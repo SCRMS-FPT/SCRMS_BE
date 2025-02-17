@@ -1,0 +1,9 @@
+.vs/
+obj/
+*.user
+*.suo
+*.db
+*.log
+Dockerfile
+.dockerignore
+*.csproj.user

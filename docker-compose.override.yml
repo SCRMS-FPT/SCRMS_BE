@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  identitydb:
+    container_name: identitydb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=IdentityDb
+    restart: always
+    ports:
+        - "5432:5432"
+    volumes:
+      - postgres_identity:/var/lib/postgresql/data/     

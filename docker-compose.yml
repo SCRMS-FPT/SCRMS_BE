@@ -1,0 +1,8 @@
+﻿version: '3.4'
+
+services:
+  identitydb:
+    image: postgres
+
+volumes:
+  postgres_identity:
