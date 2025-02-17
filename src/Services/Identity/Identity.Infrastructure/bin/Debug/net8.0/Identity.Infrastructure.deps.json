@@ -9,6 +9,7 @@
       "Identity.Infrastructure/1.0.0": {
         "dependencies": {
           "Identity.Application": "1.0.0",
+          "Identity.Domain": "1.0.0",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.11"
         },
         "runtime": {

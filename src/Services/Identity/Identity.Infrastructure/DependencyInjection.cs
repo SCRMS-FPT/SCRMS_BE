@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Identity.Infrastructure.Data.Interceptors;
 using Identity.Infrastructure.Data;
+using Identity.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Infrastructure
 {
@@ -32,9 +34,11 @@ namespace Identity.Infrastructure
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options.UseNpgsql(connectionString);
         });
-
-        // Đăng ký repository
-        services.AddScoped<IApplicationDbContext>(provider => 
+            services.AddIdentity<User, IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<IdentityDbContext>()
+            .AddDefaultTokenProviders();
+            // Đăng ký repository
+            services.AddScoped<IApplicationDbContext>(provider => 
             provider.GetRequiredService<IdentityDbContext>());
 
         return services;

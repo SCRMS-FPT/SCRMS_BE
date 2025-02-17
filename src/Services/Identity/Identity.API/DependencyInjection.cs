@@ -18,7 +18,7 @@ namespace Identity.API
 
             // Health checks
             services.AddHealthChecks()
-                .AddNpgSql(configuration.GetConnectionString("Postgres")!);
+                .AddNpgSql(configuration.GetConnectionString("Database")!);
 
             return services;
         }

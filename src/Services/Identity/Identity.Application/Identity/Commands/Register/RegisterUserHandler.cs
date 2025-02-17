@@ -8,10 +8,15 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Identity.Commands.Register
 {
-    public sealed class RegisterUserHandler(
-    UserManager<User> userManager)
-    : ICommandHandler<RegisterUserCommand, RegisterUserResult>
+    public sealed class RegisterUserHandler : ICommandHandler<RegisterUserCommand, RegisterUserResult>
     {
+        private readonly UserManager<User> _userManager;
+
+        public RegisterUserHandler(UserManager<User> userManager)
+        {
+            _userManager = userManager;
+        }
+
         public async Task<RegisterUserResult> Handle(
             RegisterUserCommand command,
             CancellationToken cancellationToken)
@@ -28,7 +33,7 @@ namespace Identity.Application.Identity.Commands.Register
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await userManager.CreateAsync(user, command.Password);
+            var result = await _userManager.CreateAsync(user, command.Password);
 
             if (!result.Succeeded)
             {

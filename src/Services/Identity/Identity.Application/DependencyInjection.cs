@@ -12,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FeatureManagement;
 using System.Reflection;
+using Identity.Application.Data;
+using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Application
 {
@@ -30,7 +32,6 @@ namespace Identity.Application
             });
 
             services.AddFeatureManagement();
-            services.AddMessageBroker(configuration, Assembly.GetExecutingAssembly());
 
             return services;
         }
