@@ -12,6 +12,8 @@ namespace Identity.Domain.Models
         public string LastName { get; set; } = null!;
         public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }
+
+        public string MembershipStatus { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastModifiedAt { get; set; }
     }
