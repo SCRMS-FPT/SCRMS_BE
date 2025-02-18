@@ -16,12 +16,14 @@ var app = builder.Build();
 
 // Cấu hình pipeline
 app.UseApiServices();
-
+app.UseAuthentication();
+app.UseAuthorization();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     await app.InitialiseDatabaseAsync(); 
 }
+
 
 app.Run();

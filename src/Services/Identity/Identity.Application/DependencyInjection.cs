@@ -14,6 +14,7 @@ using Microsoft.FeatureManagement;
 using System.Reflection;
 using Identity.Application.Data;
 using Microsoft.AspNetCore.Identity;
+using Identity.Application.Extensions;
 
 namespace Identity.Application
 {
@@ -32,7 +33,7 @@ namespace Identity.Application
             });
 
             services.AddFeatureManagement();
-
+            services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
             return services;
         }
     }
