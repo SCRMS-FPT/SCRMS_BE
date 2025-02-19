@@ -23,6 +23,9 @@ namespace Identity.Domain.Models
             decimal price,
             int durationDays)
         {
+            if (price <= 0)
+                throw new ArgumentException("Price must be positive");
+
             return new ServicePackage
             {
                 Name = name,
@@ -40,6 +43,22 @@ namespace Identity.Domain.Models
                 _subscribedUserIds.Add(userId);
                 AddDomainEvent(new ServicePackageSubscribedEvent(Id, userId));
             }
+        }
+
+        public void UpdateDetails(
+       string name,
+       string description,
+       decimal price,
+       int durationDays)
+        {
+            Name = name;
+            Description = description;
+            Price = price;
+            DurationDays = durationDays;
+
+            // Có thể thêm domain rules ở đây
+            if (price <= 0)
+                throw new ArgumentException("Price must be positive");
         }
     }
 }

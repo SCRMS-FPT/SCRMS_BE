@@ -2,6 +2,8 @@
 global using Identity.Domain.ValueObjects;
 global using BuildingBlocks.CQRS;
 global using Identity.Application.Data;
+global using Identity.Application.Exceptions;
+global using Identity.Application.Extensions;
 global using Identity.Application.Dtos;
 global using MediatR;
 global using Microsoft.Extensions.Logging;

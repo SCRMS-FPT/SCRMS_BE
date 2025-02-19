@@ -10,7 +10,7 @@ namespace Identity.Application.Identity.Commands.Login
     public record LoginUserCommand(
         string Email,
         string Password
-    ) : IRequest<LoginUserResult>;
+    ) : ICommand<LoginUserResult>;
 
     public record LoginUserResult(
         string Token,

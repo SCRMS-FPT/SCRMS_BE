@@ -26,6 +26,7 @@ namespace Identity.Application.Identity.Queries.GetProfile
             }
 
             return new UserDto(
+                user.Id,
                 user.FirstName,
                 user.LastName,
                 user.Email,

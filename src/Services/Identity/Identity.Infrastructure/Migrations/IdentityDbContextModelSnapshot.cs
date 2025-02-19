@@ -126,6 +126,9 @@ namespace Identity.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("LastModifiedAt")
                         .HasColumnType("timestamp with time zone");
 

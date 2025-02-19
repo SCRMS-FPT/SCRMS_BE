@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Identity.Commands.Login
 {
-    public sealed class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResult>
+    public sealed class LoginUserHandler : ICommandHandler<LoginUserCommand, LoginUserResult>
     {
         private readonly UserManager<User> _userManager;
         private readonly JwtSettings _jwtSettings;
@@ -37,7 +37,7 @@ namespace Identity.Application.Identity.Commands.Login
                 throw new DomainException("Invalid credentials");
             }
 
-            var token = GenerateJwtToken(user);
+            var token = await GenerateJwtToken(user);
 
             return new LoginUserResult(
                 Token: token,
@@ -46,19 +46,28 @@ namespace Identity.Application.Identity.Commands.Login
             );
         }
 
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
 
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(_jwtSettings.ExpiryHours),
                 Issuer = _jwtSettings.Issuer,
                 Audience = _jwtSettings.Audience,

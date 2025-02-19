@@ -13,6 +13,7 @@ using Identity.Infrastructure.Data.Interceptors;
 using Identity.Infrastructure.Data;
 using Identity.Domain.Models;
 using Microsoft.AspNetCore.Identity;
+using Identity.Infrastructure.Data.Managers;
 
 namespace Identity.Infrastructure
 {
@@ -27,9 +28,9 @@ namespace Identity.Infrastructure
         // Đăng ký interceptors
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
-
-        // Cấu hình DbContext
-        services.AddDbContext<IdentityDbContext>((sp, options) =>
+            services.AddScoped<UserManager<User>, SoftDeleteUserManager>();
+            // Cấu hình DbContext
+            services.AddDbContext<IdentityDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options.UseNpgsql(connectionString);
