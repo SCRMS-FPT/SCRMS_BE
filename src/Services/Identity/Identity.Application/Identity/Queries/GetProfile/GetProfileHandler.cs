@@ -21,17 +21,17 @@ namespace Identity.Application.Identity.Queries.GetProfile
         {
             var user = await _userManager.FindByIdAsync(query.UserId.ToString());
             if (user == null)
-                throw new DomainException("User not found");
+            {
+                throw new DomainException("User not found", 404, "The requested user could not be located in the system.");
+            }
 
             return new UserDto(
-                user.Id,
                 user.FirstName,
                 user.LastName,
                 user.Email,
                 user.PhoneNumber,
                 user.BirthDate,
                 user.Gender.ToString(),
-                user.MembershipStatus, // Giả sử user có thuộc tính này
                 user.CreatedAt
             );
         }

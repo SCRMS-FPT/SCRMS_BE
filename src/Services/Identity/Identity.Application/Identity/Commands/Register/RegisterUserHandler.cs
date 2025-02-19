@@ -23,6 +23,7 @@ namespace Identity.Application.Identity.Commands.Register
         {
             var user = new User
             {
+                Id = Guid.NewGuid(),
                 FirstName = command.FirstName,
                 LastName = command.LastName,
                 Email = command.Email,

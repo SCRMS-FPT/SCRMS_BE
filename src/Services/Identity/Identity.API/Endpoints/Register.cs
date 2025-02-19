@@ -18,5 +18,12 @@ namespace Identity.API.Endpoints
             });
         }
     }
-    public record RegisterUserRequest(UserDto User);
+    public record RegisterUserRequest(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Phone,
+    DateTime BirthDate,
+    string Gender,
+    string Password);
 }

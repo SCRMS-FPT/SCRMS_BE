@@ -10,13 +10,8 @@ namespace Identity.API
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Thêm Carter cho API endpoints
             services.AddCarter();
-
-            // Xử lý exception
             services.AddExceptionHandler<CustomExceptionHandler>();
-
-            // Health checks
             services.AddHealthChecks()
                 .AddNpgSql(configuration.GetConnectionString("Database")!);
 
@@ -28,10 +23,8 @@ namespace Identity.API
             // Map Carter endpoints
             app.MapCarter();
 
-            // Cấu hình exception handler
             app.UseExceptionHandler(options => { });
 
-            // Cấu hình health checks
             app.UseHealthChecks("/health", new HealthCheckOptions
             {
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse

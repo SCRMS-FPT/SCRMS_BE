@@ -38,14 +38,12 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
             }
 
             return new UserDto(
-                user.Id,
                 user.FirstName,
                 user.LastName,
                 user.Email,
                 user.PhoneNumber,
                 user.BirthDate,
                 user.Gender.ToString(),
-                user.MembershipStatus,
                 user.CreatedAt
             );
         }

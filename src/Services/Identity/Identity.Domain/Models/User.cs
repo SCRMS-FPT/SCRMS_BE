@@ -13,13 +13,13 @@ namespace Identity.Domain.Models
         public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }
 
-        public string MembershipStatus { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastModifiedAt { get; set; }
     }
 
     // Thêm enum Gender vào namespace
     public enum Gender { Male, Female, Other }
+
 
     public class ServicePackageSubscription : Entity<int>
     {
