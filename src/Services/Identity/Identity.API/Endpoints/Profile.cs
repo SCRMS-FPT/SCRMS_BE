@@ -2,7 +2,6 @@
 using Identity.Application.Identity.Queries.GetProfile;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
-using System.Text;
 
 namespace Identity.API.Endpoints
 {

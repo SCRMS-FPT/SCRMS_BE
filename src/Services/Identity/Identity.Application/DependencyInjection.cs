@@ -1,20 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using BuildingBlocks.Behaviors;
-using BuildingBlocks.Messaging.MassTransit;
+﻿using BuildingBlocks.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FeatureManagement;
 using System.Reflection;
-using Identity.Application.Data;
-using Microsoft.AspNetCore.Identity;
-using Identity.Application.Extensions;
 
 namespace Identity.Application
 {

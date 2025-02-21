@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Identity.Domain.Abstractions;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Domain.Models
 {
@@ -9,6 +6,7 @@ namespace Identity.Domain.Models
     {
         // Thêm setter public cho các property
         public string FirstName { get; set; } = null!;
+
         public string LastName { get; set; } = null!;
         public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }
@@ -20,8 +18,8 @@ namespace Identity.Domain.Models
     }
 
     // Thêm enum Gender vào namespace
-    public enum Gender { Male, Female, Other }
-
+    public enum Gender
+    { Male, Female, Other }
 
     public class ServicePackageSubscription : Entity<int>
     {

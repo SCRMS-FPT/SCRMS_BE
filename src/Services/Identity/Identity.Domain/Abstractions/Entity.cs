@@ -5,6 +5,7 @@
         public T Id { get; protected set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastModified { get; set; }
+
         public void SetCreatedAt(DateTime createdAt)
         {
             CreatedAt = createdAt;

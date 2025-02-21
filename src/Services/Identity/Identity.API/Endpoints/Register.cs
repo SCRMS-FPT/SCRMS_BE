@@ -1,5 +1,4 @@
-﻿using Identity.Application.Dtos;
-using Identity.Application.Identity.Commands.Register;
+﻿using Identity.Application.Identity.Commands.Register;
 
 namespace Identity.API.Endpoints
 {
@@ -18,6 +17,7 @@ namespace Identity.API.Endpoints
             });
         }
     }
+
     public record RegisterUserRequest(
     string FirstName,
     string LastName,

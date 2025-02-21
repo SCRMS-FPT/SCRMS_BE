@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Identity.Application.Dtos
+﻿namespace Identity.Application.Dtos
 {
     public record ServicePackageDto(
         int Id,

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Identity.Domain.Exceptions
+﻿namespace Identity.Domain.Exceptions
 {
     public class DomainException : Exception
     {

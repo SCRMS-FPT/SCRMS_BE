@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using System.IO;
-using Identity.Infrastructure.Data;
 
 namespace Identity.Infrastructure.Data
 {
@@ -14,7 +12,7 @@ namespace Identity.Infrastructure.Data
 
             // Đọc connection string từ appsettings.json hoặc các nguồn cấu hình khác
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())  
+                .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
                 .Build();
 

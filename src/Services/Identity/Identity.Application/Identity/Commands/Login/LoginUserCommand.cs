@@ -1,9 +1,4 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Application.Identity.Commands.Login
 {
@@ -17,6 +12,7 @@ namespace Identity.Application.Identity.Commands.Login
         Guid UserId,
         string Email
     );
+
     public class LoginUserValidator : AbstractValidator<LoginUserCommand>
     {
         public LoginUserValidator()

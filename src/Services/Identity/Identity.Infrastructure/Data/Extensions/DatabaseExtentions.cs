@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Identity.Domain.Models;
+﻿using Identity.Domain.Models;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity.Infrastructure.Data.Extensions
 {
@@ -48,7 +48,7 @@ namespace Identity.Infrastructure.Data.Extensions
                     BirthDate = new DateTime(2003, 5, 8, 0, 0, 0, DateTimeKind.Utc),
                     Gender = Gender.Male,
                     IsDeleted = false
-            };
+                };
                 var result = await userManager.CreateAsync(adminUser, "Admin123!");
                 if (result.Succeeded)
                 {

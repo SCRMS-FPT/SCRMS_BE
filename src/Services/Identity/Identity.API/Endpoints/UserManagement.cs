@@ -34,6 +34,7 @@ namespace Identity.API.Endpoints
                 return Results.Ok(result);
             });
         }
+
         public record UpdateUserRequest(
        string FirstName,
        string LastName,
