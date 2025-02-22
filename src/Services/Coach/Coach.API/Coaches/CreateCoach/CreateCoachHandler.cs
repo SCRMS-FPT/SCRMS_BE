@@ -2,7 +2,7 @@
 
 namespace Coach.API.Coaches.CreateCoach
 {
-    public record CreateCoachCommand(Guid UserId, int SportId, string Bio, decimal RatePerHour) : ICommand<CreateCoachResult>;
+    public record CreateCoachCommand(Guid UserId, Guid SportId, string Bio, decimal RatePerHour) : ICommand<CreateCoachResult>;
 
     public record CreateCoachResult(Guid Id);
 
@@ -14,7 +14,7 @@ namespace Coach.API.Coaches.CreateCoach
         {
             RuleFor(x => x.UserId).NotEmpty();
 
-            RuleFor(x => x.SportId).GreaterThan(0);
+            RuleFor(x => x.SportId).NotEmpty();
 
             RuleFor(x => x.Bio).NotEmpty();
 

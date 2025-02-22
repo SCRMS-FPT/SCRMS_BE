@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public Guid CoachId { get; set; }
-        public int SportId { get; set; }
+        public Guid SportId { get; set; }
         public string Status { get; set; } = "pending";
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }

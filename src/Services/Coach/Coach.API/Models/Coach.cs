@@ -6,7 +6,8 @@ namespace Coach.API.Models
     {
         [Key]
         public Guid UserId { get; set; }
-        public int SportId { get; set; }
+
+        public Guid SportId { get; set; }
         public string Bio { get; set; } = string.Empty;
         public decimal RatePerHour { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -7,7 +7,7 @@ namespace Coach.API.Coaches.GetCoaches
 
     public record CoachResponse(
         Guid UserId,
-        int SportId,
+        Guid SportId,
         string Bio,
         decimal RatePerHour,
         DateTime CreatedAt);

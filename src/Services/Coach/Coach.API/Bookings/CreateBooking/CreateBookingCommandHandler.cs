@@ -6,7 +6,7 @@ namespace Coach.API.Bookings.CreateBooking
     public record CreateBookingCommand(
         Guid UserId,
         Guid CoachId,
-        int SportId,
+        Guid SportId,
         DateTime StartTime,
         DateTime EndTime
     ) : ICommand<CreateBookingResult>;
@@ -19,7 +19,7 @@ namespace Coach.API.Bookings.CreateBooking
         {
             RuleFor(x => x.UserId).NotEmpty();
             RuleFor(x => x.CoachId).NotEmpty();
-            RuleFor(x => x.SportId).GreaterThan(0);
+            RuleFor(x => x.SportId).NotEmpty();
             RuleFor(x => x.StartTime).LessThan(x => x.EndTime);
         }
     }

@@ -6,7 +6,7 @@ Guid UserId,
 
 Guid CoachId,
 
-int SportId,
+Guid SportId,
 
 DateTime StartDateTime,
 

@@ -1,6 +1,6 @@
 ﻿namespace Coach.API.Coaches.CreateCoach
 {
-    public record CreateCoachRequest(Guid UserId, int SportId, string Bio, decimal RatePerHour);
+    public record CreateCoachRequest(Guid UserId, Guid SportId, string Bio, decimal RatePerHour);
 
     public record CreateCoachResponse(Guid Id);
 
