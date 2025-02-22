@@ -2,15 +2,16 @@
 
 namespace Coach.API.Models
 {
-    public class CoachSchedule
+    public class CoachPackage
     {
         [Key]
         public Guid Id { get; set; }
 
         public Guid CoachId { get; set; }
-        public int DayOfWeek { get; set; }
-        public TimeOnly StartTime { get; set; }
-        public TimeOnly EndTime { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int SessionCount { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

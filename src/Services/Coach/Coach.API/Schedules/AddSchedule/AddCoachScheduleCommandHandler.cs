@@ -1,15 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Coach.API.Data;
-using System.Security.Claims;
-using BuildingBlocks.Exceptions;
+﻿using Coach.API.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Schedules.AddSchedule
 {
     public record AddCoachScheduleCommand(
         Guid CoachUserId,
         int DayOfWeek,
-        TimeSpan StartTime,
-        TimeSpan EndTime) : ICommand<AddCoachScheduleResult>;
+        TimeOnly StartTime,
+        TimeOnly EndTime) : ICommand<AddCoachScheduleResult>;
 
     public record AddCoachScheduleResult(Guid Id);
 
@@ -18,25 +16,26 @@ namespace Coach.API.Schedules.AddSchedule
         public AddCoachScheduleCommandValidator()
         {
             RuleFor(x => x.DayOfWeek).InclusiveBetween(1, 7);
-            RuleFor(x => x.StartTime)
-                .LessThan(x => x.EndTime)
-                .WithMessage("Start time must be before end time");
+            RuleFor(x => x.StartTime).LessThan(x => x.EndTime);
         }
     }
 
-    internal class AddCoachScheduleCommandHandler(CoachDbContext context)
-    : ICommandHandler<AddCoachScheduleCommand, AddCoachScheduleResult>
+    internal class AddCoachScheduleCommandHandler : ICommandHandler<AddCoachScheduleCommand, AddCoachScheduleResult>
     {
-        public async Task<AddCoachScheduleResult> Handle(
-            AddCoachScheduleCommand command,
-            CancellationToken cancellationToken)
+        private readonly CoachDbContext context;
+
+        public AddCoachScheduleCommandHandler(CoachDbContext context)
         {
-            // Tìm kiếm huấn luyện viên bằng UserID (từ JWT token)
+            this.context = context;
+        }
+
+        public async Task<AddCoachScheduleResult> Handle(AddCoachScheduleCommand command, CancellationToken cancellationToken)
+        {
             var coach = await context.Coaches
-                .FirstOrDefaultAsync(c => c.UserId == command.CoachUserId);
+                .FirstOrDefaultAsync(c => c.UserId == command.CoachUserId, cancellationToken);
 
             if (coach == null)
-                throw new NotFoundException("User is not registered as a coach");
+                throw new Exception("User is not registered as a coach");
 
             var schedule = new CoachSchedule
             {

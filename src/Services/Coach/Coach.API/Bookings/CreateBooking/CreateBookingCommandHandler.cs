@@ -7,8 +7,10 @@ namespace Coach.API.Bookings.CreateBooking
         Guid UserId,
         Guid CoachId,
         Guid SportId,
-        DateTime StartTime,
-        DateTime EndTime
+        DateOnly BookingDate,
+        TimeOnly StartTime,
+        TimeOnly EndTime,
+        Guid? PackageId
     ) : ICommand<CreateBookingResult>;
 
     public record CreateBookingResult(Guid Id);
@@ -20,6 +22,7 @@ namespace Coach.API.Bookings.CreateBooking
             RuleFor(x => x.UserId).NotEmpty();
             RuleFor(x => x.CoachId).NotEmpty();
             RuleFor(x => x.SportId).NotEmpty();
+            RuleFor(x => x.BookingDate).NotEmpty();
             RuleFor(x => x.StartTime).LessThan(x => x.EndTime);
         }
     }
@@ -37,71 +40,66 @@ namespace Coach.API.Bookings.CreateBooking
 
         public async Task<CreateBookingResult> Handle(CreateBookingCommand command, CancellationToken cancellationToken)
         {
-            // Check if the coach exists
             var coach = await context.Coaches
-                .AnyAsync(c => c.UserId == command.CoachId, cancellationToken);
+                .FirstOrDefaultAsync(c => c.UserId == command.CoachId, cancellationToken);
 
-            if (!coach)
-                throw new CoachNotFoundException(command.CoachId);
+            if (coach == null)
+                throw new Exception("Coach not found");
 
-            // Check coach's schedule for the day of the week of the booking
-            var dayOfWeek = (int)command.StartTime.DayOfWeek + 1; // Adjust if necessary (e.g., Sunday is 0 in DayOfWeek)
+            var dayOfWeek = (int)command.BookingDate.DayOfWeek + 1;
             var schedules = await context.CoachSchedules
                 .Where(s => s.CoachId == command.CoachId && s.DayOfWeek == dayOfWeek)
                 .ToListAsync(cancellationToken);
 
-            // Check if the booking time fits within any schedule
-            var bookingStartTime = command.StartTime.TimeOfDay;
-            var bookingEndTime = command.EndTime.TimeOfDay;
-
             var isValidTime = schedules.Any(s =>
-                bookingStartTime >= s.StartTime &&
-                bookingEndTime <= s.EndTime);
+                command.StartTime >= s.StartTime && command.EndTime <= s.EndTime);
 
             if (!isValidTime)
-                throw new InvalidBookingTimeException("Booking time is outside coach's available hours.");
+                throw new Exception("Booking time is outside coach's available hours");
 
-            // Check for existing bookings that overlap
             var overlappingBookings = await context.CoachBookings
                 .Where(b => b.CoachId == command.CoachId &&
+                            b.BookingDate == command.BookingDate &&
                             b.StartTime < command.EndTime &&
                             b.EndTime > command.StartTime)
                 .AnyAsync(cancellationToken);
 
             if (overlappingBookings)
-                throw new BookingConflictException("The selected time slot is already booked.");
+                throw new Exception("The selected time slot is already booked");
 
-            // Create the new booking
+            var duration = (command.EndTime - command.StartTime).TotalHours;
+            var totalPrice = coach.RatePerHour * (decimal)duration;
+
             var booking = new CoachBooking
             {
                 Id = Guid.NewGuid(),
                 UserId = command.UserId,
                 CoachId = command.CoachId,
                 SportId = command.SportId,
+                BookingDate = command.BookingDate,
                 StartTime = command.StartTime,
                 EndTime = command.EndTime,
                 Status = "pending",
+                TotalPrice = totalPrice,
+                PackageId = command.PackageId,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Add booking to the context and save changes
             context.CoachBookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
 
-            // Publish event for notification
             await mediator.Publish(new BookingCreatedEvent(booking.Id, booking.UserId, booking.CoachId), cancellationToken);
 
             return new CreateBookingResult(booking.Id);
         }
     }
 
+    public record BookingCreatedEvent(Guid BookingId, Guid UserId, Guid CoachId) : INotification;
+
     public class BookingCreatedEventHandler : INotificationHandler<BookingCreatedEvent>
     {
         public async Task Handle(BookingCreatedEvent notification, CancellationToken cancellationToken)
         {
-            // Send notification to user and coach
-            // This could be an email service, push notification, etc.
-            // For now, log it
             Console.WriteLine($"Booking {notification.BookingId} created. User: {notification.UserId}, Coach: {notification.CoachId}");
         }
     }

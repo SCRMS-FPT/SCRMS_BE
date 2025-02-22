@@ -23,15 +23,10 @@
 
                 return Results.Created($"/coaches/{response.Id}", response);
             })
-
             .WithName("CreateCoach")
-
             .Produces<CreateCoachResponse>(StatusCodes.Status201Created)
-
             .ProducesProblem(StatusCodes.Status400BadRequest)
-
             .WithSummary("Create Coach")
-
             .WithDescription("Create a new coach profile");
         }
     }
