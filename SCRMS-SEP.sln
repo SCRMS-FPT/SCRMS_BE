@@ -23,17 +23,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identity.API", "src\Service
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Coach", "Coach", "{E6C5683E-A5B4-4103-83A3-DB5B314E1CD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coach.API", "src\Services\Coach\Coach.API\Coach.API.csproj", "{15569B27-9476-4B31-AA5B-8733701AD9F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Coach.API", "src\Services\Coach\Coach.API\Coach.API.csproj", "{15569B27-9476-4B31-AA5B-8733701AD9F1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CourtBooking", "CourtBooking", "{C1712DE4-1855-44FA-819C-37CE953D2B97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CourtBooking.Domain", "src\Services\CourtBooking\CourtBooking.Domain\CourtBooking.Domain.csproj", "{452412B6-5600-44CE-8935-D136BB22189D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CourtBooking.Domain", "src\Services\CourtBooking\CourtBooking.Domain\CourtBooking.Domain.csproj", "{452412B6-5600-44CE-8935-D136BB22189D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CourtBooking.Infrastructure", "src\Services\CourtBooking\CourtBooking.Infrastructure\CourtBooking.Infrastructure.csproj", "{D1A4C58C-03EA-4C31-AE07-E218BC4B9184}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CourtBooking.Infrastructure", "src\Services\CourtBooking\CourtBooking.Infrastructure\CourtBooking.Infrastructure.csproj", "{D1A4C58C-03EA-4C31-AE07-E218BC4B9184}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CourtBooking.Application", "src\Services\CourtBooking\CourtBooking.Application\CourtBooking.Application.csproj", "{ABDBEC56-8A11-4070-B064-C7E022F19541}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CourtBooking.Application", "src\Services\CourtBooking\CourtBooking.Application\CourtBooking.Application.csproj", "{ABDBEC56-8A11-4070-B064-C7E022F19541}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CourtBooking.API", "src\Services\CourtBooking\CourtBooking.API\CourtBooking.API.csproj", "{16D4CB6B-3D55-4C9D-AEE0-4569F40EF828}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CourtBooking.API", "src\Services\CourtBooking\CourtBooking.API\CourtBooking.API.csproj", "{16D4CB6B-3D55-4C9D-AEE0-4569F40EF828}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Matching", "Matching", "{6E32CE86-E67B-4120-A0FB-F67A6EEFAE62}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Matching.API", "src\Services\Matching\Matching.API\Matching.API.csproj", "{A307EB50-F668-4465-836C-E7C60A0E4E81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,10 +73,6 @@ Global
 		{15569B27-9476-4B31-AA5B-8733701AD9F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15569B27-9476-4B31-AA5B-8733701AD9F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15569B27-9476-4B31-AA5B-8733701AD9F1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{452412B6-5600-44CE-8935-D136BB22189D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{452412B6-5600-44CE-8935-D136BB22189D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{452412B6-5600-44CE-8935-D136BB22189D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -89,6 +89,10 @@ Global
 		{16D4CB6B-3D55-4C9D-AEE0-4569F40EF828}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16D4CB6B-3D55-4C9D-AEE0-4569F40EF828}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16D4CB6B-3D55-4C9D-AEE0-4569F40EF828}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A307EB50-F668-4465-836C-E7C60A0E4E81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A307EB50-F668-4465-836C-E7C60A0E4E81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A307EB50-F668-4465-836C-E7C60A0E4E81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A307EB50-F668-4465-836C-E7C60A0E4E81}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -108,6 +112,8 @@ Global
 		{D1A4C58C-03EA-4C31-AE07-E218BC4B9184} = {C1712DE4-1855-44FA-819C-37CE953D2B97}
 		{ABDBEC56-8A11-4070-B064-C7E022F19541} = {C1712DE4-1855-44FA-819C-37CE953D2B97}
 		{16D4CB6B-3D55-4C9D-AEE0-4569F40EF828} = {C1712DE4-1855-44FA-819C-37CE953D2B97}
+		{6E32CE86-E67B-4120-A0FB-F67A6EEFAE62} = {59AC14C9-1DE0-490F-A6FB-00CE3CC61259}
+		{A307EB50-F668-4465-836C-E7C60A0E4E81} = {6E32CE86-E67B-4120-A0FB-F67A6EEFAE62}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {363B2ED5-A7C1-4AD2-ADAC-10379327F2BA}

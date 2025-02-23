@@ -1,4 +1,6 @@
-﻿using Coach.API.Data;
+﻿using BuildingBlocks.Exceptions;
+using Coach.API.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Coaches.CreateCoach
 {
@@ -11,14 +13,12 @@ namespace Coach.API.Coaches.CreateCoach
     public record CreateCoachResult(Guid Id);
 
     public class CreateCoachCommandValidator : AbstractValidator<CreateCoachCommand>
-
     {
         public CreateCoachCommandValidator()
-
         {
-            RuleFor(x => x.UserId).NotEmpty();
             RuleFor(x => x.Bio).NotEmpty();
             RuleFor(x => x.RatePerHour).GreaterThan(0);
+            RuleFor(x => x.SportIds).NotEmpty().WithMessage("At least one sport required");
         }
     }
 
@@ -29,6 +29,9 @@ namespace Coach.API.Coaches.CreateCoach
             CreateCoachCommand command,
             CancellationToken cancellationToken)
         {
+            if (await context.Coaches.AnyAsync(c => c.UserId == command.UserId))
+                throw new AlreadyExistsException("Coach", command.UserId);
+
             var coach = new Models.Coach
             {
                 UserId = command.UserId,

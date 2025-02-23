@@ -42,6 +42,12 @@ public class CustomExceptionHandler
                 exception.GetType().Name,
                 context.Response.StatusCode = StatusCodes.Status404NotFound
             ),
+            AlreadyExistsException =>
+           (
+               exception.Message,
+               exception.GetType().Name,
+               context.Response.StatusCode = StatusCodes.Status409Conflict
+           ),
             _ =>
             (
                 exception.Message,
