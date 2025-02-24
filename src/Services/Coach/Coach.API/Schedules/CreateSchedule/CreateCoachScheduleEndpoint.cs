@@ -21,21 +21,23 @@ namespace Coach.API.Schedules.AddSchedule
                     if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                         return Results.Unauthorized();
 
-                    var command = new AddCoachScheduleCommand(
+                    var command = new CreateCoachScheduleCommand(
                         CoachUserId: coachUserId,
                         DayOfWeek: request.DayOfWeek,
                         StartTime: request.StartTime,
                         EndTime: request.EndTime);
 
                     var result = await sender.Send(command);
+
                     return Results.Created($"/schedules/{result.Id}", result);
                 })
-                .RequireAuthorization()
-                .WithName("AddCoachSchedule")
-                .Produces<AddCoachScheduleResponse>(StatusCodes.Status201Created)
-                .ProducesProblem(StatusCodes.Status400BadRequest)
-                .WithSummary("Add Coach Schedule")
-                .WithDescription("Add a new schedule for a coach");
+            .RequireAuthorization()
+            .WithName("CreateCoachSchedule")
+            .Produces<AddCoachScheduleResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .WithSummary("Create Coach Schedule")
+            .WithDescription("Create a new schedule for a coach");
         }
     }
 }
