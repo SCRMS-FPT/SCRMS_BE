@@ -1,5 +1,4 @@
-﻿using Coach.API.Bookings.CreateBooking;
-using Coach.API.Data;
+﻿using Coach.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Schedules.UpdateSchedule

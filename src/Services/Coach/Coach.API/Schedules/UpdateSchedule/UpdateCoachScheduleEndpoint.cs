@@ -6,7 +6,6 @@ using static Coach.API.Schedules.UpdateSchedule.UpdateCoachScheduleCommandHandle
 namespace Coach.API.Schedules.UpdateSchedule
 {
     public record UpdateScheduleRequest(
-        Guid ScheduleId,
         int DayOfWeek,
         TimeOnly StartTime,
         TimeOnly EndTime);
@@ -17,7 +16,8 @@ namespace Coach.API.Schedules.UpdateSchedule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPut("/schedules", async (
+            app.MapPut("/schedules/{scheduleId:guid}", async (
+            Guid scheduleId,
             UpdateScheduleRequest request,
             ISender sender,
             HttpContext httpContext) =>
@@ -28,7 +28,7 @@ namespace Coach.API.Schedules.UpdateSchedule
                     return Results.Unauthorized();
 
                 var command = new UpdateScheduleCommand(
-                  ScheduleId: request.ScheduleId,
+                  ScheduleId: scheduleId,
                   CoachId: coachUserId,
                   DayOfWeek: request.DayOfWeek,
                   StartTime: request.StartTime,
