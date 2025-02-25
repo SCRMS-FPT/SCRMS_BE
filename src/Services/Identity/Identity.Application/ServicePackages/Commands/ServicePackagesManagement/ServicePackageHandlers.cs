@@ -1,6 +1,7 @@
 ﻿using Mapster;
+using Microsoft.EntityFrameworkCore;
 
-namespace Identity.Application.Identity.Commands.ServicePackagesManagement
+namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagement
 {
     public class ServicePackageHandlers :
         ICommandHandler<CreateServicePackageCommand, ServicePackageDto>,
@@ -22,7 +23,8 @@ namespace Identity.Application.Identity.Commands.ServicePackagesManagement
                 request.Name,
                 request.Description,
                 request.Price,
-                request.DurationDays);
+                request.DurationDays,
+                request.AssociatedRole); // Thêm tham số AssociatedRole
 
             _context.ServicePackages.Add(package);
             await _context.SaveChangesAsync(cancellationToken);
@@ -37,13 +39,15 @@ namespace Identity.Application.Identity.Commands.ServicePackagesManagement
             var package = await _context.ServicePackages
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
-            if (package == null) throw new NotFoundException(nameof(ServicePackage), request.Id);
+            if (package == null)
+                throw new NotFoundException(nameof(ServicePackage), request.Id);
 
             package.UpdateDetails(
                 request.Name,
                 request.Description,
                 request.Price,
-                request.DurationDays);
+                request.DurationDays,
+                request.AssociatedRole);
 
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -57,10 +61,10 @@ namespace Identity.Application.Identity.Commands.ServicePackagesManagement
             var package = await _context.ServicePackages
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
-            if (package == null) throw new NotFoundException(nameof(ServicePackage), request.Id);
+            if (package == null)
+                throw new NotFoundException(nameof(ServicePackage), request.Id);
 
-            // Check if any subscriptions exist
-            if (await _context.Subscriptions.AnyAsync(x => x.ServicePackageId == request.Id))
+            if (await _context.Subscriptions.AnyAsync(x => x.PackageId == request.Id, cancellationToken))
             {
                 throw new ConflictException("Cannot delete package with active subscriptions");
             }

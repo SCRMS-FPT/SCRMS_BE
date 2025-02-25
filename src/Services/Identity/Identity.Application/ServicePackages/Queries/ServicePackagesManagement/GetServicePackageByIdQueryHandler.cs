@@ -1,6 +1,7 @@
 ﻿using Mapster;
+using Microsoft.EntityFrameworkCore;
 
-namespace Identity.Application.Identity.Queries.ServicePackagesManagement
+namespace Identity.Application.ServicePackages.Queries.ServicePackagesManagement
 {
     public class GetServicePackageByIdQueryHandler(
         IApplicationDbContext context)

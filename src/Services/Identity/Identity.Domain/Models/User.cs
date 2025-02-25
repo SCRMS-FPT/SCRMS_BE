@@ -21,12 +21,16 @@ namespace Identity.Domain.Models
     public enum Gender
     { Male, Female, Other }
 
-    public class ServicePackageSubscription : Entity<int>
+    public class ServicePackageSubscription : Entity<Guid>
     {
         public Guid UserId { get; set; }
-        public int ServicePackageId { get; set; }
+        public User User { get; set; } = null!; // Navigation property
+        public Guid PackageId { get; set; }
+        public ServicePackage Package { get; set; } = null!; // Navigation property
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public bool IsActive { get; set; }
+        public string Status { get; set; } = "active"; // Ví dụ: "active", "expired", "cancelled"
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

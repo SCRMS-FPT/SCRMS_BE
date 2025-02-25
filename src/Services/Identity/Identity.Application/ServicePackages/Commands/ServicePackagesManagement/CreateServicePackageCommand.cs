@@ -1,12 +1,13 @@
 ﻿using FluentValidation;
 
-namespace Identity.Application.Identity.Commands.ServicePackagesManagement
+namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagement
 {
     public record CreateServicePackageCommand(
         string Name,
         string Description,
         decimal Price,
-        int DurationDays
+        int DurationDays,
+        string AssociatedRole
     ) : ICommand<ServicePackageDto>;
 
     public class CreateServicePackageValidator : AbstractValidator<CreateServicePackageCommand>

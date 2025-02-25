@@ -3,6 +3,7 @@ using Identity.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace Identity.Infrastructure.Data
 {
@@ -32,6 +33,21 @@ namespace Identity.Infrastructure.Data
                 b.Property(p => p.Name).HasMaxLength(255).IsRequired();
                 b.Property(p => p.Price).HasPrecision(18, 2);
             });
+
+            builder.Entity<ServicePackageSubscription>()
+                .HasOne(s => s.Package)
+                .WithMany()
+                .HasForeignKey(s => s.PackageId);
+
+            builder.Entity<ServicePackageSubscription>()
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId);
+        }
+
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }

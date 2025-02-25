@@ -1,58 +1,56 @@
-﻿namespace Identity.Domain.Models
+﻿namespace Identity.Domain.Models;
+
+public class ServicePackage : Aggregate<Guid>
 {
-    public class ServicePackage : Aggregate<int>
+    public string Name { get; private set; } = null!;
+    public string Description { get; private set; } = null!;
+    public decimal Price { get; private set; }
+    public int DurationDays { get; private set; }
+    public string AssociatedRole { get; private set; } = null!;
+    public DateTime CreatedAt { get; private set; }
+
+    public static ServicePackage Create(
+        string name,
+        string description,
+        decimal price,
+        int durationDays,
+        string associatedRole)
     {
-        public string Name { get; private set; }
-        public string Description { get; private set; }
-        public decimal Price { get; private set; }
-        public int DurationDays { get; private set; }
-        public DateTime CreatedAt { get; private set; }
+        if (price <= 0)
+            throw new ArgumentException("Price must be positive");
 
-        private List<Guid> _subscribedUserIds = new();
-        public IReadOnlyList<Guid> SubscribedUserIds => _subscribedUserIds.AsReadOnly();
+        if (string.IsNullOrWhiteSpace(associatedRole))
+            throw new ArgumentException("Associated role is required");
 
-        public static ServicePackage Create(
-            string name,
-            string description,
-            decimal price,
-            int durationDays)
+        return new ServicePackage
         {
-            if (price <= 0)
-                throw new ArgumentException("Price must be positive");
+            Id = Guid.NewGuid(),
+            Name = name,
+            Description = description,
+            Price = price,
+            DurationDays = durationDays,
+            AssociatedRole = associatedRole,
+            CreatedAt = DateTime.UtcNow
+        };
+    }
 
-            return new ServicePackage
-            {
-                Name = name,
-                Description = description,
-                Price = price,
-                DurationDays = durationDays,
-                CreatedAt = DateTime.UtcNow
-            };
-        }
+    public void UpdateDetails(
+        string name,
+        string description,
+        decimal price,
+        int durationDays,
+        string associatedRole)
+    {
+        if (price <= 0)
+            throw new ArgumentException("Price must be positive");
 
-        public void SubscribeUser(Guid userId)
-        {
-            if (!_subscribedUserIds.Contains(userId))
-            {
-                _subscribedUserIds.Add(userId);
-                AddDomainEvent(new ServicePackageSubscribedEvent(Id, userId));
-            }
-        }
+        if (string.IsNullOrWhiteSpace(associatedRole))
+            throw new ArgumentException("Associated role is required");
 
-        public void UpdateDetails(
-       string name,
-       string description,
-       decimal price,
-       int durationDays)
-        {
-            Name = name;
-            Description = description;
-            Price = price;
-            DurationDays = durationDays;
-
-            // Có thể thêm domain rules ở đây
-            if (price <= 0)
-                throw new ArgumentException("Price must be positive");
-        }
+        Name = name;
+        Description = description;
+        Price = price;
+        DurationDays = durationDays;
+        AssociatedRole = associatedRole;
     }
 }
