@@ -6,16 +6,18 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/coaches/availability", async (
+            app.MapGet("/availability", async (
                 ISender sender,
-                HttpContext httpContext) =>
+                HttpContext httpContext,
+                int Page = 1,
+                int RecordPerPage = 10) =>
             {
                 var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
 
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                var command = new ViewCoachAvailabilityCommand(coachUserId);
+                var command = new ViewCoachAvailabilityCommand(coachUserId, Page, RecordPerPage);
                 var availableSlots = await sender.Send(command);
 
                 return Results.Ok(availableSlots);

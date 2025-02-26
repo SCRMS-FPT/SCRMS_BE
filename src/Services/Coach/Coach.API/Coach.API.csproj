@@ -31,11 +31,6 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Bookings\GetBookingById\" />
-    <Folder Include="Bookings\UpdateBookingStatus\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks\BuildingBlocks.csproj" />
   </ItemGroup>
 

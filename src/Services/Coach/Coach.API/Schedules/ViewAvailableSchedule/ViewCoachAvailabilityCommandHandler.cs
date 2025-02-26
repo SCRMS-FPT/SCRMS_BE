@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Schedules.ViewAvailableSchedule
 {
-    public record ViewCoachAvailabilityCommand(Guid CoachUserId) : ICommand<List<AvailableScheduleSlot>>;
+    public record ViewCoachAvailabilityCommand(Guid CoachUserId, int Page, int RecordPerPage) : ICommand<List<AvailableScheduleSlot>>;
     public record AvailableScheduleSlot(int DayOfWeek, TimeOnly StartTime, TimeOnly EndTime);
     public class ViewCoachAvailabilityCommandValidator : AbstractValidator<ViewCoachAvailabilityCommand>
     {
@@ -50,7 +50,7 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
                 }
             }
 
-            return availableSlots;
+            return availableSlots.Skip((command.Page - 1) * command.RecordPerPage).Take(command.RecordPerPage).ToList();
         }
     }
 }
