@@ -6,7 +6,7 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/coaches/availability", async (
+            app.MapGet("/availability", async (
                 ISender sender,
                 HttpContext httpContext) =>
             {

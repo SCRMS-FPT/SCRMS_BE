@@ -1,7 +1,4 @@
-﻿
-using Coach.API.Schedules.AddSchedule;
-using System.IdentityModel.Tokens.Jwt;
-using static Coach.API.Schedules.UpdateSchedule.UpdateCoachScheduleCommandHandler;
+﻿using System.IdentityModel.Tokens.Jwt;
 
 namespace Coach.API.Schedules.UpdateSchedule
 {
@@ -9,8 +6,6 @@ namespace Coach.API.Schedules.UpdateSchedule
         int DayOfWeek,
         TimeOnly StartTime,
         TimeOnly EndTime);
-
-    public record UpdateScheduleResponse(Guid Id);
 
     public class UpdateCoachScheduleEndpoint : ICarterModule
     {
@@ -34,27 +29,27 @@ namespace Coach.API.Schedules.UpdateSchedule
                   StartTime: request.StartTime,
                   EndTime: request.EndTime);
 
-                try
-                {
+                //try
+                //{
                     var result = await sender.Send(command);
-                    return Results.Ok(new UpdateScheduleResponse(result.Id));
-                }
-                catch (ScheduleNotFoundException)
-                {
-                    return Results.NotFound(new { message = "Schedule not found" });
-                }
-                catch (ScheduleConflictException)
-                {
-                    return Results.BadRequest(new { message = "Schedule conflict detected" });
-                }
-                catch (Exception ex)
-                {
-                    return Results.Problem(title: "An error occurred", detail: ex.Message, statusCode: 500);
-                }
+                    return result.IsUpdated ? Results.NoContent() : Results.Problem("Failed to update schedule.");
+                //}
+                //catch (ScheduleNotFoundException)
+                //{
+                //    return Results.NotFound(new { message = "Schedule not found" });
+                //}
+                //catch (ScheduleConflictException)
+                //{
+                //    return Results.BadRequest(new { message = "Schedule conflict detected" });
+                //}
+                //catch (Exception ex)
+                //{
+                //    return Results.Problem(title: "An error occurred", detail: ex.Message, statusCode: 500);
+                //}
             })
         .RequireAuthorization()
         .WithName("UpdateCoachSchedule")
-        .Produces<UpdateScheduleResponse>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .WithSummary("Update Coach Schedule")
         .WithDescription("Update an existing coach schedule");
