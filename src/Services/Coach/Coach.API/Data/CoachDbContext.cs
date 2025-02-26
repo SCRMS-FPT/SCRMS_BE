@@ -30,15 +30,15 @@ namespace Coach.API.Data
                 entity.HasKey(cs => new { cs.CoachId, cs.SportId });
 
                 entity.HasOne(cs => cs.Coach)
-                    .WithMany(c => c.Sports)
+                    .WithMany(c => c.CoachSports)
                     .HasForeignKey(cs => cs.CoachId);
             });
 
             modelBuilder.Entity<CoachSchedule>(entity =>
             {
                 entity.HasKey(s => s.Id);
-                entity.HasOne<Models.Coach>()
-                    .WithMany()
+                entity.HasOne(s => s.Coach)
+                    .WithMany(c => c.Schedules)
                     .HasForeignKey(s => s.CoachId);
             });
 
@@ -47,13 +47,14 @@ namespace Coach.API.Data
                 entity.HasKey(b => b.Id);
                 entity.Property(b => b.Status).HasMaxLength(50);
                 entity.Property(b => b.TotalPrice).HasColumnType("decimal(18,2)");
-                entity.HasOne<Models.Coach>()
-                    .WithMany()
-                    .HasForeignKey(b => b.CoachId);
-                entity.HasOne<CoachPackage>()
-                    .WithMany()
-                    .HasForeignKey(b => b.PackageId)
+                entity.HasOne(cb => cb.Coach)
+                    .WithMany(c => c.Bookings)
+                    .HasForeignKey(cb => cb.CoachId);
+                entity.HasOne(cb => cb.Package)
+                    .WithMany(p => p.Bookings) // Chỉ định navigation trong CoachPackage
+                    .HasForeignKey(cb => cb.PackageId)
                     .IsRequired(false);
+                entity.HasIndex(cb => cb.SportId);
             });
 
             modelBuilder.Entity<CoachPackage>(entity =>

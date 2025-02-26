@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Coach.API.Migrations
 {
     [DbContext(typeof(CoachDbContext))]
-    [Migration("20250222100344_InitialCreate")]
+    [Migration("20250226151859_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -91,6 +91,8 @@ namespace Coach.API.Migrations
 
                     b.HasIndex("PackageId");
 
+                    b.HasIndex("SportId");
+
                     b.ToTable("CoachBookings");
                 });
 
@@ -146,9 +148,6 @@ namespace Coach.API.Migrations
                     b.Property<Guid>("CoachId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CoachUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -167,8 +166,6 @@ namespace Coach.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoachId");
-
-                    b.HasIndex("CoachUserId");
 
                     b.ToTable("CoachSchedules");
                 });
@@ -191,15 +188,19 @@ namespace Coach.API.Migrations
 
             modelBuilder.Entity("Coach.API.Models.CoachBooking", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", null)
-                        .WithMany()
+                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                        .WithMany("Bookings")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Coach.API.Models.CoachPackage", null)
-                        .WithMany()
+                    b.HasOne("Coach.API.Models.CoachPackage", "Package")
+                        .WithMany("Bookings")
                         .HasForeignKey("PackageId");
+
+                    b.Navigation("Coach");
+
+                    b.Navigation("Package");
                 });
 
             modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
@@ -217,21 +218,19 @@ namespace Coach.API.Migrations
 
             modelBuilder.Entity("Coach.API.Models.CoachSchedule", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", null)
-                        .WithMany()
+                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                        .WithMany("Schedules")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Coach.API.Models.Coach", null)
-                        .WithMany("Schedules")
-                        .HasForeignKey("CoachUserId");
+                    b.Navigation("Coach");
                 });
 
             modelBuilder.Entity("Coach.API.Models.CoachSport", b =>
                 {
                     b.HasOne("Coach.API.Models.Coach", "Coach")
-                        .WithMany("Sports")
+                        .WithMany("CoachSports")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -241,11 +240,18 @@ namespace Coach.API.Migrations
 
             modelBuilder.Entity("Coach.API.Models.Coach", b =>
                 {
+                    b.Navigation("Bookings");
+
+                    b.Navigation("CoachSports");
+
                     b.Navigation("Packages");
 
                     b.Navigation("Schedules");
+                });
 
-                    b.Navigation("Sports");
+            modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

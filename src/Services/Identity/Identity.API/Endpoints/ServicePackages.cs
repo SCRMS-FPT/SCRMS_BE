@@ -63,21 +63,21 @@ namespace Identity.API.Endpoints
                 return Results.Ok();
             });
             var adminGroup = group.MapGroup("/api/manage-packages").RequireAuthorization("Admin");
-            adminGroup.MapPost("/", async ([FromBody] CreateServicePackageRequest request, ISender sender) =>
+            adminGroup.MapPost("/create", async ([FromBody] CreateServicePackageRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateServicePackageCommand>();
                 var result = await sender.Send(command);
                 return Results.Created($"/api/service-packages/{result.Id}", result);
             });
 
-            adminGroup.MapPut("/{id}", async (Guid id, [FromBody] UpdateServicePackageRequest request, ISender sender) =>
+            adminGroup.MapPut("/update/{id}", async (Guid id, [FromBody] UpdateServicePackageRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateServicePackageCommand>() with { Id = id };
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
 
-            adminGroup.MapDelete("/{id}", async (Guid id, ISender sender) =>
+            adminGroup.MapDelete("/delete/{id}", async (Guid id, ISender sender) =>
             {
                 await sender.Send(new DeleteServicePackageCommand(id));
                 return Results.NoContent();

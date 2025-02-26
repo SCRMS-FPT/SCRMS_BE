@@ -11,8 +11,9 @@ namespace Coach.API.Models
         public decimal RatePerHour { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public List<CoachSport> Sports { get; set; } = new();
-        public List<CoachSchedule> Schedules { get; set; } = new();
-        public List<CoachPackage> Packages { get; set; } = new();
+        public ICollection<CoachSchedule> Schedules { get; set; }
+        public ICollection<CoachSport> CoachSports { get; set; }
+        public ICollection<CoachBooking> Bookings { get; set; }
+        public ICollection<CoachPackage> Packages { get; set; }
     }
 }

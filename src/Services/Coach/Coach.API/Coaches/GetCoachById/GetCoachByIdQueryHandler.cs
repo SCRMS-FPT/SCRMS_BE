@@ -12,14 +12,14 @@ namespace Coach.API.Coaches.GetCoachById
         public async Task<CoachResponse> Handle(GetCoachByIdQuery query, CancellationToken cancellationToken)
         {
             var coach = await context.Coaches
-                .Include(c => c.Sports)
+                .Include(c => c.CoachSports)
                 .Include(c => c.Packages)
                 .FirstOrDefaultAsync(c => c.UserId == query.Id, cancellationToken);
 
             if (coach is null)
                 throw new CoachNotFoundException(query.Id);
 
-            var sportIds = coach.Sports.Select(cs => cs.SportId).ToList();
+            var sportIds = coach.CoachSports.Select(cs => cs.SportId).ToList();
 
             var packages = coach.Packages.Select(p => new CoachPackageResponse(
                 p.Id,

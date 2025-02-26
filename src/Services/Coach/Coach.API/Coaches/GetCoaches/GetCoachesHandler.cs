@@ -29,11 +29,11 @@ namespace Coach.API.Coaches.GetCoaches
             CancellationToken cancellationToken)
         {
             return await context.Coaches
-                .Include(c => c.Sports)
+                .Include(c => c.CoachSports)
                 .Include(c => c.Packages)
                 .Select(c => new CoachResponse(
                     c.UserId,
-                    c.Sports.Select(s => s.SportId).ToList(),
+                    c.CoachSports.Select(s => s.SportId).ToList(),
                     c.Bio,
                     c.RatePerHour,
                     c.CreatedAt,

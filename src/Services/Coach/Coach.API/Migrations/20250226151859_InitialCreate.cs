@@ -65,8 +65,7 @@ namespace Coach.API.Migrations
                     StartTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CoachUserId = table.Column<Guid>(type: "uuid", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -77,11 +76,6 @@ namespace Coach.API.Migrations
                         principalTable: "Coaches",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CoachSchedules_Coaches_CoachUserId",
-                        column: x => x.CoachUserId,
-                        principalTable: "Coaches",
-                        principalColumn: "UserId");
                 });
 
             migrationBuilder.CreateTable(
@@ -146,6 +140,11 @@ namespace Coach.API.Migrations
                 column: "PackageId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CoachBookings_SportId",
+                table: "CoachBookings",
+                column: "SportId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CoachPackages_CoachId",
                 table: "CoachPackages",
                 column: "CoachId");
@@ -159,11 +158,6 @@ namespace Coach.API.Migrations
                 name: "IX_CoachSchedules_CoachId",
                 table: "CoachSchedules",
                 column: "CoachId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CoachSchedules_CoachUserId",
-                table: "CoachSchedules",
-                column: "CoachUserId");
         }
 
         /// <inheritdoc />

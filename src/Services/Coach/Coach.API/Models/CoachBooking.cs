@@ -17,5 +17,8 @@ namespace Coach.API.Models
         public decimal TotalPrice { get; set; }
         public Guid? PackageId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public Coach Coach { get; set; }
+        public CoachPackage Package { get; set; }
     }
 }
