@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.GetAllBooking
 {
-    public record GetCoachBookingsQuery(Guid CoachUserId) : IQuery<List<BookingHistoryResult>>;
+    public record GetCoachBookingsQuery(Guid CoachUserId, int Page, int RecordPerPage) : IQuery<List<BookingHistoryResult>>;
 
     public record BookingHistoryResult(
         Guid Id,
@@ -33,6 +33,8 @@ namespace Coach.API.Bookings.GetAllBooking
                 .Where(b => b.CoachId == query.CoachUserId)
                 .Select(b => new BookingHistoryResult(
                     b.Id, b.UserId, b.BookingDate, b.StartTime, b.EndTime, b.Status, b.TotalPrice))
+                .Skip((query.Page - 1 ) * query.RecordPerPage)
+                .Take(query.RecordPerPage)
                 .ToListAsync(cancellationToken);
         }
     }

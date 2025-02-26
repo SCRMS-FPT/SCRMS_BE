@@ -8,13 +8,15 @@ namespace Coach.API.Bookings.GetAllBooking
         {
             app.MapGet("/bookings", async (
                 ISender sender,
-                HttpContext httpContext) =>
+                HttpContext httpContext,
+                int Page,
+                int RecordPerPage) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                var result = await sender.Send(new GetCoachBookingsQuery(coachUserId));
+                var result = await sender.Send(new GetCoachBookingsQuery(coachUserId, Page, RecordPerPage));
                 return Results.Ok(result);
             })
             .RequireAuthorization()

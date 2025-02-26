@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.GetBookingById
 {
-    public record GetBookingByIdRequest(Guid BookingId) : IQuery<BookingDetailResult>;
+    public record GetBookingByIdQuery(Guid BookingId) : IQuery<BookingDetailResult>;
 
     public record BookingDetailResult(
         Guid Id,
@@ -19,7 +19,7 @@ namespace Coach.API.Bookings.GetBookingById
         Guid? PackageId
     );
 
-    public class GetBookingByIdCommandValidator : AbstractValidator<GetBookingByIdRequest>
+    public class GetBookingByIdCommandValidator : AbstractValidator<GetBookingByIdQuery>
     {
         public GetBookingByIdCommandValidator()
         {
@@ -28,7 +28,7 @@ namespace Coach.API.Bookings.GetBookingById
     }
 
     internal class GetBookingByIdCommandHandler
-       : IQueryHandler<GetBookingByIdRequest, BookingDetailResult>
+       : IQueryHandler<GetBookingByIdQuery, BookingDetailResult>
     {
         private readonly CoachDbContext context;
         private readonly IMediator mediator;
@@ -39,7 +39,7 @@ namespace Coach.API.Bookings.GetBookingById
             this.mediator = mediator;
         }
 
-        public async Task<BookingDetailResult> Handle(GetBookingByIdRequest query, CancellationToken cancellationToken)
+        public async Task<BookingDetailResult> Handle(GetBookingByIdQuery query, CancellationToken cancellationToken)
         {
             var booking = await context.CoachBookings
                 .Where(b => b.Id == query.BookingId)

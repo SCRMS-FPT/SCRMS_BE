@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.UpdateBooking
 {
-    public record UpdateBookingStatusCommand(Guid BookingId, string Status) : ICommand<UpdateBookingStatusResult>;
+    public record UpdateBookingStatusQuery(Guid BookingId, string Status) : ICommand<UpdateBookingStatusResult>;
 
     public record UpdateBookingStatusResult(Boolean IsUpdated);
-    public class UpdateBookingStatusCommandValidator : AbstractValidator<UpdateBookingStatusCommand>
+    public class UpdateBookingStatusCommandValidator : AbstractValidator<UpdateBookingStatusQuery>
     {
         public UpdateBookingStatusCommandValidator()
         {
@@ -21,7 +21,7 @@ namespace Coach.API.Bookings.UpdateBooking
         }
     }
     internal class UpdateBookingStatusCommandHandler
-       : ICommandHandler<UpdateBookingStatusCommand, UpdateBookingStatusResult>
+       : ICommandHandler<UpdateBookingStatusQuery, UpdateBookingStatusResult>
     {
         private readonly CoachDbContext context;
         private readonly IMediator mediator;
@@ -32,13 +32,18 @@ namespace Coach.API.Bookings.UpdateBooking
             this.mediator = mediator;
         }
 
-        public async Task<UpdateBookingStatusResult> Handle(UpdateBookingStatusCommand command, CancellationToken cancellationToken)
+        public async Task<UpdateBookingStatusResult> Handle(UpdateBookingStatusQuery command, CancellationToken cancellationToken)
         {
             var booking = await context.CoachBookings
                 .FirstOrDefaultAsync(b => b.Id == command.BookingId, cancellationToken);
 
             if (booking == null)
                 throw new NotFoundException("Booking not found");
+
+            if (booking.CoachId !=  command.BookingId)
+            {
+                throw new ValidationException("Booking coach is not you");
+            }
 
             if (command.Status != "confirmed" && command.Status != "cancelled")
                 throw new ValidationException("Invalid booking status");

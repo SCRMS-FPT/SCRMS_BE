@@ -18,7 +18,7 @@ namespace Coach.API.Bookings.GetBookingById
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                var result = await sender.Send(new GetBookingByIdRequest(bookingId));
+                var result = await sender.Send(new GetBookingByIdQuery(bookingId));
                 return Results.Ok(result);
             })
             .RequireAuthorization()
