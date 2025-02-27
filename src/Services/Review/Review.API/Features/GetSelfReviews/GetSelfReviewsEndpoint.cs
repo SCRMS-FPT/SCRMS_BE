@@ -2,7 +2,7 @@
 using Reviews.API.Features.GetSelfReviews;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace Reviews.API.Features.GetCoachReviews
+namespace Reviews.API.Features.GetSelfReviews
 {
     public class GetSelfReviewsEndpoint : ICarterModule
     {
@@ -22,7 +22,7 @@ namespace Reviews.API.Features.GetCoachReviews
                 var reviews = await sender.Send(query);
                 return Results.Ok(reviews);
             })
-            .WithName("GetReviewsByCoachId");
+            .WithName("GetGetSelfReviewsByCoach");
         }
     }
 }
