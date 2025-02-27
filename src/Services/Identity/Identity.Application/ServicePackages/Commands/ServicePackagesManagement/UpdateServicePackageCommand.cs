@@ -8,7 +8,8 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
         string Description,
         decimal Price,
         int DurationDays,
-        string AssociatedRole
+        string AssociatedRole,
+        string Status
     ) : ICommand<ServicePackageDto>;
 
     public class UpdateServicePackageValidator : AbstractValidator<UpdateServicePackageCommand>
@@ -20,6 +21,7 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
             RuleFor(x => x.Description).NotEmpty().MaximumLength(1000);
             RuleFor(x => x.Price).GreaterThan(0);
             RuleFor(x => x.DurationDays).GreaterThan(0);
+            RuleFor(x => x.Status).NotEmpty();
         }
     }
 }

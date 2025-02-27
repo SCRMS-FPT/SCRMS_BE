@@ -7,6 +7,7 @@
     decimal Price,
     int DurationDays,
     string AssociatedRole,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string Status
     );
 }

@@ -41,11 +41,12 @@ namespace Identity.Test.Application.ServicePackages
             var createCommand = new CreateServicePackageCommand("Package1", "Description", 50, 30, "Basic");
             var created = await createHandler.Handle(createCommand, CancellationToken.None);
 
-            var updateCommand = new UpdateServicePackageCommand(created.Id, "Package1 Updated", "New Description", 60, 40, "Basic");
+            var updateCommand = new UpdateServicePackageCommand(created.Id, "Package1 Updated", "New Description", 60, 40, "Basic", "active");
             var updated = await createHandler.Handle(updateCommand, CancellationToken.None);
 
             updated.Name.Should().Be("Package1 Updated");
             updated.Description.Should().Be("New Description");
+            updated.Should().Be("active");
         }
 
         [Fact]

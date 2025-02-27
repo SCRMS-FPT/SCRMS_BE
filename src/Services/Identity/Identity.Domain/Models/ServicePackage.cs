@@ -7,6 +7,7 @@ public class ServicePackage : Aggregate<Guid>
     public decimal Price { get; private set; }
     public int DurationDays { get; private set; }
     public string AssociatedRole { get; private set; } = null!;
+    public string Status { get; private set; } = "active";
     public DateTime CreatedAt { get; private set; }
 
     public static ServicePackage Create(
@@ -14,13 +15,17 @@ public class ServicePackage : Aggregate<Guid>
         string description,
         decimal price,
         int durationDays,
-        string associatedRole)
+        string associatedRole,
+        string status = "active") // Thêm tham số status với giá trị mặc định
     {
         if (price <= 0)
             throw new ArgumentException("Price must be positive");
 
         if (string.IsNullOrWhiteSpace(associatedRole))
             throw new ArgumentException("Associated role is required");
+
+        if (string.IsNullOrWhiteSpace(status))
+            throw new ArgumentException("Status is required");
 
         return new ServicePackage
         {
@@ -30,6 +35,7 @@ public class ServicePackage : Aggregate<Guid>
             Price = price,
             DurationDays = durationDays,
             AssociatedRole = associatedRole,
+            Status = status,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -39,7 +45,8 @@ public class ServicePackage : Aggregate<Guid>
         string description,
         decimal price,
         int durationDays,
-        string associatedRole)
+        string associatedRole,
+        string status) // Thêm status vào phương thức UpdateDetails
     {
         if (price <= 0)
             throw new ArgumentException("Price must be positive");
@@ -47,10 +54,14 @@ public class ServicePackage : Aggregate<Guid>
         if (string.IsNullOrWhiteSpace(associatedRole))
             throw new ArgumentException("Associated role is required");
 
+        if (string.IsNullOrWhiteSpace(status))
+            throw new ArgumentException("Status is required");
+
         Name = name;
         Description = description;
         Price = price;
         DurationDays = durationDays;
         AssociatedRole = associatedRole;
+        Status = status;
     }
 }

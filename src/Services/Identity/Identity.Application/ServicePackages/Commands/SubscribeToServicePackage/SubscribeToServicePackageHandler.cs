@@ -1,10 +1,5 @@
 ﻿using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Application.ServicePackages.Commands.SubscribeToServicePackage
 {
@@ -25,6 +20,10 @@ namespace Identity.Application.ServicePackages.Commands.SubscribeToServicePackag
             var package = await _dbContext.ServicePackages.FindAsync(command.PackageId);
             if (package == null)
                 throw new DomainException("Service package not found");
+
+            // Kiểm tra trạng thái gói dịch vụ
+            if (package.Status != "active")
+                throw new DomainException("Cannot subscribe to an inactive service package");
 
             // Tìm người dùng
             var user = await _userManager.FindByIdAsync(command.UserId.ToString());

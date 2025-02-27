@@ -7,7 +7,8 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
         string Description,
         decimal Price,
         int DurationDays,
-        string AssociatedRole
+        string AssociatedRole,
+        string Status = "active"
     ) : ICommand<ServicePackageDto>;
 
     public class CreateServicePackageValidator : AbstractValidator<CreateServicePackageCommand>

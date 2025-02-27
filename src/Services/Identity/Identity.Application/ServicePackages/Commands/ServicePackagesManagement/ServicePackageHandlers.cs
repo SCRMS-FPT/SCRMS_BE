@@ -1,5 +1,4 @@
 ﻿using Mapster;
-using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagement
 {
@@ -24,7 +23,8 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
                 request.Description,
                 request.Price,
                 request.DurationDays,
-                request.AssociatedRole); // Thêm tham số AssociatedRole
+                request.AssociatedRole,
+                request.Status ?? "active"); // Sử dụng Status từ request hoặc mặc định là "active"
 
             _context.ServicePackages.Add(package);
             await _context.SaveChangesAsync(cancellationToken);
@@ -47,7 +47,8 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
                 request.Description,
                 request.Price,
                 request.DurationDays,
-                request.AssociatedRole);
+                request.AssociatedRole,
+                request.Status);
 
             await _context.SaveChangesAsync(cancellationToken);
 
