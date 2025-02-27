@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Coach.API.Schedules.UpdateSchedule
 {
@@ -13,8 +14,8 @@ namespace Coach.API.Schedules.UpdateSchedule
         {
             app.MapPut("/schedules/{scheduleId:guid}", async (
             Guid scheduleId,
-            UpdateScheduleRequest request,
-            ISender sender,
+           [FromBody] UpdateScheduleRequest request,
+            [FromServices] ISender sender,
             HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
@@ -31,8 +32,8 @@ namespace Coach.API.Schedules.UpdateSchedule
 
                 //try
                 //{
-                    var result = await sender.Send(command);
-                    return result.IsUpdated ? Results.NoContent() : Results.Problem("Failed to update schedule.");
+                var result = await sender.Send(command);
+                return result.IsUpdated ? Results.NoContent() : Results.Problem("Failed to update schedule.");
                 //}
                 //catch (ScheduleNotFoundException)
                 //{
@@ -55,5 +56,4 @@ namespace Coach.API.Schedules.UpdateSchedule
         .WithDescription("Update an existing coach schedule");
         }
     }
-
 }

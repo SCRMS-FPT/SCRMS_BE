@@ -1,4 +1,6 @@
-﻿namespace Coach.API.Packages.CreatePackage
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace Coach.API.Packages.CreatePackage
 {
     public record CreatePackageRequest(
     Guid CoachId,
@@ -11,7 +13,7 @@
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/packages", async (CreatePackageRequest request, ISender sender) =>
+            app.MapPost("/packages", async ([FromBody] CreatePackageRequest request, [FromServices] ISender sender) =>
             {
                 var command = request.Adapt<CreatePackageCommand>();
                 var result = await sender.Send(command);

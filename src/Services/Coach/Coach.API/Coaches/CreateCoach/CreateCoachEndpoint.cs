@@ -1,5 +1,8 @@
 ﻿using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.AspNetCore.Mvc;
+
+using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Coaches.CreateCoach
 {
@@ -17,8 +20,8 @@ namespace Coach.API.Coaches.CreateCoach
 
         {
             app.MapPost("/coaches", async (
-            CreateCoachRequest request,
-            ISender sender,
+           [FromBody] CreateCoachRequest request,
+            [FromServices] ISender sender,
             HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)

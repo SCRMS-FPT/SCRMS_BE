@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.JsonWebTokens;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Coach.API.Schedules.AddSchedule
 {
@@ -14,7 +15,7 @@ namespace Coach.API.Schedules.AddSchedule
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPost("/schedules",
-                async (AddCoachScheduleRequest request, ISender sender, HttpContext httpContext) =>
+                async ([FromBody] AddCoachScheduleRequest request, [FromServices] ISender sender, HttpContext httpContext) =>
                 {
                     var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
 

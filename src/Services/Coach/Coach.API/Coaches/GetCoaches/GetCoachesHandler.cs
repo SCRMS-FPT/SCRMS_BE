@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Coach.API.Data;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Coaches.GetCoaches
 {
@@ -25,7 +26,7 @@ namespace Coach.API.Coaches.GetCoaches
     : IQueryHandler<GetCoachesQuery, IEnumerable<CoachResponse>>
     {
         public async Task<IEnumerable<CoachResponse>> Handle(
-            GetCoachesQuery request,
+           [FromBody] GetCoachesQuery request,
             CancellationToken cancellationToken)
         {
             return await context.Coaches

@@ -1,6 +1,7 @@
 ﻿using Coach.API.Schedules.ViewAvailableSchedule;
 using System.IdentityModel.Tokens.Jwt;
 using static Coach.API.Bookings.GetBookingById.GetBookingByIdCommandHandler;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Bookings.GetBookingById
 {
@@ -10,7 +11,7 @@ namespace Coach.API.Bookings.GetBookingById
         {
             app.MapGet("/booking/{bookingId:guid}", async (
                 Guid bookingId,
-                ISender sender,
+                [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
                 var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);

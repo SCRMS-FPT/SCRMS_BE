@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Schedules.ViewAvailableSchedule
 {
@@ -7,7 +8,7 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapGet("/availability", async (
-                ISender sender,
+                [FromServices] ISender sender,
                 HttpContext httpContext,
                 int Page = 1,
                 int RecordPerPage = 10) =>

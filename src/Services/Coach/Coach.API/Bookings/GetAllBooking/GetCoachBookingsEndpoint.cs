@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Bookings.GetAllBooking
 {
@@ -7,7 +8,7 @@ namespace Coach.API.Bookings.GetAllBooking
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapGet("/bookings", async (
-                ISender sender,
+                [FromServices] ISender sender,
                 HttpContext httpContext,
                 int Page,
                 int RecordPerPage) =>

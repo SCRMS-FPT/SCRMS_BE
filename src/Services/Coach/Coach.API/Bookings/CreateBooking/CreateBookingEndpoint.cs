@@ -1,4 +1,6 @@
-﻿namespace Coach.API.Bookings.CreateBooking
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace Coach.API.Bookings.CreateBooking
 {
     public record CreateBookingRequest(
         Guid UserId,
@@ -17,7 +19,7 @@
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPost("/bookings",
-                async (CreateBookingRequest request, ISender sender) =>
+                async ([FromBody] CreateBookingRequest request, [FromServices] ISender sender) =>
                 {
                     var command = request.Adapt<CreateBookingCommand>();
                     var result = await sender.Send(command);

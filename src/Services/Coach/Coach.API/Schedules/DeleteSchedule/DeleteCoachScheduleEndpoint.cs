@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Schedules.DeleteSchedule
 {
@@ -8,7 +9,7 @@ namespace Coach.API.Schedules.DeleteSchedule
         {
             app.MapDelete("/api/schedules/{scheduleId:guid}", async (
                 Guid scheduleId,
-                ISender sender,
+                [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
@@ -30,4 +31,4 @@ namespace Coach.API.Schedules.DeleteSchedule
             .WithDescription("Deletes a schedule for a coach if no bookings are associated.");
         }
     }
-    }
+}

@@ -10,7 +10,7 @@ namespace Coach.API.Bookings.UpdateBooking
             app.MapPut("/bookings/{bookingId:guid}", async (
                 Guid bookingId,
                 [FromBody] string status,
-                ISender sender,
+                [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
                 var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);

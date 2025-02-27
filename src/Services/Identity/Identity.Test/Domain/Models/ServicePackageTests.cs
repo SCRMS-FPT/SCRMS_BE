@@ -45,7 +45,7 @@ namespace Identity.Test.Domain.Models
             var package = ServicePackage.Create("Old", "Old Desc", 100, 30, "Basic");
 
             // Act
-            package.UpdateDetails("New", "New Desc", 150, 45, "Premium");
+            package.UpdateDetails("New", "New Desc", 150, 45, "Premium", "active");
 
             // Assert
             package.Name.Should().Be("New");
@@ -53,6 +53,7 @@ namespace Identity.Test.Domain.Models
             package.Price.Should().Be(150);
             package.DurationDays.Should().Be(45);
             package.AssociatedRole.Should().Be("Premium");
+            package.Status.Should().Be("active");
         }
     }
 }
