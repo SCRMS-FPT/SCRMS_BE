@@ -19,11 +19,21 @@ namespace Coach.API.Bookings.CreateBooking
     {
         public CreateBookingCommandValidator()
         {
-            RuleFor(x => x.UserId).NotEmpty();
-            RuleFor(x => x.CoachId).NotEmpty();
-            RuleFor(x => x.SportId).NotEmpty();
-            RuleFor(x => x.BookingDate).NotEmpty();
-            RuleFor(x => x.StartTime).LessThan(x => x.EndTime);
+            RuleFor(x => x.UserId)
+                .NotEmpty().WithMessage("User ID is required.");
+
+            RuleFor(x => x.CoachId)
+                .NotEmpty().WithMessage("Coach ID is required.");
+
+            RuleFor(x => x.SportId)
+                .NotEmpty().WithMessage("Sport ID is required.");
+
+            RuleFor(x => x.BookingDate)
+                .NotEmpty().WithMessage("Booking date is required.");
+
+            RuleFor(x => x.StartTime)
+                .LessThan(x => x.EndTime)
+                .WithMessage("Start time must be earlier than end time.");
         }
     }
 

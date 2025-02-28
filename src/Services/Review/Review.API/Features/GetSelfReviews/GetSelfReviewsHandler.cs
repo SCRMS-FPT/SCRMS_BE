@@ -5,6 +5,14 @@ namespace Reviews.API.Features.GetSelfReviews
     public record GetSelfReviewsQuery(Guid coachId, int Page, int Limit) : IRequest<List<ReviewResponse>>;
 
     public record ReviewResponse(Guid Id, Guid ReviewerId, int Rating, string? Comment, DateTime CreatedAt);
+    public class GetSelfReviewsQueryValidator : AbstractValidator<GetSelfReviewsQuery>
+    {
+        public GetSelfReviewsQueryValidator()
+        {
+            RuleFor(x => x.coachId)
+                .NotEmpty().WithMessage("CoachId is required.");
+        }
+    }
 
     public class GetSelfReviewsHandler : IRequestHandler<GetSelfReviewsQuery, List<ReviewResponse>>
     {

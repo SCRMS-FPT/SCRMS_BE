@@ -8,8 +8,6 @@ namespace Coach.API.Schedules.AddSchedule
         TimeOnly StartTime,
         TimeOnly EndTime);
 
-    public record AddCoachScheduleResponse(Guid Id);
-
     public class AddCoachScheduleEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -34,7 +32,7 @@ namespace Coach.API.Schedules.AddSchedule
                 })
             .RequireAuthorization()
             .WithName("CreateCoachSchedule")
-            .Produces<AddCoachScheduleResponse>(StatusCodes.Status201Created)
+            .Produces<CreateCoachScheduleResult>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .WithSummary("Create Coach Schedule")

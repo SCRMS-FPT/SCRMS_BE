@@ -27,13 +27,13 @@ namespace Coach.API.Bookings.GetBookingById
         }
     }
 
-    internal class GetBookingByIdCommandHandler
+    internal class GetBookingByIdQueryHandler
        : IQueryHandler<GetBookingByIdQuery, BookingDetailResult>
     {
         private readonly CoachDbContext context;
         private readonly IMediator mediator;
 
-        public GetBookingByIdCommandHandler(CoachDbContext context, IMediator mediator)
+        public GetBookingByIdQueryHandler(CoachDbContext context, IMediator mediator)
         {
             this.context = context;
             this.mediator = mediator;

@@ -18,7 +18,7 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                var command = new ViewCoachAvailabilityCommand(coachUserId, Page, RecordPerPage);
+                var command = new ViewCoachAvailabilityQuery(coachUserId, Page, RecordPerPage);
                 var availableSlots = await sender.Send(command);
 
                 return Results.Ok(availableSlots);

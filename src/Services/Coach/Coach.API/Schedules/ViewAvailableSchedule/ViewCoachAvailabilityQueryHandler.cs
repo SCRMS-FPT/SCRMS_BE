@@ -3,28 +3,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Schedules.ViewAvailableSchedule
 {
-    public record ViewCoachAvailabilityCommand(Guid CoachUserId, int Page, int RecordPerPage) : ICommand<List<AvailableScheduleSlot>>;
+    public record ViewCoachAvailabilityQuery(Guid CoachUserId, int Page, int RecordPerPage) : IQuery<List<AvailableScheduleSlot>>;
     public record AvailableScheduleSlot(int DayOfWeek, TimeOnly StartTime, TimeOnly EndTime);
-    public class ViewCoachAvailabilityCommandValidator : AbstractValidator<ViewCoachAvailabilityCommand>
+    public class ViewCoachAvailabilityCommandValidator : AbstractValidator<ViewCoachAvailabilityQuery>
     {
         public ViewCoachAvailabilityCommandValidator()
         {
             RuleFor(x => x.CoachUserId).NotEmpty();
         }
     }
-    internal class ViewCoachAvailabilityCommandHandler
-        : ICommandHandler<ViewCoachAvailabilityCommand, List<AvailableScheduleSlot>>
+    internal class ViewCoachAvailabilityQueryHandler
+        : IQueryHandler<ViewCoachAvailabilityQuery, List<AvailableScheduleSlot>>
     {
         private readonly CoachDbContext context;
         private readonly IMediator mediator;
 
-        public ViewCoachAvailabilityCommandHandler(CoachDbContext context, IMediator mediator)
+        public ViewCoachAvailabilityQueryHandler(CoachDbContext context, IMediator mediator)
         {
             this.context = context;
             this.mediator = mediator;
         }
 
-        public async Task<List<AvailableScheduleSlot>> Handle(ViewCoachAvailabilityCommand command, CancellationToken cancellationToken)
+        public async Task<List<AvailableScheduleSlot>> Handle(ViewCoachAvailabilityQuery command, CancellationToken cancellationToken)
         {
             var coachSchedules = await context.CoachSchedules
                 .Where(cs => cs.CoachId == command.CoachUserId)

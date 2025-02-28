@@ -5,7 +5,14 @@ namespace Reviews.API.Features.GetReviewsByCoachId
     public record GetReviewsByCoachIdQuery(Guid coachId, int Page, int Limit) : IRequest<List<ReviewResponse>>;
 
     public record ReviewResponse(Guid Id, Guid ReviewerId, int Rating, string? Comment, DateTime CreatedAt);
-
+    public class GetReviewsByCoachIdQueryValidator : AbstractValidator<GetReviewsByCoachIdQuery>
+    {
+        public GetReviewsByCoachIdQueryValidator()
+        {
+            RuleFor(x => x.coachId)
+                .NotEmpty().WithMessage("CoachId is required.");
+        }
+    }
     public class GetReviewsByCoachIdHandler : IRequestHandler<GetReviewsByCoachIdQuery, List<ReviewResponse>>
     {
         private readonly ReviewDbContext _context;
