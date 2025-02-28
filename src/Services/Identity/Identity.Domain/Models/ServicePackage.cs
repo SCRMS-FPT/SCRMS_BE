@@ -8,6 +8,7 @@ public class ServicePackage : Aggregate<Guid>
     public int DurationDays { get; private set; }
     public string AssociatedRole { get; private set; } = null!;
     public string Status { get; private set; } = "active";
+    public List<ServicePackagePromotion> Promotions { get; set; } = new List<ServicePackagePromotion>();
     public DateTime CreatedAt { get; private set; }
 
     public static ServicePackage Create(
