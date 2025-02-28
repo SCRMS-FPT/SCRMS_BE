@@ -6,6 +6,6 @@
         public Guid SportId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public Coach Coach { get; set; } = null!;
+        public virtual Coach Coach { get; set; } = null!;
     }
 }

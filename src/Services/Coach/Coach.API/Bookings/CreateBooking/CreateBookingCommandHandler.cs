@@ -1,4 +1,5 @@
 ﻿using Coach.API.Data;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.CreateBooking
@@ -13,7 +14,7 @@ namespace Coach.API.Bookings.CreateBooking
         Guid? PackageId
     ) : ICommand<CreateBookingResult>;
 
-    public record CreateBookingResult(Guid Id);
+    public record CreateBookingResult(Guid Id, int SessionsRemaining);
 
     public class CreateBookingCommandValidator : AbstractValidator<CreateBookingCommand>
     {
@@ -96,11 +97,33 @@ namespace Coach.API.Bookings.CreateBooking
             };
 
             context.CoachBookings.Add(booking);
+            int sessionsRemaining = 0;
+            if (command.PackageId.HasValue)
+            {
+                var sessionCount = await context.CoachPackages
+                    .Where(cp => cp.Id == command.PackageId.Value)
+                    .Select(cp => cp.SessionCount)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var purchase = await context.CoachPackagePurchases
+                    .FirstOrDefaultAsync(cpp => cpp.UserId == command.UserId &&
+                                               cpp.CoachPackageId == command.PackageId.Value &&
+                                               cpp.ExpiryDate > DateTime.UtcNow &&
+                                               cpp.SessionsUsed < sessionCount,
+                                               cancellationToken);
+
+                if (purchase == null) throw new Exception("No valid package purchase found");
+
+                purchase.SessionsUsed++;
+                purchase.UpdatedAt = DateTime.UtcNow;
+
+                sessionsRemaining = sessionCount - purchase.SessionsUsed;
+            }
             await context.SaveChangesAsync(cancellationToken);
 
             await mediator.Publish(new BookingCreatedEvent(booking.Id, booking.UserId, booking.CoachId), cancellationToken);
 
-            return new CreateBookingResult(booking.Id);
+            return new CreateBookingResult(booking.Id, sessionsRemaining);
         }
     }
 

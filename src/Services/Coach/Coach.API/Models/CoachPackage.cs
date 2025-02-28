@@ -15,6 +15,8 @@ namespace Coach.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public ICollection<CoachBooking> Bookings { get; set; }
+        public virtual Coach Coach { get; set; }
+        public virtual ICollection<CoachBooking> Bookings { get; set; }
+        public virtual ICollection<CoachPackagePurchase> Purchases { get; set; }
     }
 }

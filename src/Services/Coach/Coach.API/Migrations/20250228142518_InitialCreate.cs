@@ -36,8 +36,7 @@ namespace Coach.API.Migrations
                     Price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     SessionCount = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CoachUserId = table.Column<Guid>(type: "uuid", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -48,11 +47,31 @@ namespace Coach.API.Migrations
                         principalTable: "Coaches",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CoachPromotions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CoachId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    DiscountType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DiscountValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    ValidFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    ValidTo = table.Column<DateOnly>(type: "date", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CoachPromotions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CoachPackages_Coaches_CoachUserId",
-                        column: x => x.CoachUserId,
+                        name: "FK_CoachPromotions_Coaches_CoachId",
+                        column: x => x.CoachId,
                         principalTable: "Coaches",
-                        principalColumn: "UserId");
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -108,7 +127,7 @@ namespace Coach.API.Migrations
                     BookingDate = table.Column<DateOnly>(type: "date", nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     TotalPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     PackageId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -129,6 +148,30 @@ namespace Coach.API.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "CoachPackagePurchases",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CoachPackageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    SessionsUsed = table.Column<int>(type: "integer", nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CoachPackagePurchases", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CoachPackagePurchases_CoachPackages_CoachPackageId",
+                        column: x => x.CoachPackageId,
+                        principalTable: "CoachPackages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_CoachBookings_CoachId",
                 table: "CoachBookings",
@@ -145,14 +188,19 @@ namespace Coach.API.Migrations
                 column: "SportId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CoachPackagePurchases_CoachPackageId",
+                table: "CoachPackagePurchases",
+                column: "CoachPackageId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CoachPackages_CoachId",
                 table: "CoachPackages",
                 column: "CoachId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CoachPackages_CoachUserId",
-                table: "CoachPackages",
-                column: "CoachUserId");
+                name: "IX_CoachPromotions_CoachId",
+                table: "CoachPromotions",
+                column: "CoachId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CoachSchedules_CoachId",
@@ -165,6 +213,12 @@ namespace Coach.API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "CoachBookings");
+
+            migrationBuilder.DropTable(
+                name: "CoachPackagePurchases");
+
+            migrationBuilder.DropTable(
+                name: "CoachPromotions");
 
             migrationBuilder.DropTable(
                 name: "CoachSchedules");
