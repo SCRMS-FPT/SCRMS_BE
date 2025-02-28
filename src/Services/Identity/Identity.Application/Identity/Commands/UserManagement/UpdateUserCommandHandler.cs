@@ -1,5 +1,6 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Identity;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Identity.Application.Identity.Commands.UserManagement
 {
@@ -20,7 +21,7 @@ namespace Identity.Application.Identity.Commands.UserManagement
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.BirthDate = request.BirthDate;
-            user.Gender = request.Gender;
+            user.Gender = Enum.Parse<Gender>(request.Gender);
 
             await userManager.UpdateAsync(user);
 

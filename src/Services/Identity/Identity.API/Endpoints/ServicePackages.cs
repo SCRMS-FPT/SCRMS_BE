@@ -94,6 +94,7 @@ namespace Identity.API.Endpoints
         string Description,
         decimal Price,
         string AssociatedRole,
+        string Status,
         int DurationDays
     );
 
@@ -102,6 +103,7 @@ namespace Identity.API.Endpoints
         string Description,
         decimal Price,
         string AssociatedRole,
+        string Status,
         int DurationDays
     );
 }

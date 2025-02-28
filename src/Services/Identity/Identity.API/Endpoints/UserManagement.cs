@@ -39,7 +39,7 @@ namespace Identity.API.Endpoints
        string FirstName,
        string LastName,
        DateTime BirthDate,
-       Gender Gender
+       string Gender
    );
     }
 }
