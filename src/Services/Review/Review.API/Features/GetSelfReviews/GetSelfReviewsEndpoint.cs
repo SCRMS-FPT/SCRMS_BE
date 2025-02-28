@@ -22,7 +22,7 @@ namespace Reviews.API.Features.GetSelfReviews
                 var reviews = await sender.Send(query);
                 return Results.Ok(reviews);
             })
-            .WithName("GetGetSelfReviewsByCoach");
+            .WithName("GetSelfReviewsByCoach");
         }
     }
 }

@@ -1,11 +1,18 @@
-﻿using Coach.API.Coaches.GetCoaches;
+﻿using Coach.API.Coaches.CreateCoach;
+using Coach.API.Coaches.GetCoaches;
 using Coach.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Coaches.GetCoachById
 {
     public record GetCoachByIdQuery(Guid Id) : IQuery<CoachResponse>;
-
+    public class GetCoachByIdQueryValidator : AbstractValidator<GetCoachByIdQuery>
+    {
+        public GetCoachByIdQueryValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty().WithMessage("Id is required");
+        }
+    }
     internal class GetCoachByIdQueryHandler(CoachDbContext context)
         : IQueryHandler<GetCoachByIdQuery, CoachResponse>
     {

@@ -1,6 +1,6 @@
 ﻿using Coach.API.Schedules.ViewAvailableSchedule;
 using System.IdentityModel.Tokens.Jwt;
-using static Coach.API.Bookings.GetBookingById.GetBookingByIdCommandHandler;
+using static Coach.API.Bookings.GetBookingById.GetBookingByIdQueryHandler;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Bookings.GetBookingById

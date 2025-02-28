@@ -12,8 +12,6 @@ namespace Coach.API.Bookings.CreateBooking
         Guid? PackageId
     );
 
-    public record CreateBookingResponse(Guid Id);
-
     public class CreateBookingEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -23,11 +21,10 @@ namespace Coach.API.Bookings.CreateBooking
                 {
                     var command = request.Adapt<CreateBookingCommand>();
                     var result = await sender.Send(command);
-                    var response = result.Adapt<CreateBookingResponse>();
-                    return Results.Created($"/bookings/{response.Id}", response);
+                    return Results.Created($"/bookings/{result.Id}", result);
                 })
                 .WithName("CreateBooking")
-                .Produces<CreateBookingResponse>(StatusCodes.Status201Created)
+                .Produces<CreateBookingResult>(StatusCodes.Status201Created)
                 .ProducesProblem(StatusCodes.Status400BadRequest)
                 .WithSummary("Create Booking")
                 .WithDescription("Create a new booking with a coach");
