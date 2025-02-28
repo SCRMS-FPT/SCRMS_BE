@@ -11,7 +11,6 @@ namespace Matching.API.Data
         public DbSet<SwipeAction> SwipeActions { get; set; }
         public DbSet<Match> Matches { get; set; }
         public DbSet<UserSkill> UserSkills { get; set; }
-        public DbSet<UserMatchInfo> UserMatchInfos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -77,21 +77,6 @@ namespace Matching.API.Migrations
                     b.ToTable("SwipeActions");
                 });
 
-            modelBuilder.Entity("Matching.API.Data.Models.UserMatchInfo", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SelfIntroduction")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("UserMatchInfos");
-                });
-
             modelBuilder.Entity("Matching.API.Data.Models.UserSkill", b =>
                 {
                     b.Property<Guid>("UserId")

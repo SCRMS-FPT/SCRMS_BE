@@ -8,5 +8,6 @@
     string Phone,
     DateTime BirthDate,
     string Gender,
+    string SelfIntroduction,
     DateTime CreatedAt);
 }

@@ -43,18 +43,6 @@ namespace Matching.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserMatchInfos",
-                columns: table => new
-                {
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SelfIntroduction = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserMatchInfos", x => x.UserId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "UserSkills",
                 columns: table => new
                 {
@@ -81,9 +69,6 @@ namespace Matching.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "SwipeActions");
-
-            migrationBuilder.DropTable(
-                name: "UserMatchInfos");
 
             migrationBuilder.DropTable(
                 name: "UserSkills");

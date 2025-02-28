@@ -10,8 +10,8 @@ namespace Identity.Domain.Models
         public string LastName { get; set; } = null!;
         public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }
-
         public bool IsDeleted { get; set; } = false;
+        public string SelfIntroduction { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastModifiedAt { get; set; }

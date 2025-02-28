@@ -1,31 +1,64 @@
 ﻿using Matching.API.Data;
 using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace Matching.API.Features.Swipe
 {
-    public class SwipeEndpoint : ICarterModule
+    public record SwipeCommand(Guid SwipedUserId, string Decision, Guid SwiperId) : IRequest<SwipeResult>;
+
+    public record SwipeResult(bool IsMatch);
+
+    public class SwipeHandler : IRequestHandler<SwipeCommand, SwipeResult>
     {
-        public void AddRoutes(IEndpointRouteBuilder app)
+        private readonly MatchingDbContext _context;
+
+        public SwipeHandler(MatchingDbContext context)
         {
-            app.MapPost("/api/matches/swipe", async (SwipeRequest request, ISender sender, HttpContext httpContext) =>
+            _context = context;
+        }
+
+        public async Task<SwipeResult> Handle(SwipeCommand request, CancellationToken cancellationToken)
+        {
+            var swiperId = request.SwiperId;
+            var swipeAction = new SwipeAction
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
-                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                    return Results.Unauthorized();
+                Id = Guid.NewGuid(),
+                SwiperId = swiperId,
+                SwipedUserId = request.SwipedUserId,
+                Decision = request.Decision,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                if (!Guid.TryParse(userIdClaim.Value, out var userId))
-                    return Results.BadRequest("Invalid user id in token");
+            _context.SwipeActions.Add(swipeAction);
 
-                var command = new SwipeCommand(request.SwipedUserId, request.Decision, userId);
-                var result = await sender.Send(command);
-                return Results.Ok(result);
-            })
-            .RequireAuthorization()
-            .WithName("Swipe");
+            if (request.Decision == "pending")
+            {
+                var reverseSwipe = await _context.SwipeActions
+                    .FirstOrDefaultAsync(sa => sa.SwiperId == request.SwipedUserId &&
+                                              sa.SwipedUserId == swiperId &&
+                                              sa.Decision == "accepted", cancellationToken);
+
+                if (reverseSwipe != null)
+                {
+                    var match = new Data.Models.Match
+                    {
+                        Id = Guid.NewGuid(),
+                        InitiatorId = swiperId,
+                        MatchedUserId = request.SwipedUserId,
+                        MatchTime = DateTime.UtcNow,
+                        Status = "confirmed",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Matches.Add(match);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    return new SwipeResult(true);
+                }
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            return new SwipeResult(false);
         }
     }
-
-    public record SwipeRequest(Guid SwipedUserId, string Decision);
 }

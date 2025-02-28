@@ -27,7 +27,7 @@ namespace Identity.Application.Identity.Queries.GetProfile
                 user.Email,
                 user.PhoneNumber,
                 user.BirthDate,
-                user.Gender.ToString(),
+                user.Gender.ToString(), null,
                 user.CreatedAt
             );
         }

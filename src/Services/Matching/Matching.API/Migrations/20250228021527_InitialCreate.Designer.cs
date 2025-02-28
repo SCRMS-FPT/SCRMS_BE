@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Matching.API.Migrations
 {
     [DbContext(typeof(MatchingDbContext))]
-    [Migration("20250223145204_InitialCreate")]
+    [Migration("20250228021527_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -78,21 +78,6 @@ namespace Matching.API.Migrations
                     b.HasIndex("SwiperId", "SwipedUserId");
 
                     b.ToTable("SwipeActions");
-                });
-
-            modelBuilder.Entity("Matching.API.Data.Models.UserMatchInfo", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SelfIntroduction")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("UserMatchInfos");
                 });
 
             modelBuilder.Entity("Matching.API.Data.Models.UserSkill", b =>

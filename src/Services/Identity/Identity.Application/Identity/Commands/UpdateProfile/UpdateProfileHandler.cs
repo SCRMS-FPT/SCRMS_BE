@@ -25,7 +25,7 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
             user.BirthDate = command.BirthDate;
             // Chuyển đổi string sang enum (giả sử enum Gender đã được định nghĩa)
             user.Gender = Enum.Parse<Gender>(command.Gender, true);
-
+            user.SelfIntroduction = command.SelfIntroduction;
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
@@ -39,7 +39,7 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
                 user.Email,
                 user.PhoneNumber,
                 user.BirthDate,
-                user.Gender.ToString(),
+                user.Gender.ToString(), user.SelfIntroduction,
                 user.CreatedAt
             );
         }
