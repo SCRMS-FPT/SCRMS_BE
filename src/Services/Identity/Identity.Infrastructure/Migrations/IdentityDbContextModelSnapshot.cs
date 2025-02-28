@@ -218,7 +218,6 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("SelfIntroduction")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")

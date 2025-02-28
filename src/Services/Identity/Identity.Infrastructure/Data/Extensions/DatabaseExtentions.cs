@@ -12,13 +12,13 @@ namespace Identity.Infrastructure.Data.Extensions
         {
             using var scope = app.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-            //await context.Database.MigrateAsync();
+            await context.Database.MigrateAsync();
 
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-            //await SeedRolesAsync(roleManager);
-            //await SeedAdminUserAsync(userManager);
+            await SeedRolesAsync(roleManager);
+            await SeedAdminUserAsync(userManager);
         }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
