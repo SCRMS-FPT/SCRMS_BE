@@ -28,24 +28,23 @@ namespace Matching.API.Features.RespondToSwipe
             {
                 var reverseSwipe = await _context.SwipeActions
                     .FirstOrDefaultAsync(sa => sa.SwiperId == userId &&
-                                              sa.SwipedUserId == swipeAction.SwiperId &&
-                                              sa.Decision == "pending", cancellationToken);
+                                              sa.SwipedUserId == swipeAction.SwiperId, cancellationToken);
 
                 if (reverseSwipe != null)
                 {
-                    var match = new Match
-                    {
-                        Id = Guid.NewGuid(),
-                        InitiatorId = swipeAction.SwiperId,
-                        MatchedUserId = userId,
-                        MatchTime = DateTime.UtcNow,
-                        Status = "confirmed",
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    _context.Matches.Add(match);
-                    await _context.SaveChangesAsync(cancellationToken);
-                    return new SwipeResult(true);
+                    reverseSwipe.Decision = "accepted";
                 }
+                var match = new Match
+                {
+                    Id = Guid.NewGuid(),
+                    InitiatorId = swipeAction.SwiperId,
+                    MatchedUserId = userId,
+                    MatchTime = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Matches.Add(match);
+                await _context.SaveChangesAsync(cancellationToken);
+                return new SwipeResult(true);
             }
 
             await _context.SaveChangesAsync(cancellationToken);

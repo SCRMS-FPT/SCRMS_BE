@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Matching.API.Migrations
 {
     [DbContext(typeof(MatchingDbContext))]
-    [Migration("20250228021527_InitialCreate")]
+    [Migration("20250301093939_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -42,11 +42,6 @@ namespace Matching.API.Migrations
 
                     b.Property<Guid>("MatchedUserId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -85,8 +80,8 @@ namespace Matching.API.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("SportId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("SportId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("SkillLevel")
                         .IsRequired()

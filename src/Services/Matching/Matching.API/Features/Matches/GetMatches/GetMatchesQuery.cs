@@ -26,7 +26,6 @@ namespace Matching.API.Features.Matches.GetMatches
                     Id = m.Id,
                     PartnerId = m.InitiatorId == userId ? m.MatchedUserId : m.InitiatorId,
                     MatchTime = m.MatchTime,
-                    Status = m.Status
                 })
                 .ToListAsync(cancellationToken);
 
@@ -39,6 +38,5 @@ namespace Matching.API.Features.Matches.GetMatches
         public Guid Id { get; set; }
         public Guid PartnerId { get; set; }
         public DateTime MatchTime { get; set; }
-        public string Status { get; set; }
     }
 }

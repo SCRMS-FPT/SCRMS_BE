@@ -16,9 +16,6 @@ namespace Matching.API.Data.Models
         [Required]
         public DateTime MatchTime { get; set; }
 
-        [MaxLength(20)]
-        public string Status { get; set; } = "confirmed";
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

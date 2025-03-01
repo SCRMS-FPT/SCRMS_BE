@@ -19,7 +19,6 @@ namespace Matching.API.Migrations
                     InitiatorId = table.Column<Guid>(type: "uuid", nullable: false),
                     MatchedUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     MatchTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -47,7 +46,7 @@ namespace Matching.API.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SportId = table.Column<int>(type: "integer", nullable: false),
+                    SportId = table.Column<Guid>(type: "uuid", nullable: false),
                     SkillLevel = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>

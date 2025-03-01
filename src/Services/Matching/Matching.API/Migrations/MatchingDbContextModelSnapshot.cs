@@ -40,11 +40,6 @@ namespace Matching.API.Migrations
                     b.Property<Guid>("MatchedUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.HasKey("Id");
 
                     b.ToTable("Matches");
@@ -82,8 +77,8 @@ namespace Matching.API.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("SportId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("SportId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("SkillLevel")
                         .IsRequired()
