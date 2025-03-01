@@ -47,7 +47,7 @@ namespace Identity.Test.Application.Identity.Commands
 
             // Assert
             result.Should().NotBeNull();
-            result.Email.Should().Be("test@example.com");
+            result.user.Email.Should().Be("test@example.com");
             result.UserId.Should().Be(user.Id);
             result.Token.Should().NotBeNullOrEmpty();
         }

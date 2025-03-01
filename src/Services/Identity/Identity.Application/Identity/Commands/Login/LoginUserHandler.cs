@@ -1,4 +1,6 @@
-﻿using Identity.Domain.Exceptions;
+﻿using Identity.Application.Dtos;
+using Identity.Domain.Exceptions;
+using Mapster;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -37,7 +39,7 @@ namespace Identity.Application.Identity.Commands.Login
             return new LoginUserResult(
                 Token: token,
                 UserId: user.Id,
-                Email: user.Email
+                User: user.Adapt<UserDto>()
             );
         }
 
