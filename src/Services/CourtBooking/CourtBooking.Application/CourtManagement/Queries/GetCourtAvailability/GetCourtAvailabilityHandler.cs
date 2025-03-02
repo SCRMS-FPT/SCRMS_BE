@@ -10,7 +10,7 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
         {
             var courtId = CourtId.Of(query.CourtId);
             var court = await _context.Courts
-                .Include(c => c.OperatingHours)
+                //.Include(c => c.OperatingHours)
                 .FirstOrDefaultAsync(c => c.Id == courtId, cancellationToken);
 
             if (court == null)
@@ -23,9 +23,9 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
 
             while (currentTime <= query.EndTime)
             {
-                var isAvailable = court.IsAvailable(currentTime);
-                timeSlots.Add(new CourtTimeSlot(currentTime, isAvailable));
-                currentTime = currentTime.AddHours(1); // Add 1-hour intervals
+                //var isAvailable = court.IsAvailable(currentTime);
+                //timeSlots.Add(new CourtTimeSlot(currentTime, isAvailable));
+                //currentTime = currentTime.AddHours(1); // Add 1-hour intervals
             }
 
             return new GetCourtAvailabilityResult(timeSlots);

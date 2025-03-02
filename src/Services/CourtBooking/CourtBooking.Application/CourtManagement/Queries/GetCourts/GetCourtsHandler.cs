@@ -23,8 +23,6 @@ public class GetCourtsHandler(IApplicationDbContext _context)
         var totalCount = await _context.Courts.LongCountAsync(cancellationToken);
 
         var courts = await _context.Courts
-                       .Include(o => o.OperatingHours)
-                       .Include(o => o.Sport)
                        .OrderBy(o => o.CourtName.Value)
                        .Skip(pageSize * pageIndex)
                        .Take(pageSize)

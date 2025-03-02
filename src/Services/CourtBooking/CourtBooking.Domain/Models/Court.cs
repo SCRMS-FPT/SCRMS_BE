@@ -1,91 +1,61 @@
 ﻿using CourtBooking.Domain.ValueObjects;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace CourtBooking.Domain.Models
 {
-    public class Court : Aggregate<CourtId>
+    public class Court : Entity<CourtId>
     {
         public CourtName CourtName { get; private set; }
+        public SportCenterId SportCenterId { get; private set; }
         public SportId SportId { get; private set; }
-        public Sport Sport { get; }
-        public Location Location { get; private set; }
-        public string Description { get; private set; }
-        public string Facilities { get; private set; }
-        public decimal PricePerHour { get; private set; }
+        public TimeSpan SlotDuration { get; private set; }
+        public string? Description { get; private set; }
+        public string? Facilities { get; private set; }
         public CourtStatus Status { get; private set; }
-        public OwnerId OwnerId { get; private set; }
-        public DateTime CreatedAt { get; private set; }
 
-        private List<CourtOperatingHour> _operatingHours = new();
-        public IReadOnlyCollection<CourtOperatingHour> OperatingHours => _operatingHours.AsReadOnly();
+        private List<CourtSchedule> _courtSlots = new();
+        public IReadOnlyCollection<CourtSchedule> CourtSlots => _courtSlots.AsReadOnly();
 
-        private Court() { } // For EF Core
 
-        public Court(CourtId courtId, CourtName courtName, SportId sportId, Location location, string description,
-                     string facilities, decimal pricePerHour, OwnerId ownerId)
-        {
-            Id = courtId;
-            CourtName = CourtName;
-            SportId = sportId;
-            Location = location;
-            Description = description;
-            Facilities = facilities;
-            PricePerHour = pricePerHour;
-            Status = CourtStatus.Open;
-            OwnerId = ownerId;
-            CreatedAt = DateTime.UtcNow;
-        }
-
-        public static Court Create(CourtId courtId, CourtName courtName, SportId sportId, Location location, string description,
-                                   string facilities, decimal pricePerHour, OwnerId ownerId)
+        public static Court Create(CourtId courtId, CourtName courtName, SportCenterId sportCenterId,
+            SportId sportId, TimeSpan slotDuration, string? description,
+            string? facilities)
         {
             var court = new Court
             {
                 Id = courtId,
                 CourtName = courtName,
+                SportCenterId = sportCenterId,
                 SportId = sportId,
-                Location = location,
+                SlotDuration = slotDuration,
                 Description = description,
                 Facilities = facilities,
-                PricePerHour = pricePerHour,
                 Status = CourtStatus.Open,
-                OwnerId = ownerId,
-                CreatedAt = DateTime.UtcNow
             };
             return court;
         }
 
-        public void UpdateStatus(CourtStatus newStatus)
-        {
-            Status = newStatus;
-        }
-
-        public void AddOperatingHour(CourtOperatingHour hour)
-        {
-            _operatingHours.Add(hour);
-        }
-        public bool IsAvailable(DateTime dateTime)
-        {
-            int dayOfWeek = (int)dateTime.DayOfWeek;
-            var operatingHour = _operatingHours.FirstOrDefault(oh => oh.DayOfWeek == dayOfWeek);
-            if (operatingHour == null)
-                return false;
-
-            TimeSpan timeOfDay = dateTime.TimeOfDay;
-            return timeOfDay >= operatingHour.OpenTime &&
-                   timeOfDay <= operatingHour.CloseTime &&
-                   Status == CourtStatus.Open;
-        }
-
-        public void UpdateCourt(CourtName courtName, SportId sportId, Location location, string description,
-                            string facilities, decimal pricePerHour, CourtStatus status)
+        public void UpdateCourt(CourtName courtName, SportCenterId sportCenterId,
+            SportId sportId, TimeSpan slotDuration, string? description, 
+            string? facilities, CourtStatus courtStatus)
         {
             CourtName = courtName;
+            SportCenterId = sportCenterId;
             SportId = sportId;
-            Location = location;
+            SlotDuration = slotDuration;
             Description = description;
             Facilities = facilities;
-            PricePerHour = pricePerHour;
-            Status = CourtStatus.Open;
+            Status = courtStatus;
+            SetLastModified(DateTime.UtcNow);
+        }
+
+        public void AddCourtSlot(int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+        {
+            var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);
+            var courtSlot = new CourtSchedule(CourtScheduleId.Of(Guid.NewGuid()), Id,
+                dayOfWeekValue, startTime, endTime, priceSlot);
+            _courtSlots.Add(courtSlot);
         }
     }
 

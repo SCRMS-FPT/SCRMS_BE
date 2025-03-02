@@ -13,8 +13,8 @@ namespace CourtBooking.Application.DTOs
         string Description,
         List<FacilityDTO> Facilities,
         decimal PricePerHour,
-        LocationDTO Address,
+        double SlotDuration,
         Guid OwnerId,
-        List<CourtOperatingHourDTO> OperatingHours
+        List<CourtSlotDTO> CourtSlots
      );
 }

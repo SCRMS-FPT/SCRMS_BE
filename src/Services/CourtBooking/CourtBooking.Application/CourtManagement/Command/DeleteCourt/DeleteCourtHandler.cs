@@ -15,8 +15,8 @@ namespace CourtBooking.Application.CourtManagement.Command.DeleteCourt
         {
            var courtId = CourtId.Of(command.CourtId);
             var court = await context.Courts
-               .Include(o => o.OperatingHours)
-               .Include(o => o.Sport)
+               //.Include(o => o.OperatingHours)
+               //.Include(o => o.Sport)
                .FirstOrDefaultAsync(o => o.Id == courtId, cancellationToken);
 
             if (court == null)
@@ -24,7 +24,7 @@ namespace CourtBooking.Application.CourtManagement.Command.DeleteCourt
                 throw new CourtNotFoundException(command.CourtId);
             }
             //remove range of operating hours
-            context.CourtOperatingHours.RemoveRange(court.OperatingHours);
+            //context.CourtOperatingHours.RemoveRange(court.OperatingHours);
             context.Courts.Remove(court);
             await context.SaveChangesAsync(cancellationToken);
 

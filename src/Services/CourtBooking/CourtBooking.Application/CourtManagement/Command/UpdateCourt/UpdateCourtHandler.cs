@@ -24,16 +24,16 @@ public class UpdateCourtHandler(IApplicationDbContext _context)
         {
             WriteIndented = true
         });
-        var location = Location.Of(request.Court.Address.Address, request.Court.Address.Commune, request.Court.Address.District, request.Court.Address.City);
-        court.UpdateCourt(
-            new CourtName(request.Court.CourtName),
-            SportId.Of(request.Court.SportId),
-            location,
-            request.Court.Description,
-            facilitiesJson,
-            request.Court.PricePerHour,
-            CourtStatus.Open
-        );
+        //var location = Location.Of(request.Court.Address.Address, request.Court.Address.Commune, request.Court.Address.District, request.Court.Address.City);
+        //court.UpdateCourt(
+        //    new CourtName(request.Court.CourtName),
+        //    SportId.Of(request.Court.SportId),
+        //    location,
+        //    request.Court.Description,
+        //    facilitiesJson,
+        //    request.Court.PricePerHour,
+        //    CourtStatus.Open
+        //);
 
         //court.ClearOperatingHours();
         //foreach (var hour in request.Court.OperatingHours)

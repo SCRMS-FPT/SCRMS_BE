@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace CourtBooking.Domain.ValueObjects
 {
-
-    public record CourtOperatingHourId
+    public record SportCenterId
     {
         public Guid Value { get; }
-        public CourtOperatingHourId(Guid value) => Value = value;
-        public static CourtOperatingHourId Of(Guid value)
+        public SportCenterId(Guid value) => Value = value;
+        public static SportCenterId Of(Guid value)
         {
             ArgumentNullException.ThrowIfNull(value);
             if (value == Guid.Empty)
             {
-                throw new DomainException("CourtOperatingHourId cannot be empty.");
+                throw new DomainException("Sport Center Id cannot be empty.");
             }
-            return new CourtOperatingHourId(value);
+
+            return new SportCenterId(value);
         }
     }
 }

@@ -15,9 +15,10 @@ namespace CourtBooking.Infrastructure.Data
 
         public DbSet<Court> Courts { get; set; }
 
-        public DbSet<CourtOperatingHour> CourtOperatingHours { get; set; }
+        public DbSet<CourtSchedule> CourtSlots { get; set; }
 
         public DbSet<Sport> Sports { get; set; }
+        public DbSet<SportCenter> SportCenters { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

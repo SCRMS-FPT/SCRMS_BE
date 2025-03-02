@@ -6,11 +6,6 @@ using System.Threading.Tasks;
 
 namespace CourtBooking.Application.DTOs
 {
-
-    public record SportDTO
-    ( 
-        string icon,
-        string Name,
-        string Description
-    );
+    public record CourtSlotDTO
+    (DateTime slotDate, int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot);
 }

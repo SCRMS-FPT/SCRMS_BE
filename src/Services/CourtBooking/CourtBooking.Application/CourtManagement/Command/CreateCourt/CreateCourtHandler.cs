@@ -19,32 +19,29 @@ public class CreateCourtHandler(IApplicationDbContext context)
 
     private Court CreateNewCourt(CourtCreateDTO courtDTO)
     {
-        var location = Location.Of(courtDTO.Address.Address, courtDTO.Address.Commune, courtDTO.Address.District, courtDTO.Address.City);
-        //CourtId courtId, CourtName courtName, SportId sportId, Location location, string description,
-        //                           string facilities, decimal pricePerHour, OwnerId ownerId
+        //var location = Location.Of(courtDTO.Address.Address, courtDTO.Address.Commune, courtDTO.Address.District, courtDTO.Address.City);
         var facilitiesJson = JsonSerializer.Serialize(courtDTO.Facilities, new JsonSerializerOptions
         {
             WriteIndented = true
         });
+        //var imagesJson = JsonSerializer.Serialize(courtDTO.Images, new JsonSerializerOptions
+        //{
+        //    WriteIndented = true
+        //});
+
         var newId = CourtId.Of(Guid.NewGuid());
         var newCourt = Court.Create(
             courtId: newId,
             courtName: CourtName.Of(courtDTO.CourtName),
-            description: courtDTO.Description,
+            sportCenterId: SportCenterId.Of(courtDTO.OwnerId),
             sportId: SportId.Of(courtDTO.SportId),
-            location: location,
-            facilities: facilitiesJson,
-            pricePerHour: courtDTO.PricePerHour,
-            ownerId: OwnerId.Of(courtDTO.OwnerId)
+            slotDuration: TimeSpan.FromMinutes(courtDTO.SlotDuration),
+            description: courtDTO.Description,
+            facilities: facilitiesJson
          );
-        foreach (var operatingHour in courtDTO.OperatingHours)
+        foreach (var slot in courtDTO.CourtSlots)
         {
-            newCourt.AddOperatingHour( new CourtOperatingHour(
-                courtId: newId,
-                dayOfWeek: Int16.Parse(operatingHour.Day),
-                openTime: TimeSpan.Parse(operatingHour.OpenTime),
-                closeTime: TimeSpan.Parse(operatingHour.CloseTime)
-            ));
+            newCourt.AddCourtSlot(slot.dayOfWeek, slot.startTime, slot.endTime, slot.priceSlot);
         }
         return newCourt;
     }

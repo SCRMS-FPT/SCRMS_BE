@@ -10,11 +10,8 @@ namespace CourtBooking.Application.DTOs
     (
         Guid Id,
         string CourtName, 
-        string Description, 
-        SportDTO Sport, 
-        Guid OwnerId, 
-        LocationDTO Address,
-        decimal Price,
-        List<CourtOperatingHourDTO> CourtOperatingHours 
+        string Description
+        //Guid OwnerId, 
+        //decimal Price
     );
 }
