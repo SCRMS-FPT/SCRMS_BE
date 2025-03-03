@@ -17,7 +17,7 @@ namespace Identity.Application.ServicePackages.Queries.GetServicePackages
 
         public async Task<List<ServicePackageDto>> Handle(GetServicePackagesQuery query, CancellationToken cancellationToken)
         {
-            return await _dbContext.ServicePackages
+            return await _dbContext.ServicePackagePromotions
                 .Select(p => new ServicePackageDto(
                     p.Id,
                     p.Name,
