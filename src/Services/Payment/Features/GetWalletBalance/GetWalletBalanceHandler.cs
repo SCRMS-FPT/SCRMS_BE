@@ -12,7 +12,7 @@ namespace Payment.API.Features.GetWalletBalance
 
         public async Task<UserWallet> Handle(GetWalletBalanceQuery request, CancellationToken cancellationToken)
         {
-            var wallet = await _context.UserWallets
+            var wallet = await _context.UserWallets.AsNoTracking()
                 .FirstOrDefaultAsync(w => w.UserId == request.UserId, cancellationToken);
             if (wallet == null)
                 throw new Exception("Wallet not found");

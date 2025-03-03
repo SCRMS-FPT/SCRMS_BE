@@ -49,7 +49,9 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy =>
         policy.RequireRole("Admin"));
+    options.AddPolicy("Coach", policy => policy.RequireRole("Coach"));
 });
+
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Database")!);
 builder.Services.AddEndpointsApiExplorer();

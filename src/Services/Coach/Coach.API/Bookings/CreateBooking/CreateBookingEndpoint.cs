@@ -1,25 +1,62 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace Coach.API.Bookings.CreateBooking
 {
     public record CreateBookingRequest(
-        Guid UserId,
         Guid CoachId,
         Guid SportId,
-        DateOnly BookingDate,
-        TimeOnly StartTime,
-        TimeOnly EndTime,
+        DateTime StartTime,
+        DateTime EndTime,
         Guid? PackageId
     );
 
     public class CreateBookingEndpoint : ICarterModule
     {
+        private readonly ILogger<CreateBookingEndpoint> _logger;
+
+        public CreateBookingEndpoint(ILogger<CreateBookingEndpoint> logger)
+        {
+            _logger = logger;
+        }
+
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPost("/bookings",
-                async ([FromBody] CreateBookingRequest request, [FromServices] ISender sender) =>
+                async ([FromBody] CreateBookingRequest request, HttpContext httpContext, [FromServices] ISender sender) =>
                 {
-                    var command = request.Adapt<CreateBookingCommand>();
+                    var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
+                    // Logging if userIdClaim is null
+                    if (userIdClaim == null)
+                    {
+                        _logger.LogWarning("User ID claim is missing from the token.");
+                        return Results.Unauthorized();
+                    }
+
+                    if (!Guid.TryParse(userIdClaim.Value, out var userId))
+                    {
+                        _logger.LogWarning($"Failed to parse User ID claim: {userIdClaim.Value}");
+                        return Results.Unauthorized();
+                    }
+
+                    // Convert DateTime to TimeOnly
+                    var startTime = TimeOnly.FromDateTime(request.StartTime);
+                    var endTime = TimeOnly.FromDateTime(request.EndTime);
+
+                    var command = new CreateBookingCommand(
+                        userId,
+                        request.CoachId,
+                        request.SportId,
+                        DateOnly.FromDateTime(request.StartTime),
+                        startTime,
+                        endTime,
+                        request.PackageId
+                    );
+
                     var result = await sender.Send(command);
                     return Results.Created($"/bookings/{result.Id}", result);
                 })

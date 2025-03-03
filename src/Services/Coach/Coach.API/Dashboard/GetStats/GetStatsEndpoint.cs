@@ -26,7 +26,7 @@ namespace Coach.API.Dashboard.GetStats
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             })
-        .RequireAuthorization()
+        .RequireAuthorization("Coach")
         .WithName("GetStats")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)

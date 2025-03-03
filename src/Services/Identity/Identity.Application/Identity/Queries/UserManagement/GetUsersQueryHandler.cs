@@ -13,10 +13,23 @@ namespace Identity.Application.Identity.Queries.UserManagement
         {
             var users = await userManager.Users
                 .Where(u => !u.IsDeleted)
-                .ProjectToType<UserDto>()
                 .ToListAsync(cancellationToken);
 
-            return users;
+            // Tạo danh sách UserDto với thông tin roles
+            var userDtos = new List<UserDto>();
+            foreach (var user in users)
+            {
+                // Lấy danh sách roles của user
+                var roles = await userManager.GetRolesAsync(user);
+
+                // Ánh xạ từ User sang UserDto và thêm roles
+                var userDto = user.Adapt<UserDto>();
+                userDto = userDto with { Roles = roles.ToList() }; // Gán danh sách roles
+
+                userDtos.Add(userDto);
+            }
+
+            return userDtos;
         }
     }
 }

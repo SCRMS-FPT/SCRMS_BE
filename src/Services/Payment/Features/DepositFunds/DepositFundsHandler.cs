@@ -12,31 +12,40 @@
         {
             if (request.Amount <= 0)
                 throw new ArgumentException("Amount must be positive.");
-
-            var wallet = await _context.UserWallets.FindAsync(request.UserId);
-            if (wallet == null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                wallet = new UserWallet { UserId = request.UserId, Balance = 0, UpdatedAt = DateTime.UtcNow };
-                _context.UserWallets.Add(wallet);
+                var wallet = await _context.UserWallets.FindAsync(request.UserId);
+                if (wallet == null)
+                {
+                    wallet = new UserWallet { UserId = request.UserId, Balance = 0, UpdatedAt = DateTime.UtcNow };
+                    _context.UserWallets.Add(wallet);
+                }
+
+                var transactionRecord = new WalletTransaction
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = request.UserId,
+                    TransactionType = "deposit",
+                    Amount = request.Amount,
+                    Description = $"Deposit via payment gateway, Ref: {request.TransactionReference}",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                wallet.Balance += request.Amount;
+                wallet.UpdatedAt = DateTime.UtcNow;
+
+                _context.WalletTransactions.Add(transactionRecord);
+                await _context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync();
+
+                return transactionRecord.Id;
             }
-
-            var transaction = new WalletTransaction
+            catch
             {
-                Id = Guid.NewGuid(),
-                UserId = request.UserId,
-                TransactionType = "deposit",
-                Amount = request.Amount,
-                Description = $"Deposit via payment gateway, Ref: {request.TransactionReference}",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            wallet.Balance += request.Amount;
-            wallet.UpdatedAt = DateTime.UtcNow;
-
-            _context.WalletTransactions.Add(transaction);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return transaction.Id;
+                await transaction.RollbackAsync(); // Hủy bỏ mọi thay đổi
+                throw;
+            }
         }
     }
 }

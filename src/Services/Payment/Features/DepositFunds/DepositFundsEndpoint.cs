@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace Payment.API.Features.DepositFunds
 {
@@ -18,5 +19,13 @@ namespace Payment.API.Features.DepositFunds
         }
     }
 
-    public record DepositFundsRequest(decimal Amount, string TransactionReference);
+    public record DepositFundsRequest(
+    [Required(ErrorMessage = "Amount is required")]
+    [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be ≥ 0.01")]
+    decimal Amount,
+
+    [Required(ErrorMessage = "Transaction reference required")]
+    [StringLength(100, MinimumLength = 5)]
+    string TransactionReference
+);
 }

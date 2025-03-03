@@ -9,5 +9,6 @@
     DateTime BirthDate,
     string Gender,
     string SelfIntroduction,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    List<string>? Roles = null);
 }

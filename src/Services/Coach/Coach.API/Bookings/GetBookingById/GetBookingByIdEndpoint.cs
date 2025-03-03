@@ -2,6 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using static Coach.API.Bookings.GetBookingById.GetBookingByIdQueryHandler;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Coach.API.Bookings.GetBookingById
 {
@@ -14,7 +15,8 @@ namespace Coach.API.Bookings.GetBookingById
                 [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
-                var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
@@ -22,7 +24,7 @@ namespace Coach.API.Bookings.GetBookingById
                 var result = await sender.Send(new GetBookingByIdQuery(bookingId));
                 return Results.Ok(result);
             })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("GetBookingById")
             .Produces<BookingDetailResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
