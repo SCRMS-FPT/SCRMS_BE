@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.UpdateBooking
 {
-    public record UpdateBookingStatusQuery(Guid BookingId, string Status) : ICommand<UpdateBookingStatusResult>;
+    public record UpdateBookingStatusCommand(Guid BookingId, string Status, Guid CoachBookingId) : ICommand<UpdateBookingStatusResult>;
 
     public record UpdateBookingStatusResult(Boolean IsUpdated);
-    public class UpdateBookingStatusCommandValidator : AbstractValidator<UpdateBookingStatusQuery>
+
+    public class UpdateBookingStatusCommandValidator : AbstractValidator<UpdateBookingStatusCommand>
     {
         public UpdateBookingStatusCommandValidator()
         {
@@ -20,8 +21,9 @@ namespace Coach.API.Bookings.UpdateBooking
             .WithMessage("Status must be either 'confirmed' or 'cancelled'.");
         }
     }
+
     internal class UpdateBookingStatusCommandHandler
-       : ICommandHandler<UpdateBookingStatusQuery, UpdateBookingStatusResult>
+       : ICommandHandler<UpdateBookingStatusCommand, UpdateBookingStatusResult>
     {
         private readonly CoachDbContext context;
         private readonly IMediator mediator;
@@ -32,7 +34,7 @@ namespace Coach.API.Bookings.UpdateBooking
             this.mediator = mediator;
         }
 
-        public async Task<UpdateBookingStatusResult> Handle(UpdateBookingStatusQuery command, CancellationToken cancellationToken)
+        public async Task<UpdateBookingStatusResult> Handle(UpdateBookingStatusCommand command, CancellationToken cancellationToken)
         {
             var booking = await context.CoachBookings
                 .FirstOrDefaultAsync(b => b.Id == command.BookingId, cancellationToken);
@@ -40,7 +42,7 @@ namespace Coach.API.Bookings.UpdateBooking
             if (booking == null)
                 throw new NotFoundException("Booking not found");
 
-            if (booking.CoachId !=  command.BookingId)
+            if (booking.CoachId != command.CoachBookingId)
             {
                 throw new ValidationException("Booking coach is not you");
             }

@@ -20,7 +20,7 @@ namespace Coach.API.Bookings.UpdateBooking
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                await sender.Send(new UpdateBookingStatusQuery(bookingId, status));
+                await sender.Send(new UpdateBookingStatusCommand(bookingId, status, coachUserId));
                 return Results.NoContent();
             })
             .RequireAuthorization("Coach")
