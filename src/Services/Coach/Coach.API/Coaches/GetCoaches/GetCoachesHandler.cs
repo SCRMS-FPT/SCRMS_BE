@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Coach.API.Data;
 using Microsoft.AspNetCore.Mvc;
+using Coach.API.Data.Repositories;
 
 namespace Coach.API.Coaches.GetCoaches
 {
@@ -22,31 +23,41 @@ namespace Coach.API.Coaches.GetCoaches
         int SessionCount);
 
     // Handler
-    internal class GetCoachesQueryHandler(CoachDbContext context)
-    : IQueryHandler<GetCoachesQuery, IEnumerable<CoachResponse>>
+    internal class GetCoachesQueryHandler : IQueryHandler<GetCoachesQuery, IEnumerable<CoachResponse>>
     {
-        public async Task<IEnumerable<CoachResponse>> Handle(
-           [FromBody] GetCoachesQuery request,
-            CancellationToken cancellationToken)
+        private readonly ICoachRepository _coachRepository;
+        private readonly ICoachSportRepository _sportRepository;
+        private readonly ICoachPackageRepository _packageRepository;
+
+        public GetCoachesQueryHandler(
+            ICoachRepository coachRepository,
+            ICoachSportRepository sportRepository,
+            ICoachPackageRepository packageRepository)
         {
-            return await context.Coaches
-                .Include(c => c.CoachSports)
-                .Include(c => c.Packages)
-                .Select(c => new CoachResponse(
-                    c.UserId,
-                    c.CoachSports.Select(s => s.SportId).ToList(),
-                    c.Bio,
-                    c.RatePerHour,
-                    c.CreatedAt,
-                    c.Packages.Select(p => new CoachPackageResponse(
-                        p.Id,
-                        p.Name,
-                        p.Description,
-                        p.Price,
-                        p.SessionCount
-                    )).ToList()
-                ))
-                .ToListAsync(cancellationToken);
+            _coachRepository = coachRepository;
+            _sportRepository = sportRepository;
+            _packageRepository = packageRepository;
+        }
+
+        public async Task<IEnumerable<CoachResponse>> Handle(GetCoachesQuery request, CancellationToken cancellationToken)
+        {
+            var coaches = await _coachRepository.GetAllCoachesAsync(cancellationToken);
+            var responses = new List<CoachResponse>();
+
+            foreach (var coach in coaches)
+            {
+                var sports = await _sportRepository.GetCoachSportsByCoachIdAsync(coach.UserId, cancellationToken);
+                var packages = await _packageRepository.GetCoachPackagesByCoachIdAsync(coach.UserId, cancellationToken);
+
+                var sportIds = sports.Select(s => s.SportId).ToList();
+                var packageResponses = packages.Select(p => new CoachPackageResponse(
+                    p.Id, p.Name, p.Description, p.Price, p.SessionCount)).ToList();
+
+                responses.Add(new CoachResponse(
+                    coach.UserId, sportIds, coach.Bio, coach.RatePerHour, coach.CreatedAt, packageResponses));
+            }
+
+            return responses;
         }
     }
 }

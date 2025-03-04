@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Reviews.API.Data.Repositories;
 
 namespace Reviews.API.Features.GetReviewReplies
 {
@@ -8,19 +9,17 @@ namespace Reviews.API.Features.GetReviewReplies
 
     public class GetReviewRepliesHandler : IRequestHandler<GetReviewRepliesQuery, List<ReviewReplyResponse>>
     {
-        private readonly ReviewDbContext _context;
+        private readonly IReviewRepository _reviewRepository;
 
-        public GetReviewRepliesHandler(ReviewDbContext context) => _context = context;
+        public GetReviewRepliesHandler(IReviewRepository reviewRepository)
+        {
+            _reviewRepository = reviewRepository;
+        }
 
         public async Task<List<ReviewReplyResponse>> Handle(GetReviewRepliesQuery request, CancellationToken cancellationToken)
         {
-            return await _context.ReviewReplies
-                .Where(r => r.ReviewId == request.ReviewId)
-                .OrderBy(r => r.CreatedAt)
-                .Skip((request.Page - 1) * request.Limit)
-                .Take(request.Limit)
-                .Select(r => new ReviewReplyResponse(r.Id, r.ResponderId, r.ReplyText, r.CreatedAt))
-                .ToListAsync(cancellationToken);
+            var replies = await _reviewRepository.GetReviewRepliesAsync(request.ReviewId, request.Page, request.Limit, cancellationToken);
+            return replies.Select(r => new ReviewReplyResponse(r.Id, r.ResponderId, r.ReplyText, r.CreatedAt)).ToList();
         }
     }
 }

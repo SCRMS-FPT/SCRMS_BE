@@ -4,9 +4,18 @@
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/chats", async (CreateChatSessionRequest request, ISender sender) =>
+            app.MapPost("/api/chats", async (CreateChatSessionRequest request, ISender sender, HttpContext httpContext) =>
             {
-                var command = new CreateChatSessionCommand(request.User1Id, request.User2Id);
+                // Lấy UserId từ JWT
+                var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Results.Unauthorized();
+
+                if (!Guid.TryParse(userIdClaim.Value, out var user1Id))
+                    return Results.BadRequest("Invalid user ID in token");
+
+                // Gửi command để tạo phiên chat
+                var command = new CreateChatSessionCommand(user1Id, request.User2Id);
                 var result = await sender.Send(command);
                 return Results.Created($"/api/chats/{result.ChatSessionId}", result);
             })
@@ -15,5 +24,6 @@
         }
     }
 
-    public record CreateChatSessionRequest(Guid User1Id, Guid User2Id);
+    // Payload chỉ chứa User2Id
+    public record CreateChatSessionRequest(Guid User2Id);
 }

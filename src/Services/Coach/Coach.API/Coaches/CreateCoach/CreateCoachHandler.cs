@@ -1,5 +1,6 @@
 ﻿using BuildingBlocks.Exceptions;
 using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Coaches.CreateCoach
@@ -22,14 +23,28 @@ namespace Coach.API.Coaches.CreateCoach
         }
     }
 
-    internal class CreateCoachCommandHandler(CoachDbContext context)
-    : ICommandHandler<CreateCoachCommand, CreateCoachResult>
+    internal class CreateCoachCommandHandler : ICommandHandler<CreateCoachCommand, CreateCoachResult>
     {
+        private readonly ICoachRepository _coachRepository;
+        private readonly ICoachSportRepository _sportRepository;
+        private readonly CoachDbContext _context;
+
+        public CreateCoachCommandHandler(
+            ICoachRepository coachRepository,
+            ICoachSportRepository sportRepository,
+            CoachDbContext context)
+        {
+            _coachRepository = coachRepository;
+            _sportRepository = sportRepository;
+            _context = context;
+        }
+
         public async Task<CreateCoachResult> Handle(
             CreateCoachCommand command,
             CancellationToken cancellationToken)
         {
-            if (await context.Coaches.AnyAsync(c => c.UserId == command.UserId))
+            var exists = await _coachRepository.CoachExistsAsync(command.UserId, cancellationToken);
+            if (exists)
                 throw new AlreadyExistsException("Coach", command.UserId);
 
             var coach = new Models.Coach
@@ -40,17 +55,19 @@ namespace Coach.API.Coaches.CreateCoach
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Thêm các môn thể thao
             var coachSports = command.SportIds.Select(sportId => new CoachSport
             {
                 CoachId = coach.UserId,
                 SportId = sportId,
                 CreatedAt = DateTime.UtcNow
-            });
+            }).ToList();
 
-            await context.Coaches.AddAsync(coach, cancellationToken);
-            await context.CoachSports.AddRangeAsync(coachSports, cancellationToken);
-            await context.SaveChangesAsync(cancellationToken);
+            await _coachRepository.AddCoachAsync(coach, cancellationToken);
+            foreach (var sport in coachSports)
+            {
+                await _sportRepository.AddCoachSportAsync(sport, cancellationToken);
+            }
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new CreateCoachResult(coach.UserId);
         }

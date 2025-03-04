@@ -1,14 +1,16 @@
 ﻿using BuildingBlocks.Exceptions;
 using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using Coach.API.Schedules.UpdateSchedule;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.UpdateBooking
 {
-    public record UpdateBookingStatusQuery(Guid BookingId, string Status) : ICommand<UpdateBookingStatusResult>;
+    public record UpdateBookingStatusCommand(Guid BookingId, string Status, Guid CoachBookingId) : ICommand<UpdateBookingStatusResult>;
 
     public record UpdateBookingStatusResult(Boolean IsUpdated);
-    public class UpdateBookingStatusCommandValidator : AbstractValidator<UpdateBookingStatusQuery>
+
+    public class UpdateBookingStatusCommandValidator : AbstractValidator<UpdateBookingStatusCommand>
     {
         public UpdateBookingStatusCommandValidator()
         {
@@ -20,36 +22,33 @@ namespace Coach.API.Bookings.UpdateBooking
             .WithMessage("Status must be either 'confirmed' or 'cancelled'.");
         }
     }
-    internal class UpdateBookingStatusCommandHandler
-       : ICommandHandler<UpdateBookingStatusQuery, UpdateBookingStatusResult>
-    {
-        private readonly CoachDbContext context;
-        private readonly IMediator mediator;
 
-        public UpdateBookingStatusCommandHandler(CoachDbContext context, IMediator mediator)
+    internal class UpdateBookingStatusCommandHandler : ICommandHandler<UpdateBookingStatusCommand, UpdateBookingStatusResult>
+    {
+        private readonly ICoachBookingRepository _bookingRepository;
+        private readonly CoachDbContext _context;
+
+        public UpdateBookingStatusCommandHandler(ICoachBookingRepository bookingRepository, CoachDbContext context)
         {
-            this.context = context;
-            this.mediator = mediator;
+            _bookingRepository = bookingRepository;
+            _context = context;
         }
 
-        public async Task<UpdateBookingStatusResult> Handle(UpdateBookingStatusQuery command, CancellationToken cancellationToken)
+        public async Task<UpdateBookingStatusResult> Handle(UpdateBookingStatusCommand command, CancellationToken cancellationToken)
         {
-            var booking = await context.CoachBookings
-                .FirstOrDefaultAsync(b => b.Id == command.BookingId, cancellationToken);
-
+            var booking = await _bookingRepository.GetCoachBookingByIdAsync(command.BookingId, cancellationToken);
             if (booking == null)
                 throw new NotFoundException("Booking not found");
 
-            if (booking.CoachId !=  command.BookingId)
-            {
+            if (booking.CoachId != command.CoachBookingId)
                 throw new ValidationException("Booking coach is not you");
-            }
 
             if (command.Status != "confirmed" && command.Status != "cancelled")
                 throw new ValidationException("Invalid booking status");
 
             booking.Status = command.Status;
-            await context.SaveChangesAsync(cancellationToken);
+            await _bookingRepository.UpdateCoachBookingAsync(booking, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new UpdateBookingStatusResult(true);
         }

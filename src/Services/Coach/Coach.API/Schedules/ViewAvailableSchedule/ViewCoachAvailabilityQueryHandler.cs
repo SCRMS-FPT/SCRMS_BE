@@ -1,10 +1,12 @@
 ﻿using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Schedules.ViewAvailableSchedule
 {
     public record ViewCoachAvailabilityQuery(Guid CoachUserId, int Page, int RecordPerPage) : IQuery<List<AvailableScheduleSlot>>;
     public record AvailableScheduleSlot(int DayOfWeek, TimeOnly StartTime, TimeOnly EndTime);
+
     public class ViewCoachAvailabilityCommandValidator : AbstractValidator<ViewCoachAvailabilityQuery>
     {
         public ViewCoachAvailabilityCommandValidator()
@@ -12,35 +14,31 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
             RuleFor(x => x.CoachUserId).NotEmpty();
         }
     }
-    internal class ViewCoachAvailabilityQueryHandler
-        : IQueryHandler<ViewCoachAvailabilityQuery, List<AvailableScheduleSlot>>
-    {
-        private readonly CoachDbContext context;
-        private readonly IMediator mediator;
 
-        public ViewCoachAvailabilityQueryHandler(CoachDbContext context, IMediator mediator)
+    internal class ViewCoachAvailabilityQueryHandler : IQueryHandler<ViewCoachAvailabilityQuery, List<AvailableScheduleSlot>>
+    {
+        private readonly ICoachScheduleRepository _scheduleRepository;
+        private readonly ICoachBookingRepository _bookingRepository;
+
+        public ViewCoachAvailabilityQueryHandler(
+            ICoachScheduleRepository scheduleRepository,
+            ICoachBookingRepository bookingRepository)
         {
-            this.context = context;
-            this.mediator = mediator;
+            _scheduleRepository = scheduleRepository;
+            _bookingRepository = bookingRepository;
         }
 
-        public async Task<List<AvailableScheduleSlot>> Handle(ViewCoachAvailabilityQuery command, CancellationToken cancellationToken)
+        public async Task<List<AvailableScheduleSlot>> Handle(ViewCoachAvailabilityQuery query, CancellationToken cancellationToken)
         {
-            var coachSchedules = await context.CoachSchedules
-                .Where(cs => cs.CoachId == command.CoachUserId)
-                .ToListAsync(cancellationToken);
-
-            var bookedSchedules = await context.CoachBookings
-                .Where(b => b.CoachId == command.CoachUserId && b.BookingDate >= DateOnly.FromDateTime(DateTime.UtcNow))
-                .Select(b => new { b.BookingDate, b.StartTime, b.EndTime })
-                .ToListAsync(cancellationToken);
+            var coachSchedules = await _scheduleRepository.GetCoachSchedulesByCoachIdAsync(query.CoachUserId, cancellationToken);
+            var bookedSchedules = await _bookingRepository.GetCoachBookingsByCoachIdAsync(query.CoachUserId, cancellationToken);
 
             var availableSlots = new List<AvailableScheduleSlot>();
 
             foreach (var schedule in coachSchedules)
             {
                 bool isBooked = bookedSchedules.Any(b =>
-                    (int)b.BookingDate.DayOfWeek == schedule.DayOfWeek &&
+                    (int)b.BookingDate.DayOfWeek + 1 == schedule.DayOfWeek &&
                     b.StartTime < schedule.EndTime &&
                     b.EndTime > schedule.StartTime);
 
@@ -50,7 +48,7 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
                 }
             }
 
-            return availableSlots.Skip((command.Page - 1) * command.RecordPerPage).Take(command.RecordPerPage).ToList();
+            return availableSlots.Skip((query.Page - 1) * query.RecordPerPage).Take(query.RecordPerPage).ToList();
         }
     }
 }

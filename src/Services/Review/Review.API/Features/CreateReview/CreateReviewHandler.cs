@@ -1,5 +1,6 @@
 ﻿using Reviews.API.Cache;
 using Reviews.API.Clients;
+using Reviews.API.Data.Repositories;
 
 namespace Reviews.API.Features.CreateReview
 {
@@ -7,20 +8,20 @@ namespace Reviews.API.Features.CreateReview
 
     public class CreateReviewHandler : IRequestHandler<CreateReviewCommand, Guid>
     {
-        private readonly ReviewDbContext _context;
+        private readonly IReviewRepository _reviewRepository;
         private readonly ISubjectCache _cache;
         private readonly ICoachServiceClient _coachClient;
         private readonly ICourtServiceClient _courtClient;
         private readonly ILogger<CreateReviewHandler> _logger;
 
         public CreateReviewHandler(
-            ReviewDbContext context,
+            IReviewRepository reviewRepository,
             ISubjectCache cache,
             ICoachServiceClient coachClient,
             ICourtServiceClient courtClient,
             ILogger<CreateReviewHandler> logger)
         {
-            _context = context;
+            _reviewRepository = reviewRepository;
             _cache = cache;
             _coachClient = coachClient;
             _courtClient = courtClient;
@@ -54,8 +55,8 @@ namespace Reviews.API.Features.CreateReview
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.Reviews.Add(review);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _reviewRepository.AddReviewAsync(review, cancellationToken);
+            await _reviewRepository.SaveChangesAsync(cancellationToken);
             return review.Id;
         }
 

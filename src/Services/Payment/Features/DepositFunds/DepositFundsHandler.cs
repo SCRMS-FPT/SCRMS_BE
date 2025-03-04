@@ -1,25 +1,38 @@
-﻿namespace Payment.API.Features.DepositFunds
+﻿using Payment.API.Data.Repositories;
+
+namespace Payment.API.Features.DepositFunds
 {
     public record DepositFundsCommand(Guid UserId, decimal Amount, string TransactionReference) : IRequest<Guid>;
 
     public class DepositFundsHandler : IRequestHandler<DepositFundsCommand, Guid>
     {
+        private readonly IUserWalletRepository _userWalletRepository;
+        private readonly IWalletTransactionRepository _walletTransactionRepository;
         private readonly PaymentDbContext _context;
 
-        public DepositFundsHandler(PaymentDbContext context) => _context = context;
+        public DepositFundsHandler(
+            IUserWalletRepository userWalletRepository,
+            IWalletTransactionRepository walletTransactionRepository,
+            PaymentDbContext context)
+        {
+            _userWalletRepository = userWalletRepository;
+            _walletTransactionRepository = walletTransactionRepository;
+            _context = context;
+        }
 
         public async Task<Guid> Handle(DepositFundsCommand request, CancellationToken cancellationToken)
         {
             if (request.Amount <= 0)
                 throw new ArgumentException("Amount must be positive.");
-            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                var wallet = await _context.UserWallets.FindAsync(request.UserId);
+                var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
                 if (wallet == null)
                 {
                     wallet = new UserWallet { UserId = request.UserId, Balance = 0, UpdatedAt = DateTime.UtcNow };
-                    _context.UserWallets.Add(wallet);
+                    await _userWalletRepository.AddUserWalletAsync(wallet, cancellationToken);
                 }
 
                 var transactionRecord = new WalletTransaction
@@ -35,15 +48,16 @@
                 wallet.Balance += request.Amount;
                 wallet.UpdatedAt = DateTime.UtcNow;
 
-                _context.WalletTransactions.Add(transactionRecord);
+                await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
+                await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
                 await _context.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
 
                 return transactionRecord.Id;
             }
             catch
             {
-                await transaction.RollbackAsync(); // Hủy bỏ mọi thay đổi
+                await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
         }

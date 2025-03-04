@@ -1,4 +1,5 @@
 ﻿using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -19,7 +20,13 @@ builder.Services.AddMediatR(config =>
     config.AddOpenBehavior(typeof(LoggingBehavior<,>));
 });
 builder.Services.AddValidatorsFromAssembly(assembly);
-
+builder.Services.AddScoped<ICoachRepository, CoachRepository>();
+builder.Services.AddScoped<ICoachScheduleRepository, CoachScheduleRepository>();
+builder.Services.AddScoped<ICoachBookingRepository, CoachBookingRepository>();
+builder.Services.AddScoped<ICoachPackageRepository, CoachPackageRepository>();
+builder.Services.AddScoped<ICoachSportRepository, CoachSportRepository>();
+builder.Services.AddScoped<ICoachPromotionRepository, CoachPromotionRepository>();
+builder.Services.AddScoped<ICoachPackagePurchaseRepository, CoachPackagePurchaseRepository>();
 builder.Services.AddCarter();
 
 builder.Services.AddDbContext<CoachDbContext>(options =>

@@ -1,0 +1,33 @@
+{
+  "swaggerGenerator": {
+    "fromUrl": {
+      "url": "https://localhost:7237/swagger/v1/swagger.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "className": "ApiClient",
+      "moduleName": "",
+      "template": "Fetch",
+      "promiseType": "Promise",
+      "httpClass": "HttpClient",
+      "useTransformOptionsMethod": true,
+      "useTransformResultMethod": true,
+      "wrapDtoExceptions": false,
+      "generateClientClasses": true,
+      "generateClientInterfaces": false,
+      "clientBaseClass": "",
+      "configurationClass": "",
+      "useSingletonProvider": true,
+      "injectionTokenType": "OpaqueToken",
+      "rxJsVersion": 6.5,
+      "dateTimeType": "string",
+      "nullValue": "Undefined",
+      "generateOptionalParameters": true,
+      "generateDefaultValues": false,
+      "excludedTypeNames": [],
+      "output": "ClientApi.ts"
+    }
+  }
+}

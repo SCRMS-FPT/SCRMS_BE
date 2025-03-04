@@ -1,4 +1,5 @@
 ﻿using Matching.API.Data;
+using Matching.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matching.API.Features.PendingResponses.GetPendingSwipes
@@ -9,16 +10,17 @@ namespace Matching.API.Features.PendingResponses.GetPendingSwipes
 
     public class GetPendingSwipesHandler : IRequestHandler<GetPendingSwipesQuery, List<PendingSwipeResponse>>
     {
-        private readonly MatchingDbContext _context;
+        private readonly ISwipeActionRepository _swipeActionRepository;
 
-        public GetPendingSwipesHandler(MatchingDbContext context) => _context = context;
+        public GetPendingSwipesHandler(ISwipeActionRepository swipeActionRepository)
+        {
+            _swipeActionRepository = swipeActionRepository;
+        }
 
         public async Task<List<PendingSwipeResponse>> Handle(GetPendingSwipesQuery request, CancellationToken cancellationToken)
         {
-            return await _context.SwipeActions
-                .Where(sa => sa.SwipedUserId == request.UserId && sa.Decision == "pending")
-                .Select(sa => new PendingSwipeResponse(sa.SwiperId, sa.CreatedAt))
-                .ToListAsync(cancellationToken);
+            var pendingSwipes = await _swipeActionRepository.GetPendingSwipesByUserIdAsync(request.UserId, cancellationToken);
+            return pendingSwipes.Select(sa => new PendingSwipeResponse(sa.SwiperId, sa.CreatedAt)).ToList();
         }
     }
 }

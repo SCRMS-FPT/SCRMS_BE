@@ -1,4 +1,5 @@
 ﻿using Matching.API.Data;
+using Matching.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matching.API.Features.Skills.GetUserSkills
@@ -9,16 +10,17 @@ namespace Matching.API.Features.Skills.GetUserSkills
 
     public class GetUserSkillsHandler : IRequestHandler<GetUserSkillsQuery, List<UserSkillResponse>>
     {
-        private readonly MatchingDbContext _context;
+        private readonly IUserSkillRepository _userSkillRepository;
 
-        public GetUserSkillsHandler(MatchingDbContext context) => _context = context;
+        public GetUserSkillsHandler(IUserSkillRepository userSkillRepository)
+        {
+            _userSkillRepository = userSkillRepository;
+        }
 
         public async Task<List<UserSkillResponse>> Handle(GetUserSkillsQuery request, CancellationToken cancellationToken)
         {
-            return await _context.UserSkills
-                .Where(us => us.UserId == request.UserId)
-                .Select(us => new UserSkillResponse(us.SportId, us.SkillLevel))
-                .ToListAsync(cancellationToken);
+            var skills = await _userSkillRepository.GetByUserIdAsync(request.UserId, cancellationToken);
+            return skills.Select(us => new UserSkillResponse(us.SportId, us.SkillLevel)).ToList();
         }
     }
 }
