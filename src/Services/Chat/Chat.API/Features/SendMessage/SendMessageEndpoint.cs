@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Chat.API.Features.SendMessage
 {
@@ -6,7 +7,7 @@ namespace Chat.API.Features.SendMessage
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/chats/{chatSessionId}/messages", async (Guid chatSessionId, SendMessageRequest request, ISender sender, HttpContext httpContext) =>
+            app.MapPost("/api/chats/{chatSessionId}/messages", async (Guid chatSessionId,[FromBody] SendMessageRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null) return Results.Unauthorized();
