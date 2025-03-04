@@ -65,9 +65,10 @@ namespace Notification.API.Features.SendNotification
             if (command.SendMail)
             {
                 var emailCommand = new SendEmailCommand(
-                    command.UserEmail, 
+                    command.UserEmail,
                     $"{command.Title}",
-                command.Content
+                command.Content,
+                false
            );
 
                 await sender.Send(emailCommand, cancellationToken);

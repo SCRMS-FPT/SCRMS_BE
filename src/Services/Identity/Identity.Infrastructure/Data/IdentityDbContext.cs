@@ -13,6 +13,7 @@ namespace Identity.Infrastructure.Data
         public DbSet<ServicePackageSubscription> Subscriptions { get; set; }
 
         public DbSet<ServicePackagePromotion> ServicePackagePromotions { get; set; }
+        public DbSet<CoachServicePromotion> CoachPromotion { get; set; }
 
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
         {
