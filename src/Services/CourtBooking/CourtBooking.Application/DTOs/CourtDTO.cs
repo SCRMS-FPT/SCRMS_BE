@@ -13,8 +13,8 @@ namespace CourtBooking.Application.DTOs
         string Description,
         SportId SportId,
         TimeSpan SlotDuration,
-        string Facilities,
-        CourtStatus Status
-        //List<CourtSlotDTO> CourtSlots
+        List<FacilityDTO> Facilities,
+        CourtStatus Status,
+        List<CourtScheduleDTO> CourtSlots
     );
 }

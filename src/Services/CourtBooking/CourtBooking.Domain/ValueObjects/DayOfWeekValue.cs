@@ -12,6 +12,10 @@ namespace CourtBooking.Domain.ValueObjects
 
         public DayOfWeekValue(IEnumerable<int> days)
         {
+            if (days == null)
+            {
+                throw new ArgumentNullException(nameof(days), "DayOfWeekValue cannot be null.");
+            }
             var dayList = days.Distinct().ToList();
             if (dayList.Count == 0 || dayList.Count > 7)
                 throw new DomainException("Invalid day of week count.");

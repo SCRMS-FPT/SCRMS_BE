@@ -18,13 +18,13 @@ namespace CourtBooking.Domain.Models
         public IReadOnlyCollection<CourtSchedule> CourtSlots => _courtSlots.AsReadOnly();
 
 
-        public static Court Create(CourtName courtName, SportCenterId sportCenterId,
+        public static Court Create(CourtId courtId,CourtName courtName, SportCenterId sportCenterId,
             SportId sportId, TimeSpan slotDuration, string? description,
             string? facilities)
         {
             var court = new Court
             {
-                Id = CourtId.Of(Guid.NewGuid()),
+                Id = courtId,
                 CourtName = courtName,
                 SportCenterId = sportCenterId,
                 SportId = sportId,
@@ -32,6 +32,7 @@ namespace CourtBooking.Domain.Models
                 Description = description,
                 Facilities = facilities,
                 Status = CourtStatus.Open,
+                CreatedAt = DateTime.UtcNow,
             };
             return court;
         }
@@ -50,11 +51,12 @@ namespace CourtBooking.Domain.Models
             SetLastModified(DateTime.UtcNow);
         }
 
-        public void AddCourtSlot(int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+        public void AddCourtSlot(CourtId courtId,int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
         {
             var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);
-            var courtSlot = new CourtSchedule(CourtScheduleId.Of(Guid.NewGuid()), Id,
+            var courtSlot =  CourtSchedule.Create(CourtScheduleId.Of(Guid.NewGuid()), courtId,
                 dayOfWeekValue, startTime, endTime, priceSlot);
+            courtSlot.CreatedAt = DateTime.UtcNow;
             _courtSlots.Add(courtSlot);
         }
     }

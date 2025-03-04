@@ -13,28 +13,35 @@ namespace CourtBooking.Domain.Models
 
         public CourtSchedule() { } // For EF Core
 
-        public CourtSchedule(CourtScheduleId id, CourtId courtId, DayOfWeekValue dayOfWeek,
-                     TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
-        {
-            Id = id;
-            CourtId = courtId ?? throw new DomainException("CourtId is required");
-            DayOfWeek = dayOfWeek ?? throw new DomainException("DayOfWeek is required");
-            if (startTime >= endTime)
-                throw new DomainException("StartTime must be before EndTime");
-            if (priceSlot < 0)
-                throw new DomainException("Price must be non-negative");
+        //public CourtSchedule(CourtScheduleId id, CourtId courtId, DayOfWeekValue dayOfWeek,
+        //             TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+        //{
+        //    Id = id;
+        //    CourtId = courtId ?? throw new DomainException("CourtId is required");
+        //    DayOfWeek = dayOfWeek ?? throw new DomainException("DayOfWeek is required");
+        //    if (startTime <= endTime)
+        //        throw new DomainException("StartTime must be before EndTime");
+        //    if (priceSlot < 0)
+        //        throw new DomainException("Price must be non-negative");
 
-            StartTime = startTime;
-            EndTime = endTime;
-            PriceSlot = priceSlot;
-            Status = CourtSlotStatus.Available;
-        }
+        //    StartTime = startTime;
+        //    EndTime = endTime;
+        //    PriceSlot = priceSlot;
+        //    Status = CourtSlotStatus.Available;
+        //}
         public static CourtSchedule Create(CourtScheduleId courtSlotId, CourtId courtId,
-            int[] dayOfWeek,TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+            DayOfWeekValue dayOfWeek,TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
         {
-            var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);
-            return new CourtSchedule(courtSlotId, courtId, dayOfWeekValue, startTime, endTime,
-                priceSlot);
+            return new CourtSchedule
+            {
+                Id = courtSlotId,
+                CourtId = courtId,
+                DayOfWeek = dayOfWeek,
+                StartTime = startTime,
+                EndTime = endTime,
+                PriceSlot = priceSlot,
+                Status = CourtSlotStatus.Available
+            };
         }
 
         public void Update(DayOfWeekValue dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot, CourtSlotStatus status)

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -33,12 +34,17 @@ public class CreateSportCenterHandler(IApplicationDbContext _context)
             images: command.Images,
             description: command.Description
         );
-            //foreach (var court in command.Courts)
-            //{
-            //    sportCenter.AddCourt(Court.Create(CourtName.Of(court.CourtName), newId,
-            //        court.SportId, court.SlotDuration,
-            //        court.Description, court.Facilities));
-            //}
+            foreach (var court in command.Courts)
+            {
+                var facilitiesJson = JsonSerializer.Serialize(court.Facilities, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                var newCourtId = CourtId.Of(Guid.NewGuid());
+                sportCenter.AddCourt(Court.Create(newCourtId,CourtName.Of(court.CourtName), newId,
+                    court.SportId, court.SlotDuration,
+                    court.Description, facilitiesJson));
+            }
 
 
             _context.SportCenters.Add(sportCenter);

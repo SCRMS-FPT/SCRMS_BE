@@ -17,5 +17,5 @@ public class CourtUpdateDTO
     public List<FacilityDTO> Facilities { get; set; }
     public decimal PricePerHour { get; set; }
     //public CourtStatus Status { get; set; }
-    public List<CourtSlotDTO> OperatingHours { get; set; }
+    public List<CourtScheduleDTO> OperatingHours { get; set; }
 }

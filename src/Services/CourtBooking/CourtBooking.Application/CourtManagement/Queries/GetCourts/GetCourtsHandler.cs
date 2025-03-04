@@ -11,7 +11,7 @@
 
 //namespace CourtBooking.Application.CourtManagement.Queries.GetCourts;
 
-//public class GetCourtsHandler(IApplicationDbContext _context) 
+//public class GetCourtsHandler(IApplicationDbContext _context)
 //    : IQueryHandler<GetCourtsQuery, GetCourtsResult>
 //{
 //    public async Task<GetCourtsResult> Handle(GetCourtsQuery query, CancellationToken cancellationToken)

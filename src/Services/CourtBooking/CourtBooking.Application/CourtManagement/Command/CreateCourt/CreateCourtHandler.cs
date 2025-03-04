@@ -31,17 +31,17 @@ public class CreateCourtHandler(IApplicationDbContext context)
 
         var newId = CourtId.Of(Guid.NewGuid());
         var newCourt = Court.Create(
-            //courtId: newId,
+            courtId: newId,
             courtName: CourtName.Of(courtDTO.CourtName),
-            sportCenterId: SportCenterId.Of(courtDTO.OwnerId),
+            sportCenterId: SportCenterId.Of(courtDTO.SportCenterId),
             sportId: SportId.Of(courtDTO.SportId),
-            slotDuration: TimeSpan.FromMinutes(courtDTO.SlotDuration),
+            slotDuration: courtDTO.SlotDuration,
             description: courtDTO.Description,
             facilities: facilitiesJson
          );
         foreach (var slot in courtDTO.CourtSlots)
         {
-            newCourt.AddCourtSlot(slot.dayOfWeek, slot.startTime, slot.endTime, slot.priceSlot);
+            newCourt.AddCourtSlot(newId, slot.DayOfWeek, slot.StartTime, slot.EndTime, slot.PriceSlot);
         }
         return newCourt;
     }
