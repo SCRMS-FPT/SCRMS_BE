@@ -1,5 +1,6 @@
 ﻿using BuildingBlocks.Exceptions;
 using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.GetBookingById
@@ -27,28 +28,24 @@ namespace Coach.API.Bookings.GetBookingById
         }
     }
 
-    internal class GetBookingByIdQueryHandler
-       : IQueryHandler<GetBookingByIdQuery, BookingDetailResult>
+    internal class GetBookingByIdQueryHandler : IQueryHandler<GetBookingByIdQuery, BookingDetailResult>
     {
-        private readonly CoachDbContext context;
-        private readonly IMediator mediator;
+        private readonly ICoachBookingRepository _bookingRepository;
 
-        public GetBookingByIdQueryHandler(CoachDbContext context, IMediator mediator)
+        public GetBookingByIdQueryHandler(ICoachBookingRepository bookingRepository)
         {
-            this.context = context;
-            this.mediator = mediator;
+            _bookingRepository = bookingRepository;
         }
 
         public async Task<BookingDetailResult> Handle(GetBookingByIdQuery query, CancellationToken cancellationToken)
         {
-            var booking = await context.CoachBookings
-                .Where(b => b.Id == query.BookingId)
-                .Select(b => new BookingDetailResult(
-                    b.Id, b.UserId, b.CoachId, b.SportId, b.BookingDate,
-                    b.StartTime, b.EndTime, b.Status, b.TotalPrice, b.PackageId))
-                .FirstOrDefaultAsync(cancellationToken);
+            var booking = await _bookingRepository.GetCoachBookingByIdAsync(query.BookingId, cancellationToken);
+            if (booking == null)
+                throw new NotFoundException("Booking not found");
 
-            return booking ?? throw new NotFoundException("Booking not found");
+            return new BookingDetailResult(
+                booking.Id, booking.UserId, booking.CoachId, booking.SportId, booking.BookingDate,
+                booking.StartTime, booking.EndTime, booking.Status, booking.TotalPrice, booking.PackageId);
         }
     }
 }

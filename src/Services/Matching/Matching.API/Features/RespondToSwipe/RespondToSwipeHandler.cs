@@ -1,4 +1,5 @@
 ﻿using Matching.API.Data;
+using Matching.API.Data.Repositories;
 using Matching.API.Features.Swipe;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,43 +9,49 @@ namespace Matching.API.Features.RespondToSwipe
 
     public class RespondToSwipeHandler : IRequestHandler<RespondToSwipeCommand, SwipeResult>
     {
+        private readonly ISwipeActionRepository _swipeActionRepository;
+        private readonly IMatchRepository _matchRepository;
         private readonly MatchingDbContext _context;
 
-        public RespondToSwipeHandler(MatchingDbContext context)
+        public RespondToSwipeHandler(
+            ISwipeActionRepository swipeActionRepository,
+            IMatchRepository matchRepository,
+            MatchingDbContext context)
         {
+            _swipeActionRepository = swipeActionRepository;
+            _matchRepository = matchRepository;
             _context = context;
         }
 
         public async Task<SwipeResult> Handle(RespondToSwipeCommand request, CancellationToken cancellationToken)
         {
-            var userId = request.UserId;
-            var swipeAction = await _context.SwipeActions
-                .FirstOrDefaultAsync(sa => sa.Id == request.SwipeActionId && sa.SwipedUserId == userId, cancellationToken);
-
-            if (swipeAction == null) throw new Exception("Swipe action not found");
+            var swipeAction = await _swipeActionRepository.GetByIdAsync(request.SwipeActionId, cancellationToken);
+            if (swipeAction == null || swipeAction.SwipedUserId != request.UserId)
+                throw new Exception("Swipe action not found or unauthorized");
 
             swipeAction.Decision = request.Decision;
+            await _swipeActionRepository.UpdateSwipeActionAsync(swipeAction, cancellationToken);
+
             if (request.Decision == "accepted")
             {
-                var reverseSwipe = await _context.SwipeActions
-                    .FirstOrDefaultAsync(sa => sa.SwiperId == userId &&
-                                              sa.SwipedUserId == swipeAction.SwiperId, cancellationToken);
-
+                var reverseSwipe = await _swipeActionRepository.GetBySwiperAndSwipedAsync(request.UserId, swipeAction.SwiperId, cancellationToken);
                 if (reverseSwipe != null)
                 {
                     reverseSwipe.Decision = "accepted";
+                    await _swipeActionRepository.UpdateSwipeActionAsync(reverseSwipe, cancellationToken);
+
+                    var match = new Match
+                    {
+                        Id = Guid.NewGuid(),
+                        InitiatorId = swipeAction.SwiperId,
+                        MatchedUserId = request.UserId,
+                        MatchTime = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _matchRepository.AddMatchAsync(match, cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    return new SwipeResult(true);
                 }
-                var match = new Match
-                {
-                    Id = Guid.NewGuid(),
-                    InitiatorId = swipeAction.SwiperId,
-                    MatchedUserId = userId,
-                    MatchTime = DateTime.UtcNow,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.Matches.Add(match);
-                await _context.SaveChangesAsync(cancellationToken);
-                return new SwipeResult(true);
             }
 
             await _context.SaveChangesAsync(cancellationToken);

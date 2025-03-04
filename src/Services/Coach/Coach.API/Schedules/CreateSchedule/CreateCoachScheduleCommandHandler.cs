@@ -5,6 +5,7 @@ using BuildingBlocks.Exceptions;
 using Coach.API.Bookings.CreateBooking;
 using MediatR;
 using Coach.API.Schedules.CreateSchedule;
+using Coach.API.Data.Repositories;
 
 namespace Coach.API.Schedules.AddSchedule
 {
@@ -32,34 +33,37 @@ namespace Coach.API.Schedules.AddSchedule
 
     internal class CreateCoachScheduleCommandHandler : ICommandHandler<CreateCoachScheduleCommand, CreateCoachScheduleResult>
     {
-        private readonly CoachDbContext context;
-        private readonly IMediator mediator;
+        private readonly ICoachRepository _coachRepository;
+        private readonly ICoachScheduleRepository _scheduleRepository;
+        private readonly CoachDbContext _context;
+        private readonly IMediator _mediator;
 
-        public CreateCoachScheduleCommandHandler(CoachDbContext context, IMediator mediator)
+        public CreateCoachScheduleCommandHandler(
+            ICoachRepository coachRepository,
+            ICoachScheduleRepository scheduleRepository,
+            CoachDbContext context,
+            IMediator mediator)
         {
-            this.context = context;
-            this.mediator = mediator;
+            _coachRepository = coachRepository;
+            _scheduleRepository = scheduleRepository;
+            _context = context;
+            _mediator = mediator;
         }
 
         public async Task<CreateCoachScheduleResult> Handle(
             CreateCoachScheduleCommand command,
             CancellationToken cancellationToken)
         {
-            var coach = await context.Coaches
-                .FirstOrDefaultAsync(c => c.UserId == command.CoachUserId);
-
+            var coach = await _coachRepository.GetCoachByIdAsync(command.CoachUserId, cancellationToken);
             if (coach == null)
                 throw new NotFoundException("User is not registered as a coach");
 
-            var hasConflict = await context.CoachSchedules
-             .AnyAsync(s =>
-                 s.CoachId == command.CoachUserId &&
-                 s.DayOfWeek == command.DayOfWeek &&
-                 (
-                     (command.StartTime >= s.StartTime && command.StartTime < s.EndTime) ||
-                     (command.EndTime > s.StartTime && command.EndTime <= s.EndTime) ||
-                     (command.StartTime <= s.StartTime && command.EndTime >= s.EndTime)
-                 ), cancellationToken);
+            var hasConflict = await _scheduleRepository.HasCoachScheduleConflictAsync(
+                command.CoachUserId,
+                command.DayOfWeek,
+                command.StartTime,
+                command.EndTime,
+                cancellationToken);
 
             if (hasConflict)
                 throw new AlreadyExistsException("The schedule conflicts with an existing schedule.");
@@ -75,10 +79,10 @@ namespace Coach.API.Schedules.AddSchedule
                 UpdatedAt = DateTime.UtcNow
             };
 
-            context.CoachSchedules.Add(schedule);
-            await context.SaveChangesAsync(cancellationToken);
+            await _scheduleRepository.AddCoachScheduleAsync(schedule, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
-            await mediator.Publish(new ScheduleCreatedEvent(schedule.Id, schedule.CoachId), cancellationToken);
+            await _mediator.Publish(new ScheduleCreatedEvent(schedule.Id, schedule.CoachId), cancellationToken);
 
             return new CreateCoachScheduleResult(schedule.Id);
         }

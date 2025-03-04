@@ -1,5 +1,6 @@
 ﻿using Coach.API.Bookings.CreateBooking;
 using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Bookings.GetAllBooking
@@ -15,6 +16,7 @@ namespace Coach.API.Bookings.GetAllBooking
         string Status,
         decimal TotalPrice
     );
+
     public class GetCoachBookingsQueryValidator : AbstractValidator<GetCoachBookingsQuery>
     {
         public GetCoachBookingsQueryValidator()
@@ -22,35 +24,32 @@ namespace Coach.API.Bookings.GetAllBooking
             RuleFor(x => x.CoachUserId).NotEmpty().WithMessage("CoachId is required.");
         }
     }
-    internal class GetCoachBookingsQueryHandler
-        : IQueryHandler<GetCoachBookingsQuery, List<BookingHistoryResult>>
-    {
-        private readonly CoachDbContext context;
-        private readonly IMediator mediator;
 
-        public GetCoachBookingsQueryHandler(CoachDbContext context, IMediator mediator)
+    internal class GetCoachBookingsQueryHandler : IQueryHandler<GetCoachBookingsQuery, List<BookingHistoryResult>>
+    {
+        private readonly ICoachBookingRepository _bookingRepository;
+
+        public GetCoachBookingsQueryHandler(ICoachBookingRepository bookingRepository)
         {
-            this.context = context;
-            this.mediator = mediator;
+            _bookingRepository = bookingRepository;
         }
 
         public async Task<List<BookingHistoryResult>> Handle(GetCoachBookingsQuery query, CancellationToken cancellationToken)
         {
-            var list = await context.CoachBookings.ToListAsync(cancellationToken); 
+            var bookings = await _bookingRepository.GetCoachBookingsByCoachIdAsync(query.CoachUserId, cancellationToken);
             if (query.Status != null)
             {
-                list = list.Where(l => l.Status.Equals(query.Status)).ToList();
+                bookings = bookings.Where(b => b.Status == query.Status).ToList();
             }
-            if (query.EndDate != null && query.StartDate != null)
+            if (query.StartDate != null && query.EndDate != null)
             {
-                list =list.Where(l => l.BookingDate.CompareTo(query.StartDate) >= 0 && l.BookingDate.CompareTo(query.EndDate) <= 0).ToList();
+                bookings = bookings.Where(b => b.BookingDate >= query.StartDate && b.BookingDate <= query.EndDate).ToList();
             }
-            
-            return list
-                .Where(b => b.CoachId == query.CoachUserId)
+
+            return bookings
                 .Select(b => new BookingHistoryResult(
                     b.Id, b.UserId, b.BookingDate, b.StartTime, b.EndTime, b.Status, b.TotalPrice))
-                .Skip((query.Page - 1 ) * query.RecordPerPage)
+                .Skip((query.Page - 1) * query.RecordPerPage)
                 .Take(query.RecordPerPage)
                 .ToList();
         }

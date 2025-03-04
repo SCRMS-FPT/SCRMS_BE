@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Payment.API.Data.Repositories;
 
 namespace Payment.API.Features.GetTransactionHistory
 {
@@ -6,18 +7,16 @@ namespace Payment.API.Features.GetTransactionHistory
 
     public class GetTransactionHistoryHandler : IRequestHandler<GetTransactionHistoryQuery, List<WalletTransaction>>
     {
-        private readonly PaymentDbContext _context;
+        private readonly IWalletTransactionRepository _walletTransactionRepository;
 
-        public GetTransactionHistoryHandler(PaymentDbContext context) => _context = context;
+        public GetTransactionHistoryHandler(IWalletTransactionRepository walletTransactionRepository)
+        {
+            _walletTransactionRepository = walletTransactionRepository;
+        }
 
         public async Task<List<WalletTransaction>> Handle(GetTransactionHistoryQuery request, CancellationToken cancellationToken)
         {
-            return await _context.WalletTransactions
-                .Where(t => t.UserId == request.UserId)
-                .OrderByDescending(t => t.CreatedAt)
-                .Skip((request.Page - 1) * request.Limit)
-                .Take(request.Limit)
-                .ToListAsync(cancellationToken);
+            return await _walletTransactionRepository.GetTransactionsByUserIdAsync(request.UserId, request.Page, request.Limit, cancellationToken);
         }
     }
 }

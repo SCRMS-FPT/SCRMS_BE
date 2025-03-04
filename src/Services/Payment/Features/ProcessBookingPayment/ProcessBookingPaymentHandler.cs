@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Payment.API.Data.Repositories;
 
 namespace Payment.API.Features.ProcessBookingPayment
 {
@@ -6,21 +7,30 @@ namespace Payment.API.Features.ProcessBookingPayment
 
     public class ProcessBookingPaymentHandler : IRequestHandler<ProcessBookingPaymentCommand, Guid>
     {
+        private readonly IUserWalletRepository _userWalletRepository;
+        private readonly IWalletTransactionRepository _walletTransactionRepository;
         private readonly PaymentDbContext _context;
 
-        public ProcessBookingPaymentHandler(PaymentDbContext context) => _context = context;
+        public ProcessBookingPaymentHandler(
+            IUserWalletRepository userWalletRepository,
+            IWalletTransactionRepository walletTransactionRepository,
+            PaymentDbContext context)
+        {
+            _userWalletRepository = userWalletRepository;
+            _walletTransactionRepository = walletTransactionRepository;
+            _context = context;
+        }
 
         public async Task<Guid> Handle(ProcessBookingPaymentCommand request, CancellationToken cancellationToken)
         {
             if (request.Amount <= 0)
                 throw new ArgumentException("Amount must be positive.");
 
-            var wallet = await _context.UserWallets
-                .FirstOrDefaultAsync(w => w.UserId == request.UserId, cancellationToken);
+            var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
             if (wallet == null || wallet.Balance < request.Amount)
                 throw new Exception("Insufficient balance.");
 
-            var transaction = new WalletTransaction
+            var transactionRecord = new WalletTransaction
             {
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
@@ -33,10 +43,11 @@ namespace Payment.API.Features.ProcessBookingPayment
             wallet.Balance -= request.Amount;
             wallet.UpdatedAt = DateTime.UtcNow;
 
-            _context.WalletTransactions.Add(transaction);
+            await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
+            await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return transaction.Id;
+            return transactionRecord.Id;
         }
     }
 }

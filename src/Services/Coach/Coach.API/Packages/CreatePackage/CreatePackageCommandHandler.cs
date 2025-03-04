@@ -1,5 +1,6 @@
 ﻿using Coach.API.Bookings.CreateBooking;
 using Coach.API.Data;
+using Coach.API.Data.Repositories;
 
 namespace Coach.API.Packages.CreatePackage
 {
@@ -12,9 +13,17 @@ namespace Coach.API.Packages.CreatePackage
     decimal Price,
     int SessionCount) : ICommand<CreatePackageResult>;
 
-    internal class CreatePackageCommandHandler(CoachDbContext context)
-    : ICommandHandler<CreatePackageCommand, CreatePackageResult>
+    internal class CreatePackageCommandHandler : ICommandHandler<CreatePackageCommand, CreatePackageResult>
     {
+        private readonly ICoachPackageRepository _packageRepository;
+        private readonly CoachDbContext _context;
+
+        public CreatePackageCommandHandler(ICoachPackageRepository packageRepository, CoachDbContext context)
+        {
+            _packageRepository = packageRepository;
+            _context = context;
+        }
+
         public async Task<CreatePackageResult> Handle(
             CreatePackageCommand command,
             CancellationToken cancellationToken)
@@ -31,8 +40,8 @@ namespace Coach.API.Packages.CreatePackage
                 UpdatedAt = DateTime.UtcNow
             };
 
-            await context.CoachPackages.AddAsync(package, cancellationToken);
-            await context.SaveChangesAsync(cancellationToken);
+            await _packageRepository.AddCoachPackageAsync(package, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new CreatePackageResult(package.Id);
         }

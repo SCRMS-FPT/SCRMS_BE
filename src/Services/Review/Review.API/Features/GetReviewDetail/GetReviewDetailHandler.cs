@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Reviews.API.Data.Repositories;
 
 namespace Reviews.API.Features.GetReviewDetail
 {
@@ -8,17 +9,27 @@ namespace Reviews.API.Features.GetReviewDetail
 
     public class GetReviewDetailHandler : IRequestHandler<GetReviewDetailQuery, ReviewDetailResponse>
     {
-        private readonly ReviewDbContext _context;
+        private readonly IReviewRepository _reviewRepository;
 
-        public GetReviewDetailHandler(ReviewDbContext context) => _context = context;
+        public GetReviewDetailHandler(IReviewRepository reviewRepository)
+        {
+            _reviewRepository = reviewRepository;
+        }
 
         public async Task<ReviewDetailResponse> Handle(GetReviewDetailQuery request, CancellationToken cancellationToken)
         {
-            var review = await _context.Reviews
-                .FirstOrDefaultAsync(r => r.Id == request.ReviewId, cancellationToken)
+            var review = await _reviewRepository.GetReviewByIdAsync(request.ReviewId, cancellationToken)
                 ?? throw new Exception("Review not found");
 
-            return new ReviewDetailResponse(review.Id, review.ReviewerId, review.SubjectType, review.SubjectId, review.Rating, review.Comment, review.CreatedAt);
+            return new ReviewDetailResponse(
+                review.Id,
+                review.ReviewerId,
+                review.SubjectType,
+                review.SubjectId,
+                review.Rating,
+                review.Comment,
+                review.CreatedAt
+            );
         }
     }
 }

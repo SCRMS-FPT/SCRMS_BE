@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using Matching.API.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,9 @@ builder.Services.AddCarter();
 
 builder.Services.AddDbContext<MatchingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
-
+builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+builder.Services.AddScoped<ISwipeActionRepository, SwipeActionRepository>();
+builder.Services.AddScoped<IUserSkillRepository, UserSkillRepository>();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddAuthentication(options =>
 {

@@ -5,6 +5,7 @@ using Matching.API.Data.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Matching.API.Data.Repositories;
 
 namespace Matching.API.Features.Swipe
 {
@@ -14,50 +15,51 @@ namespace Matching.API.Features.Swipe
 
     public class SwipeHandler : IRequestHandler<SwipeCommand, SwipeResult>
     {
+        private readonly ISwipeActionRepository _swipeActionRepository;
+        private readonly IMatchRepository _matchRepository;
         private readonly MatchingDbContext _context;
 
-        public SwipeHandler(MatchingDbContext context) => _context = context;
+        public SwipeHandler(
+            ISwipeActionRepository swipeActionRepository,
+            IMatchRepository matchRepository,
+            MatchingDbContext context)
+        {
+            _swipeActionRepository = swipeActionRepository;
+            _matchRepository = matchRepository;
+            _context = context;
+        }
 
         public async Task<SwipeResult> Handle(SwipeCommand request, CancellationToken cancellationToken)
         {
-            var swiperId = request.SwiperId;
-            var swipedUserId = request.SwipedUserId;
-
-            // Kiểm tra xem người kia đã swipe mình chưa
-            var reverseSwipe = await _context.SwipeActions
-                .FirstOrDefaultAsync(sa => sa.SwiperId == swipedUserId && sa.SwipedUserId == swiperId && sa.Decision == "pending", cancellationToken);
-
-            // Xác định decision cuối cùng
+            var reverseSwipe = await _swipeActionRepository.GetBySwiperAndSwipedAsync(request.SwipedUserId, request.SwiperId, cancellationToken);
             string finalDecision = reverseSwipe == null ? "pending" : "accepted";
             if (request.Decision == "reject") finalDecision = "rejected";
 
-            // Tạo bản ghi swipe mới
             var swipeAction = new SwipeAction
             {
                 Id = Guid.NewGuid(),
-                SwiperId = swiperId,
-                SwipedUserId = swipedUserId,
+                SwiperId = request.SwiperId,
+                SwipedUserId = request.SwipedUserId,
                 Decision = finalDecision,
                 CreatedAt = DateTime.UtcNow
             };
-            _context.SwipeActions.Add(swipeAction);
+            await _swipeActionRepository.AddSwipeActionAsync(swipeAction, cancellationToken);
 
             bool isMatch = false;
             if (finalDecision == "accepted" && reverseSwipe != null)
             {
-                // Cập nhật bản ghi của người kia thành "accepted"
                 reverseSwipe.Decision = "accepted";
+                await _swipeActionRepository.UpdateSwipeActionAsync(reverseSwipe, cancellationToken);
 
-                // Tạo bản ghi match
                 var match = new Match
                 {
                     Id = Guid.NewGuid(),
-                    InitiatorId = swipedUserId, // Người swipe trước là initiator
-                    MatchedUserId = swiperId,
+                    InitiatorId = request.SwipedUserId,
+                    MatchedUserId = request.SwiperId,
                     MatchTime = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow
                 };
-                _context.Matches.Add(match);
+                await _matchRepository.AddMatchAsync(match, cancellationToken);
                 isMatch = true;
             }
 

@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using Reviews.API.Cache;
 using Reviews.API.Clients;
+using Reviews.API.Data.Repositories;
 using System.Reflection;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,8 @@ public static class DependencyInjection
     {
         // Cache
         services.AddSingleton<ISubjectCache, MemorySubjectCache>();
+
+        services.AddScoped<IReviewRepository, ReviewRepository>();
 
         // HTTP Clients
         services.AddHttpClient<ICoachServiceClient, CoachServiceClient>(client =>
