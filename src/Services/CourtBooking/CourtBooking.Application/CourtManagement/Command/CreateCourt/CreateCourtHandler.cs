@@ -31,7 +31,7 @@ public class CreateCourtHandler(IApplicationDbContext context)
 
         var newId = CourtId.Of(Guid.NewGuid());
         var newCourt = Court.Create(
-            courtId: newId,
+            //courtId: newId,
             courtName: CourtName.Of(courtDTO.CourtName),
             sportCenterId: SportCenterId.Of(courtDTO.OwnerId),
             sportId: SportId.Of(courtDTO.SportId),

@@ -18,13 +18,13 @@ namespace CourtBooking.Domain.Models
         public IReadOnlyCollection<CourtSchedule> CourtSlots => _courtSlots.AsReadOnly();
 
 
-        public static Court Create(CourtId courtId, CourtName courtName, SportCenterId sportCenterId,
+        public static Court Create(CourtName courtName, SportCenterId sportCenterId,
             SportId sportId, TimeSpan slotDuration, string? description,
             string? facilities)
         {
             var court = new Court
             {
-                Id = courtId,
+                Id = CourtId.Of(Guid.NewGuid()),
                 CourtName = courtName,
                 SportCenterId = sportCenterId,
                 SportId = sportId,

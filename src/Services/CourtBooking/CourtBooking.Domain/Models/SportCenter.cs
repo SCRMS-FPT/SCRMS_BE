@@ -6,7 +6,7 @@ namespace CourtBooking.Domain.Models
 {
     public class SportCenter : Aggregate<SportCenterId>
     {
-        public Guid OwnerId { get; private set; }
+        public OwnerId OwnerId { get; private set; }
         public string Name { get; private set; }
         public string PhoneNumber { get; private set; }
         public Location Address { get; private set; }
@@ -19,7 +19,7 @@ namespace CourtBooking.Domain.Models
 
         private SportCenter() { } // Required for EF Core
 
-        private SportCenter(SportCenterId id, Guid ownerId, string name, string phoneNumber,
+        private SportCenter(SportCenterId id, OwnerId ownerId, string name, string phoneNumber,
             Location address, GeoLocation location, SportCenterImages images, string description)
         {
             Id = id;
@@ -32,10 +32,22 @@ namespace CourtBooking.Domain.Models
             Description = description ?? string.Empty;
         }
 
-        public static SportCenter Create(Guid ownerId, string name, string phoneNumber,
-            Location address, GeoLocation location, SportCenterImages images, string description = "")
+        public static SportCenter Create(SportCenterId id,OwnerId ownerId, string name, string phoneNumber,
+            Location address, GeoLocation location, SportCenterImages images, string description)
         {
-            return new SportCenter(SportCenterId.Of(Guid.NewGuid()), ownerId, name, phoneNumber, address, location, images, description);
+            var newSportCenter = new SportCenter {
+                Id = id,
+                OwnerId = ownerId,
+                Name = name,
+                PhoneNumber = phoneNumber,
+                Address = address,
+                LocationPoint = location,
+                Images = images,
+                Description = description
+            };
+
+            //newCenter.AddDomainEvent
+            return newSportCenter;
         }
 
         public void UpdateInfo(string name, string phoneNumber, string description)

@@ -18,6 +18,9 @@ namespace CourtBooking.Infrastructure.Data.Configuration;
                 .IsRequired();
 
             builder.Property(sc => sc.OwnerId)
+            .HasConversion(
+                id => id.Value,
+                value => OwnerId.Of(value))
                 .IsRequired();
 
             builder.Property(sc => sc.Name)
