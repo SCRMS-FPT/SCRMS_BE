@@ -21,16 +21,12 @@ namespace Identity.Application.ServicePackages.Commands.UpdatePromotion
                 throw new NotFoundException("promotion", request.Id);
             }
 
-            // TODO: Must check the authority of promotion
-
             promotion.UpdatedAt = DateTime.UtcNow;
             promotion.Description = request.Description;    
             promotion.DiscountType = request.Type;
             promotion.DiscountValue = request.Value;
             promotion.ValidFrom = request.ValidFrom;
             promotion.ValidTo = request.ValidTo;
-            //TODO: A little confuse in here, should we also change the id of the package ?
-            promotion.ServicePackageId = request.Id;    
 
             _context.ServicePackagePromotions.Update(promotion);
             await _context.SaveChangesAsync(cancellationToken);

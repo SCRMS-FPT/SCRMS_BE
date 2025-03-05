@@ -27,7 +27,6 @@ namespace Identity.Application.ServicePackages.Commands.DeletePromotion
             {
                 throw new NotFoundException("promotion", request.PromotionId);
             }
-            // TODO: Must check the authority of promotion
             _context.ServicePackagePromotions.Remove(promotion);
 
             await _context.SaveChangesAsync(cancellationToken);

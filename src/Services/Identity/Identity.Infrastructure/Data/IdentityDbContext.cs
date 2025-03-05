@@ -3,7 +3,6 @@ using Identity.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace Identity.Infrastructure.Data
 {
@@ -13,7 +12,6 @@ namespace Identity.Infrastructure.Data
         public DbSet<ServicePackageSubscription> Subscriptions { get; set; }
 
         public DbSet<ServicePackagePromotion> ServicePackagePromotions { get; set; }
-        public DbSet<CoachServicePromotion> CoachPromotion { get; set; }
 
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
         {

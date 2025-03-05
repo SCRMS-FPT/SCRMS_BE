@@ -12,6 +12,7 @@ namespace Coach.API.Coaches.GetCoachById
                 var result = await sender.Send(new GetCoachByIdQuery(id));
                 return Results.Ok(result);
             })
+                .RequireAuthorization("Admin")
             .WithName("GetCoachById")
             .Produces<CoachResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound);

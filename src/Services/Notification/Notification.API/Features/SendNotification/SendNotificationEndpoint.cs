@@ -8,7 +8,7 @@ namespace Notification.API.Features.SendNotification
         Guid SendTo,
         string Title,
         string Content,
-        string Type, 
+        string Type,
         Boolean SendMail,
         string UserEmail
         );
@@ -26,6 +26,7 @@ namespace Notification.API.Features.SendNotification
 
                     return Results.Ok();
                 })
+            .RequireAuthorization("Admin")
             .WithName("SendNotification")
             .Produces<SendNotificationResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
