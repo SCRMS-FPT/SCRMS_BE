@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Coaches.UpdateCoach
 {
-    public record UpdateCoachCommand(Guid CoachId, string Bio, decimal RatePerHour, List<CoachSport> listSport) : ICommand<Unit>;
+    public record UpdateCoachCommand(Guid CoachId, string Bio, decimal RatePerHour, List<Guid> listSport) : ICommand<Unit>;
     public class UpdateCoachCommandValidator : AbstractValidator<UpdateCoachCommand>
     {
         public UpdateCoachCommandValidator()
@@ -35,8 +35,8 @@ namespace Coach.API.Coaches.UpdateCoach
             // ADD NEW LIST OF SPORT
             var listNewSport = command.listSport.Select(p => new CoachSport
             {
-                CoachId = p.CoachId,
-                SportId = p.SportId,
+                CoachId = coach.UserId,
+                SportId = p,
                 CreatedAt = DateTime.UtcNow
             }).ToList();
             await context.CoachSports.AddRangeAsync(listNewSport);

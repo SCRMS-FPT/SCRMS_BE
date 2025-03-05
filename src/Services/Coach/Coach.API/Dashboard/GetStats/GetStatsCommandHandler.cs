@@ -1,7 +1,5 @@
 ﻿using Coach.API.Data;
-using Coach.API.Schedules.UpdateSchedule;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.Replication.PgOutput.Messages;
 
 namespace Coach.API.Dashboard.GetStat
 {
@@ -42,13 +40,16 @@ namespace Coach.API.Dashboard.GetStat
                 var coach = await context.Coaches.FirstOrDefaultAsync(c => c.UserId == booking.CoachId);
                 if (package != null)
                 {
+                    // TODO: Must check again
                     totalRevenues += booking.TotalPrice;
                     numberOfLessons += package.SessionCount;
                 }
-                if (coach != null)
+                else
                 {
-                    // TODO: This really confuse because of RatePerHour attribute, which must change in the future
-                    totalRate += coach.RatePerHour;
+                    if (coach != null)
+                    {
+                        totalRevenues += coach.RatePerHour;
+                    }
                 }
             }
 

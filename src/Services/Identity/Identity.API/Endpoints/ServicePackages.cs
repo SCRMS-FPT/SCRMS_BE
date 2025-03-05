@@ -66,7 +66,8 @@ namespace Identity.API.Endpoints
                 await sender.Send(command);
                 return Results.Ok();
             });
-            group.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext) =>
+            var adminGroup2 = group.MapGroup("/api/service-packages").RequireAuthorization("Admin");
+            adminGroup2.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -77,7 +78,7 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
-            group.MapPost("/{packageId:guid}/promotions", async (Guid packageId, AddNewPromotionRequest request, ISender sender, HttpContext httpContext) =>
+            adminGroup2.MapPost("/{packageId:guid}/promotions", async (Guid packageId, AddNewPromotionRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -88,25 +89,25 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(command);
                 return Results.Created($"/api/promotions/{result.Id}", result);
             });
-            group.MapPut("/promotions/{promotionId:guid}", async (Guid promotionId, UpdatePromotionRequest request, ISender sender, HttpContext httpContext) =>
+            adminGroup2.MapPut("/promotions/{promotionId:guid}", async (Guid promotionId, UpdatePromotionRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
 
-                var command = new UpdatePromotionCommand(promotionId, userId ,request.PackageId, request.Description, request.Type, request.Value, request.ValidFrom, request.ValidTo);
+                var command = new UpdatePromotionCommand(promotionId, request.PackageId, request.Description, request.Type, request.Value, request.ValidFrom, request.ValidTo);
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
-            group.MapDelete("/promotions/{promotionId:guid}", async (Guid promotionId, ISender sender, HttpContext httpContext) =>
+            adminGroup2.MapDelete("/promotions/{promotionId:guid}", async (Guid promotionId, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
 
-                var command = new DeletePromotionCommand(promotionId, userId);
+                var command = new DeletePromotionCommand(promotionId);
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });

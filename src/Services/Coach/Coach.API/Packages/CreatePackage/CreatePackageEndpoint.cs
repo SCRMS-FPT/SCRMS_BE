@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 
 namespace Coach.API.Packages.CreatePackage
 {
@@ -19,7 +20,8 @@ namespace Coach.API.Packages.CreatePackage
                 [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 

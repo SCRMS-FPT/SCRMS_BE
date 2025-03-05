@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Notification.API.Features.GetNotifications
 {
@@ -18,7 +19,8 @@ namespace Notification.API.Features.GetNotifications
                 int Page = 1,
                 int Limit = 10) =>
                 {
-                    var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                    var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                     if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                         return Results.Unauthorized();
