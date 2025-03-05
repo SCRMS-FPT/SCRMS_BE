@@ -15,7 +15,7 @@ namespace Identity.Application.ServicePackages.Queries.GetUserSubscriptions
 
         public async Task<UserSubscriptionsDto> Handle(GetUserSubscriptionsQuery query, CancellationToken cancellationToken)
         {
-            var subscriptions = await _subscriptionRepository.GetByUserIdAsync(query.UserId);
+            var subscriptions = await _subscriptionRepository.GetSubscriptionByUserIdAsync(query.UserId);
             var subscriptionDtos = subscriptions.Select(s => new UserSubscriptionDto(
                 s.Id,
                 s.PackageId,

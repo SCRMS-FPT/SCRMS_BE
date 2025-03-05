@@ -15,13 +15,13 @@ namespace Identity.Application.ServicePackages.Commands.RenewSubscription
 
         public async Task<Unit> Handle(RenewSubscriptionCommand command, CancellationToken cancellationToken)
         {
-            var subscription = await _subscriptionRepository.GetByIdAsync(command.SubscriptionId);
+            var subscription = await _subscriptionRepository.GetSubscriptionByIdAsync(command.SubscriptionId);
             if (subscription == null || subscription.UserId != command.UserId)
                 throw new DomainException("Subscription not found or unauthorized");
 
             subscription.EndDate = subscription.EndDate.AddDays(command.AdditionalDurationDays);
             subscription.UpdatedAt = DateTime.UtcNow;
-            await _subscriptionRepository.UpdateAsync(subscription);
+            await _subscriptionRepository.UpdateSubscriptionAsync(subscription);
 
             return Unit.Value;
         }

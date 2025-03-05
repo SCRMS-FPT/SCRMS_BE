@@ -30,7 +30,7 @@ namespace Identity.Application.Identity.Commands.Register
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await _userRepository.CreateAsync(user, command.Password);
+            var result = await _userRepository.CreateUserAsync(user, command.Password);
 
             if (!result.Succeeded)
             {

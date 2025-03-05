@@ -17,7 +17,7 @@ namespace Identity.Application.ServicePackages.Queries.ServicePackagesManagement
             GetServicePackageByIdQuery request,
             CancellationToken cancellationToken)
         {
-            var package = await _packageRepository.GetByIdAsync(request.Id);
+            var package = await _packageRepository.GetServicePackageByIdAsync(request.Id);
             return package?.Adapt<ServicePackageDto>();
         }
     }

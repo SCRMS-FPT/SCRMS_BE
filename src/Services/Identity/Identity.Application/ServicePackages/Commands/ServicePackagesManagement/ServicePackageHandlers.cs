@@ -33,7 +33,7 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
                 request.AssociatedRole,
                 request.Status ?? "active");
 
-            await _packageRepository.AddAsync(package);
+            await _packageRepository.AddServicePackageAsync(package);
 
             return package.Adapt<ServicePackageDto>();
         }
@@ -42,7 +42,7 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
             UpdateServicePackageCommand request,
             CancellationToken cancellationToken)
         {
-            var package = await _packageRepository.GetByIdAsync(request.Id);
+            var package = await _packageRepository.GetServicePackageByIdAsync(request.Id);
             if (package == null)
                 throw new NotFoundException(nameof(ServicePackage), request.Id);
 
@@ -54,7 +54,7 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
                 request.AssociatedRole,
                 request.Status);
 
-            await _packageRepository.UpdateAsync(package);
+            await _packageRepository.UpdateServicePackageAsync(package);
 
             return package.Adapt<ServicePackageDto>();
         }
@@ -63,16 +63,16 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
             DeleteServicePackageCommand request,
             CancellationToken cancellationToken)
         {
-            var package = await _packageRepository.GetByIdAsync(request.Id);
+            var package = await _packageRepository.GetServicePackageByIdAsync(request.Id);
             if (package == null)
                 throw new NotFoundException(nameof(ServicePackage), request.Id);
 
-            if (await _subscriptionRepository.ExistsByPackageIdAsync(request.Id))
+            if (await _subscriptionRepository.ExistsSubscriptionByPackageIdAsync(request.Id))
             {
                 throw new ConflictException("Cannot delete package with active subscriptions");
             }
 
-            await _packageRepository.DeleteAsync(package);
+            await _packageRepository.DeleteServicePackageAsync(package);
 
             return Unit.Value;
         }

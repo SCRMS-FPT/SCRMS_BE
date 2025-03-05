@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Identity.Application.Data;
 using Identity.Application.Data.Repositories;
 using Identity.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Infrastructure.Data.Repositories
 {
@@ -18,29 +19,29 @@ namespace Identity.Infrastructure.Data.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<ServicePackage> GetByIdAsync(Guid packageId)
+        public async Task<ServicePackage> GetServicePackageByIdAsync(Guid packageId)
         {
             return await _dbContext.ServicePackages.FindAsync(packageId);
         }
 
-        public async Task<List<ServicePackage>> GetAllAsync()
+        public async Task<List<ServicePackage>> GetAllServicePackageAsync()
         {
             return await _dbContext.ServicePackages.ToListAsync();
         }
 
-        public async Task AddAsync(ServicePackage package)
+        public async Task AddServicePackageAsync(ServicePackage package)
         {
             _dbContext.ServicePackages.Add(package);
             await _dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
-        public async Task UpdateAsync(ServicePackage package)
+        public async Task UpdateServicePackageAsync(ServicePackage package)
         {
             _dbContext.ServicePackages.Update(package);
             await _dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
-        public async Task DeleteAsync(ServicePackage package)
+        public async Task DeleteServicePackageAsync(ServicePackage package)
         {
             _dbContext.ServicePackages.Remove(package);
             await _dbContext.SaveChangesAsync(CancellationToken.None);

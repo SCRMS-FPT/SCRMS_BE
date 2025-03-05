@@ -17,7 +17,7 @@ namespace Identity.Application.Identity.Queries.UserManagement
             GetUserByIdQuery request,
             CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(request.UserId);
+            var user = await _userRepository.GetUserByIdAsync(request.UserId);
             if (user == null || user.IsDeleted)
             {
                 return null;

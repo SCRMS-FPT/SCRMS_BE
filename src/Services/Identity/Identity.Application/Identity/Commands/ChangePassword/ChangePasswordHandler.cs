@@ -15,7 +15,7 @@ namespace Identity.Application.Identity.Commands.ChangePassword
 
         public async Task<Unit> Handle(ChangePasswordCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId);
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null)
                 throw new DomainException("User not found");
 

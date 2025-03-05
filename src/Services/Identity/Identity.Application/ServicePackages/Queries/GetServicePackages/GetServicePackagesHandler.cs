@@ -15,7 +15,7 @@ namespace Identity.Application.ServicePackages.Queries.GetServicePackages
 
         public async Task<List<ServicePackageDto>> Handle(GetServicePackagesQuery query, CancellationToken cancellationToken)
         {
-            var packages = await _packageRepository.GetAllAsync();
+            var packages = await _packageRepository.GetAllServicePackageAsync();
             return packages.Select(p => p.Adapt<ServicePackageDto>()).ToList();
         }
     }

@@ -9,15 +9,15 @@ namespace Identity.Application.Data.Repositories
 {
     public interface IUserRepository
     {
-        Task<User> GetByIdAsync(Guid userId);
+        Task<User> GetUserByIdAsync(Guid userId);
 
-        Task<User> GetByEmailAsync(string email);
+        Task<User> GetUserByEmailAsync(string email);
 
-        Task<IdentityResult> CreateAsync(User user, string password);
+        Task<IdentityResult> CreateUserAsync(User user, string password);
 
-        Task<IdentityResult> UpdateAsync(User user);
+        Task<IdentityResult> UpdateUserAsync(User user);
 
-        Task<IdentityResult> DeleteAsync(User user);
+        Task<IdentityResult> DeleteUserAsync(User user);
 
         Task<IList<string>> GetRolesAsync(User user);
 
@@ -31,6 +31,6 @@ namespace Identity.Application.Data.Repositories
 
         Task<IdentityResult> UpdatePasswordAsync(User user, string oldPassword, string newPassword);
 
-        Task<List<User>> GetAllAsync();
+        Task<List<User>> GetAllUserAsync();
     }
 }

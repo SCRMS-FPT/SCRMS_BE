@@ -17,7 +17,7 @@ namespace Identity.Application.Identity.Commands.Role
             AssignRolesToUserCommand command,
             CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId);
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null)
                 throw new DomainException("User not found");
 

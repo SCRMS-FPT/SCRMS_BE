@@ -28,7 +28,7 @@ namespace Identity.Application.Identity.Commands.Login
             LoginUserCommand command,
             CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByEmailAsync(command.Email);
+            var user = await _userRepository.GetUserByEmailAsync(command.Email);
 
             if (user == null || !await _userRepository.CheckPasswordAsync(user, command.Password))
             {

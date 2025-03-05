@@ -15,7 +15,7 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
 
         public async Task<UserDto> Handle(UpdateProfileCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId);
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null)
                 throw new DomainException("User not found");
 
@@ -26,7 +26,7 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
             user.Gender = Enum.Parse<Gender>(command.Gender, true);
             user.SelfIntroduction = command.SelfIntroduction;
 
-            var result = await _userRepository.UpdateAsync(user);
+            var result = await _userRepository.UpdateUserAsync(user);
             if (!result.Succeeded)
             {
                 throw new DomainException($"Failed to update profile: {string.Join(", ", result.Errors.Select(e => e.Description))}");

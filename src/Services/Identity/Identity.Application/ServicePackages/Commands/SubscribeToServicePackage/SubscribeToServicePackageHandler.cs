@@ -22,14 +22,14 @@ namespace Identity.Application.ServicePackages.Commands.SubscribeToServicePackag
 
         public async Task<SubscribeToServicePackageResult> Handle(SubscribeToServicePackageCommand command, CancellationToken cancellationToken)
         {
-            var package = await _packageRepository.GetByIdAsync(command.PackageId);
+            var package = await _packageRepository.GetServicePackageByIdAsync(command.PackageId);
             if (package == null)
                 throw new DomainException("Service package not found");
 
             if (package.Status != "active")
                 throw new DomainException("Cannot subscribe to an inactive service package");
 
-            var user = await _userRepository.GetByIdAsync(command.UserId);
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null)
                 throw new DomainException("User not found");
 
@@ -47,7 +47,7 @@ namespace Identity.Application.ServicePackages.Commands.SubscribeToServicePackag
                 UpdatedAt = DateTime.UtcNow
             };
 
-            await _subscriptionRepository.AddAsync(subscription);
+            await _subscriptionRepository.AddSubscriptionAsync(subscription);
 
             if (!(await _userRepository.GetRolesAsync(user)).Contains(package.AssociatedRole))
             {

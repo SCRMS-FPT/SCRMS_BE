@@ -17,14 +17,14 @@ namespace Identity.Application.Identity.Commands.UserManagement
             DeleteUserCommand command,
             CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId);
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null || user.IsDeleted)
             {
                 throw new DomainException("User not found");
             }
 
             user.IsDeleted = true;
-            await _userRepository.UpdateAsync(user);
+            await _userRepository.UpdateUserAsync(user);
             return Unit.Value;
         }
     }

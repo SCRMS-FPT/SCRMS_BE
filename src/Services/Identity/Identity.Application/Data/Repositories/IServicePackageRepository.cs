@@ -8,14 +8,14 @@ namespace Identity.Application.Data.Repositories
 {
     public interface IServicePackageRepository
     {
-        Task<ServicePackage> GetByIdAsync(Guid packageId);
+        Task<ServicePackage> GetServicePackageByIdAsync(Guid packageId);
 
-        Task<List<ServicePackage>> GetAllAsync();
+        Task<List<ServicePackage>> GetAllServicePackageAsync();
 
-        Task AddAsync(ServicePackage package);
+        Task AddServicePackageAsync(ServicePackage package);
 
-        Task UpdateAsync(ServicePackage package);
+        Task UpdateServicePackageAsync(ServicePackage package);
 
-        Task DeleteAsync(ServicePackage package);
+        Task DeleteServicePackageAsync(ServicePackage package);
     }
 }

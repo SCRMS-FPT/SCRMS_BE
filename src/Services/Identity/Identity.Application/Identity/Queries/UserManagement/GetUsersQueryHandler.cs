@@ -17,7 +17,7 @@ namespace Identity.Application.Identity.Queries.UserManagement
             GetUsersQuery request,
             CancellationToken cancellationToken)
         {
-            var users = await _userRepository.GetAllAsync();
+            var users = await _userRepository.GetAllUserAsync();
             var activeUsers = users.Where(u => !u.IsDeleted).ToList();
 
             var userDtos = new List<UserDto>();

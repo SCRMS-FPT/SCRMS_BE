@@ -20,27 +20,27 @@ namespace Identity.Infrastructure.Data.Repositories
             _userManager = userManager;
         }
 
-        public async Task<User> GetByIdAsync(Guid userId)
+        public async Task<User> GetUserByIdAsync(Guid userId)
         {
             return await _userManager.FindByIdAsync(userId.ToString());
         }
 
-        public async Task<User> GetByEmailAsync(string email)
+        public async Task<User> GetUserByEmailAsync(string email)
         {
             return await _userManager.FindByEmailAsync(email);
         }
 
-        public async Task<IdentityResult> CreateAsync(User user, string password)
+        public async Task<IdentityResult> CreateUserAsync(User user, string password)
         {
             return await _userManager.CreateAsync(user, password);
         }
 
-        public async Task<IdentityResult> UpdateAsync(User user)
+        public async Task<IdentityResult> UpdateUserAsync(User user)
         {
             return await _userManager.UpdateAsync(user);
         }
 
-        public async Task<IdentityResult> DeleteAsync(User user)
+        public async Task<IdentityResult> DeleteUserAsync(User user)
         {
             user.IsDeleted = true;
             return await _userManager.UpdateAsync(user);
@@ -82,7 +82,7 @@ namespace Identity.Infrastructure.Data.Repositories
             return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
 
-        public async Task<List<User>> GetAllAsync()
+        public async Task<List<User>> GetAllUserAsync()
         {
             return await _userManager.Users.ToListAsync();
         }

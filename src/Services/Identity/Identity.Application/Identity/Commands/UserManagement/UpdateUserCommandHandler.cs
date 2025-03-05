@@ -18,7 +18,7 @@ namespace Identity.Application.Identity.Commands.UserManagement
             UpdateUserCommand request,
             CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(request.UserId);
+            var user = await _userRepository.GetUserByIdAsync(request.UserId);
             if (user == null || user.IsDeleted)
             {
                 throw new UserNotFoundException(request.UserId);
@@ -29,7 +29,7 @@ namespace Identity.Application.Identity.Commands.UserManagement
             user.BirthDate = request.BirthDate;
             user.Gender = Enum.Parse<Gender>(request.Gender);
 
-            await _userRepository.UpdateAsync(user);
+            await _userRepository.UpdateUserAsync(user);
 
             return user.Adapt<UserDto>();
         }

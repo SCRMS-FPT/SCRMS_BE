@@ -8,16 +8,16 @@ namespace Identity.Application.Data.Repositories
 {
     public interface ISubscriptionRepository
     {
-        Task<ServicePackageSubscription> GetByIdAsync(Guid subscriptionId);
+        Task<ServicePackageSubscription> GetSubscriptionByIdAsync(Guid subscriptionId);
 
-        Task<List<ServicePackageSubscription>> GetByUserIdAsync(Guid userId);
+        Task<List<ServicePackageSubscription>> GetSubscriptionByUserIdAsync(Guid userId);
 
-        Task AddAsync(ServicePackageSubscription subscription);
+        Task AddSubscriptionAsync(ServicePackageSubscription subscription);
 
-        Task UpdateAsync(ServicePackageSubscription subscription);
+        Task UpdateSubscriptionAsync(ServicePackageSubscription subscription);
 
-        Task DeleteAsync(ServicePackageSubscription subscription);
+        Task DeleteSubscriptionAsync(ServicePackageSubscription subscription);
 
-        Task<bool> ExistsByPackageIdAsync(Guid packageId);
+        Task<bool> ExistsSubscriptionByPackageIdAsync(Guid packageId);
     }
 }
