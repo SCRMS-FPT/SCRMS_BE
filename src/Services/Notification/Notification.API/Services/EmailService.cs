@@ -6,7 +6,7 @@ namespace Notification.API.Services
 {
     public interface IEmailService
     {
-        Task<bool> SendEmailAsync(string to, string subject, string body);
+        Task<bool> SendEmailAsync(string to, string subject, string body, Boolean isHtml);
     }
 
     public class EmailService : IEmailService
@@ -21,7 +21,7 @@ namespace Notification.API.Services
                 ?? throw new Exception("SMTP_PASSWORD environment variable not set.");
         }
 
-        public async Task<bool> SendEmailAsync(string to, string subject, string body)
+        public async Task<bool> SendEmailAsync(string to, string subject, string body, Boolean isHtml)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace Notification.API.Services
                 message.From.Add(new MailboxAddress("Sports Court Management and Reservation System", _config["Smtp:Username"]));
                 message.To.Add(MailboxAddress.Parse(to));
                 message.Subject = subject;
-                message.Body = new TextPart("plain")
+                message.Body = new TextPart(isHtml ? "html" : "plain")
                 {
                     Text = body
                 };

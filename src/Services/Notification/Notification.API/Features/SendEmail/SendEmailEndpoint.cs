@@ -5,7 +5,7 @@ using Notification.Api.Features.SendEmail;
 
 namespace Notification.API.Features.SendEmail
 {
-    public record SendEmailRequest(string to, string subject, string body);
+    public record SendEmailRequest(string to, string subject, string body, Boolean isHtml);
     public class SendEmailEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -18,7 +18,7 @@ namespace Notification.API.Features.SendEmail
                     //if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     //    return Results.Unauthorized();
 
-                    var command = new SendEmailCommand(request.to, request.subject, request.body);
+                    var command = new SendEmailCommand(request.to, request.subject, request.body, request.isHtml);
 
                     var result = await sender.Send(command);
 
