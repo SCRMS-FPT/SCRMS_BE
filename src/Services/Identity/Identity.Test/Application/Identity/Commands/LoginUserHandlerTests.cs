@@ -1,26 +1,31 @@
-﻿using Identity.Application.Extensions;
-using Identity.Application.Identity.Commands.Login;
-using Microsoft.Extensions.Options;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
+using Identity.Application.Identity.Commands.Login;
+using Identity.Application.Dtos;
+using Identity.Domain.Exceptions;
+using Identity.Domain.Models;
+using MediatR;
+using Microsoft.Extensions.Options;
+using Moq;
+using Xunit;
+using Identity.Application.Data.Repositories;
+using Identity.Application.Extensions;
 
 namespace Identity.Test.Application.Identity.Commands
 {
     public class LoginUserHandlerTests
     {
-        private readonly Mock<UserManager<User>> _userManagerMock; private readonly IOptions<JwtSettings> _jwtSettings;
+        private readonly Mock<IUserRepository> _userRepositoryMock; private readonly IOptions<JwtSettings> _jwtSettings;
 
         public LoginUserHandlerTests()
         {
-            var store = new Mock<IUserStore<User>>();
-            _userManagerMock = new Mock<UserManager<User>>(store.Object, null, null, null, null, null, null, null, null);
-
+            _userRepositoryMock = new Mock<IUserRepository>();
             _jwtSettings = Options.Create(new JwtSettings
             {
-                Secret = "TestSecretKey123456789012345678901234",  // 32 ký tự = 256 bit
+                Secret = "TestSecretKey123456789012345678901234", // 32 characters (256 bits)
                 ExpiryHours = 1,
                 Issuer = "identity-service",
                 Audience = "webapp"
@@ -32,14 +37,14 @@ namespace Identity.Test.Application.Identity.Commands
         {
             // Arrange
             var user = new User { Id = Guid.NewGuid(), Email = "test@example.com", UserName = "test@example.com" };
-            _userManagerMock.Setup(x => x.FindByEmailAsync("test@example.com"))
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync("test@example.com"))
                 .ReturnsAsync(user);
-            _userManagerMock.Setup(x => x.CheckPasswordAsync(user, "password"))
+            _userRepositoryMock.Setup(x => x.CheckPasswordAsync(user, "password"))
                 .ReturnsAsync(true);
-            _userManagerMock.Setup(x => x.GetRolesAsync(user))
+            _userRepositoryMock.Setup(x => x.GetRolesAsync(user))
                 .ReturnsAsync(new List<string> { "User" });
 
-            var handler = new LoginUserHandler(_userManagerMock.Object, _jwtSettings);
+            var handler = new LoginUserHandler(_userRepositoryMock.Object, _jwtSettings);
             var command = new LoginUserCommand("test@example.com", "password");
 
             // Act
@@ -56,18 +61,17 @@ namespace Identity.Test.Application.Identity.Commands
         public async Task Handle_ShouldThrowException_WhenCredentialsAreInvalid()
         {
             // Arrange
-            _userManagerMock.Setup(x => x.FindByEmailAsync("wrong@example.com"))
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync("wrong@example.com"))
                 .ReturnsAsync((User)null);
 
-            var handler = new LoginUserHandler(_userManagerMock.Object, _jwtSettings);
+            var handler = new LoginUserHandler(_userRepositoryMock.Object, _jwtSettings);
             var command = new LoginUserCommand("wrong@example.com", "password");
 
             // Act
-            Func<Task> act = async () => { await handler.Handle(command, CancellationToken.None); };
+            Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
             // Assert
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage("Invalid credentials");
+            await act.Should().ThrowAsync<DomainException>().WithMessage("Invalid credentials");
         }
     }
 }

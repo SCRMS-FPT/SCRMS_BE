@@ -1,44 +1,44 @@
-﻿using Moq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Identity.Application.Identity.Queries.UserManagement;
-using Microsoft.AspNetCore.Identity;
 using FluentAssertions;
+using Identity.Application.Identity.Queries.UserManagement;
+using Identity.Application.Dtos;
+using Identity.Domain.Models;
+using MediatR;
+using Moq;
 using Xunit;
-using Identity.Test.Helpers;
+using Identity.Application.Data.Repositories;
 
 namespace Identity.Test.Application.Identity.Queries
 {
     public class GetUsersQueryHandlerTests
     {
-        private readonly Mock<UserManager<User>> _userManagerMock;
+        private readonly Mock<IUserRepository> _userRepositoryMock;
 
         public GetUsersQueryHandlerTests()
         {
-            var store = new Mock<IUserStore<User>>();
-            _userManagerMock = new Mock<UserManager<User>>(
-                store.Object, null, null, null, null, null, null, null, null);
-
-            var users = new List<User>
-            {
-                new User { Id = Guid.NewGuid(), FirstName = "Alice", IsDeleted = false },
-                new User { Id = Guid.NewGuid(), FirstName = "Bob", IsDeleted = false },
-                new User { Id = Guid.NewGuid(), FirstName = "Charlie", IsDeleted = true }
-            }.AsQueryable();
-
-            // Sử dụng TestAsyncEnumerable từ namespace Identity.Test.Helpers
-            var asyncUsers = new TestAsyncEnumerable<User>(users);
-            _userManagerMock.Setup(x => x.Users).Returns(asyncUsers);
+            _userRepositoryMock = new Mock<IUserRepository>();
         }
 
         [Fact]
         public async Task Handle_ShouldReturnOnlyNonDeletedUsers()
         {
             // Arrange
-            var handler = new GetUsersQueryHandler(_userManagerMock.Object);
+            var users = new List<User>
+        {
+            new User { Id = Guid.NewGuid(), FirstName = "Alice", IsDeleted = false },
+            new User { Id = Guid.NewGuid(), FirstName = "Bob", IsDeleted = false },
+            new User { Id = Guid.NewGuid(), FirstName = "Charlie", IsDeleted = true }
+        };
+            _userRepositoryMock.Setup(x => x.GetAllUserAsync())
+                .ReturnsAsync(users);
+            _userRepositoryMock.Setup(x => x.GetRolesAsync(It.IsAny<User>()))
+                .ReturnsAsync(new List<string> { "User" });
+
+            var handler = new GetUsersQueryHandler(_userRepositoryMock.Object);
             var query = new GetUsersQuery();
 
             // Act

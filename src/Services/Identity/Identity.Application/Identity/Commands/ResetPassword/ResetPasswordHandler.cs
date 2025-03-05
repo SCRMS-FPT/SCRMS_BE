@@ -15,7 +15,7 @@ namespace Identity.Application.Identity.Commands.ResetPassword
 
         public async Task<Unit> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByEmailAsync(command.Email);
+            var user = await _userRepository.GetUserByEmailAsync(command.Email);
             if (user == null)
                 throw new DomainException("User not found");
 
