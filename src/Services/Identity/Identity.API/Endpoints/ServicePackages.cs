@@ -1,7 +1,11 @@
 ﻿using Identity.Application.ServicePackages.Commands.CancelSubscription;
+using Identity.Application.ServicePackages.Commands.CreatePromotion;
+using Identity.Application.ServicePackages.Commands.DeletePromotion;
 using Identity.Application.ServicePackages.Commands.RenewSubscription;
 using Identity.Application.ServicePackages.Commands.ServicePackagesManagement;
 using Identity.Application.ServicePackages.Commands.SubscribeToServicePackage;
+using Identity.Application.ServicePackages.Commands.UpdatePromotion;
+using Identity.Application.ServicePackages.Queries.GetPromotions;
 using Identity.Application.ServicePackages.Queries.GetServicePackages;
 using Identity.Application.ServicePackages.Queries.ServicePackagesManagement;
 using Microsoft.AspNetCore.Mvc;
@@ -62,6 +66,50 @@ namespace Identity.API.Endpoints
                 await sender.Send(command);
                 return Results.Ok();
             });
+            group.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.Unauthorized();
+
+                var command = new GetPromotionsQuery(packageId);
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            });
+            group.MapPost("/{packageId:guid}/promotions", async (Guid packageId, AddNewPromotionRequest request, ISender sender, HttpContext httpContext) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.Unauthorized();
+
+                var command = new CreatePromotionCommand(packageId, request.Description, request.Type, request.Value, request.ValidFrom, request.ValidTo);
+                var result = await sender.Send(command);
+                return Results.Created($"/api/promotions/{result.Id}", result);
+            });
+            group.MapPut("/promotions/{promotionId:guid}", async (Guid promotionId, UpdatePromotionRequest request, ISender sender, HttpContext httpContext) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.Unauthorized();
+
+                var command = new UpdatePromotionCommand(promotionId, userId ,request.PackageId, request.Description, request.Type, request.Value, request.ValidFrom, request.ValidTo);
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            });
+            group.MapDelete("/promotions/{promotionId:guid}", async (Guid promotionId, ISender sender, HttpContext httpContext) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.Unauthorized();
+
+                var command = new DeletePromotionCommand(promotionId, userId);
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            });
             var adminGroup = group.MapGroup("/api/manage-packages").RequireAuthorization("Admin");
             adminGroup.MapPost("/create", async ([FromBody] CreateServicePackageRequest request, ISender sender) =>
             {
@@ -88,6 +136,8 @@ namespace Identity.API.Endpoints
     public record CancelRequest(Guid SubscriptionId);
     public record RenewRequest(Guid SubscriptionId, int AdditionalDurationDays);
     public record SubscribeRequest(Guid PackageId);
+    public record AddNewPromotionRequest(Guid PackageId, string Description, string Type, decimal Value, DateTime ValidFrom, DateTime ValidTo);
+    public record UpdatePromotionRequest(Guid PromotionId, Guid PackageId, string Description, string Type, decimal Value, DateTime ValidFrom, DateTime ValidTo);
 
     public record CreateServicePackageRequest(
         string Name,

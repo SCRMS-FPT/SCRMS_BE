@@ -4,7 +4,7 @@ using Notification.API.Services;
 
 namespace Notification.Api.Features.SendEmail
 {
-    public record SendEmailCommand(string To, string Subject, string Body) : ICommand<SendEmailResult>;
+    public record SendEmailCommand(string To, string Subject, string Body, Boolean IsHtml) : ICommand<SendEmailResult>;
     public record SendEmailResult(Boolean Sent);
     public class SendEmailCommandValidator : AbstractValidator<SendEmailCommand>
     {
@@ -32,7 +32,7 @@ namespace Notification.Api.Features.SendEmail
 
         public async Task<SendEmailResult> Handle(SendEmailCommand request, CancellationToken cancellationToken)
         {
-            var result = new SendEmailResult(await _emailService.SendEmailAsync(request.To, request.Subject, request.Body));
+            var result = new SendEmailResult(await _emailService.SendEmailAsync(request.To, request.Subject, request.Body, request.IsHtml));
             return result;
         }
     }

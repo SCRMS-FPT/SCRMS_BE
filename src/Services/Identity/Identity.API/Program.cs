@@ -71,6 +71,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+builder.Services.AddHttpClient("NotificationAPI", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7069"); 
+});
+
+
 var app = builder.Build();
 app.UseCors(builder =>
 {
