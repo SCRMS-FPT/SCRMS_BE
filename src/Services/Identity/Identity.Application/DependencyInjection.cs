@@ -1,4 +1,5 @@
 ﻿using BuildingBlocks.Behaviors;
+using Identity.Application.Data.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FeatureManagement;

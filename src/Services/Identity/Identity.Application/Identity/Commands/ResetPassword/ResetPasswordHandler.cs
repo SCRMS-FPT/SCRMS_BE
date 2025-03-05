@@ -1,4 +1,4 @@
-﻿using Identity.Domain.Exceptions;
+using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -9,16 +9,18 @@ namespace Identity.Application.Identity.Commands.ResetPassword
     {
         private readonly UserManager<User> _userManager;
         private readonly HttpClient _httpClient;
+        private readonly IUserRepository _userRepository;
 
-        public ResetPasswordHandler(UserManager<User> userManager, IHttpClientFactory httpClientFactory)
+        public ResetPasswordHandler(UserManager<User> userManager, IHttpClientFactory httpClientFactory, IUserRepository userRepository)
         {
             _userManager = userManager;
             _httpClient = httpClientFactory.CreateClient("NotificationAPI");
+            _userRepository = userRepository;
         }
 
         public async Task<Unit> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userManager.FindByEmailAsync(command.Email);
+            var user = await _userRepository.GetUserByEmailAsync(command.Email);
             if (user == null)
                 throw new DomainException("User not found");
 

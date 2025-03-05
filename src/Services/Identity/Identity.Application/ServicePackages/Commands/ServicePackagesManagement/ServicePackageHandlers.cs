@@ -1,4 +1,7 @@
-﻿using Mapster;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
+using Mapster;
 
 namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagement
 {
@@ -7,11 +10,15 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
         ICommandHandler<UpdateServicePackageCommand, ServicePackageDto>,
         ICommandHandler<DeleteServicePackageCommand, Unit>
     {
-        private readonly IApplicationDbContext _context;
+        private readonly IServicePackageRepository _packageRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
 
-        public ServicePackageHandlers(IApplicationDbContext context)
+        public ServicePackageHandlers(
+            IServicePackageRepository packageRepository,
+            ISubscriptionRepository subscriptionRepository)
         {
-            _context = context;
+            _packageRepository = packageRepository;
+            _subscriptionRepository = subscriptionRepository;
         }
 
         public async Task<ServicePackageDto> Handle(
@@ -24,10 +31,9 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
                 request.Price,
                 request.DurationDays,
                 request.AssociatedRole,
-                request.Status ?? "active"); // Sử dụng Status từ request hoặc mặc định là "active"
+                request.Status ?? "active");
 
-            _context.ServicePackages.Add(package);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _packageRepository.AddServicePackageAsync(package);
 
             return package.Adapt<ServicePackageDto>();
         }
@@ -36,9 +42,7 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
             UpdateServicePackageCommand request,
             CancellationToken cancellationToken)
         {
-            var package = await _context.ServicePackages
-                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
-
+            var package = await _packageRepository.GetServicePackageByIdAsync(request.Id);
             if (package == null)
                 throw new NotFoundException(nameof(ServicePackage), request.Id);
 
@@ -50,7 +54,7 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
                 request.AssociatedRole,
                 request.Status);
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await _packageRepository.UpdateServicePackageAsync(package);
 
             return package.Adapt<ServicePackageDto>();
         }
@@ -59,19 +63,16 @@ namespace Identity.Application.ServicePackages.Commands.ServicePackagesManagemen
             DeleteServicePackageCommand request,
             CancellationToken cancellationToken)
         {
-            var package = await _context.ServicePackages
-                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
-
+            var package = await _packageRepository.GetServicePackageByIdAsync(request.Id);
             if (package == null)
                 throw new NotFoundException(nameof(ServicePackage), request.Id);
 
-            if (await _context.Subscriptions.AnyAsync(x => x.PackageId == request.Id, cancellationToken))
+            if (await _subscriptionRepository.ExistsSubscriptionByPackageIdAsync(request.Id))
             {
                 throw new ConflictException("Cannot delete package with active subscriptions");
             }
 
-            _context.ServicePackages.Remove(package);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _packageRepository.DeleteServicePackageAsync(package);
 
             return Unit.Value;
         }
