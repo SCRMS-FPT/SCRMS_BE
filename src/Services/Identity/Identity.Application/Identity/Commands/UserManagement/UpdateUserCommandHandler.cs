@@ -1,19 +1,25 @@
-﻿using Mapster;
-using Microsoft.AspNetCore.Identity;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
+using Mapster;
 
 namespace Identity.Application.Identity.Commands.UserManagement
 {
-    public class UpdateUserCommandHandler(
-        UserManager<User> userManager)
-        : ICommandHandler<UpdateUserCommand, UserDto>
+    public class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand, UserDto>
     {
+        private readonly IUserRepository _userRepository;
+
+        public UpdateUserCommandHandler(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
         public async Task<UserDto> Handle(
             UpdateUserCommand request,
             CancellationToken cancellationToken)
         {
-            var user = await userManager.FindByIdAsync(request.UserId.ToString());
-            if (user is null || user.IsDeleted)
+            var user = await _userRepository.GetByIdAsync(request.UserId);
+            if (user == null || user.IsDeleted)
             {
                 throw new UserNotFoundException(request.UserId);
             }
@@ -23,7 +29,7 @@ namespace Identity.Application.Identity.Commands.UserManagement
             user.BirthDate = request.BirthDate;
             user.Gender = Enum.Parse<Gender>(request.Gender);
 
-            await userManager.UpdateAsync(user);
+            await _userRepository.UpdateAsync(user);
 
             return user.Adapt<UserDto>();
         }

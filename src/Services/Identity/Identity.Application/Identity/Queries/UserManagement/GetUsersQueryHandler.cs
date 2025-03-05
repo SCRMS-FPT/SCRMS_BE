@@ -1,31 +1,31 @@
-﻿using Mapster;
-using Microsoft.AspNetCore.Identity;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Mapster;
 
 namespace Identity.Application.Identity.Queries.UserManagement
 {
-    public class GetUsersQueryHandler(
-        UserManager<User> userManager)
-        : IQueryHandler<GetUsersQuery, IEnumerable<UserDto>>
+    public class GetUsersQueryHandler : IQueryHandler<GetUsersQuery, IEnumerable<UserDto>>
     {
+        private readonly IUserRepository _userRepository;
+
+        public GetUsersQueryHandler(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
         public async Task<IEnumerable<UserDto>> Handle(
             GetUsersQuery request,
             CancellationToken cancellationToken)
         {
-            var users = await userManager.Users
-                .Where(u => !u.IsDeleted)
-                .ToListAsync(cancellationToken);
+            var users = await _userRepository.GetAllAsync();
+            var activeUsers = users.Where(u => !u.IsDeleted).ToList();
 
-            // Tạo danh sách UserDto với thông tin roles
             var userDtos = new List<UserDto>();
-            foreach (var user in users)
+            foreach (var user in activeUsers)
             {
-                // Lấy danh sách roles của user
-                var roles = await userManager.GetRolesAsync(user);
-
-                // Ánh xạ từ User sang UserDto và thêm roles
+                var roles = await _userRepository.GetRolesAsync(user);
                 var userDto = user.Adapt<UserDto>();
-                userDto = userDto with { Roles = roles.ToList() }; // Gán danh sách roles
-
+                userDto = userDto with { Roles = roles.ToList() };
                 userDtos.Add(userDto);
             }
 

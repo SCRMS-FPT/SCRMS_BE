@@ -1,15 +1,16 @@
-﻿using Identity.Domain.Exceptions;
-using Microsoft.AspNetCore.Identity;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
 
 namespace Identity.Application.Identity.Commands.Register
 {
     public sealed class RegisterUserHandler : ICommandHandler<RegisterUserCommand, RegisterUserResult>
     {
-        private readonly UserManager<User> _userManager;
+        private readonly IUserRepository _userRepository;
 
-        public RegisterUserHandler(UserManager<User> userManager)
+        public RegisterUserHandler(IUserRepository userRepository)
         {
-            _userManager = userManager;
+            _userRepository = userRepository;
         }
 
         public async Task<RegisterUserResult> Handle(
@@ -29,7 +30,7 @@ namespace Identity.Application.Identity.Commands.Register
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await _userManager.CreateAsync(user, command.Password);
+            var result = await _userRepository.CreateAsync(user, command.Password);
 
             if (!result.Succeeded)
             {

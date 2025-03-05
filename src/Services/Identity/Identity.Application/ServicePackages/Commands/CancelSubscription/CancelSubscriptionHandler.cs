@@ -1,31 +1,28 @@
-﻿using Identity.Domain.Exceptions;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
 
 namespace Identity.Application.ServicePackages.Commands.CancelSubscription
 {
     public class CancelSubscriptionHandler : ICommandHandler<CancelSubscriptionCommand, Unit>
     {
-        private readonly IApplicationDbContext _dbContext;
+        private readonly ISubscriptionRepository _subscriptionRepository;
 
-        public CancelSubscriptionHandler(IApplicationDbContext dbContext)
+        public CancelSubscriptionHandler(ISubscriptionRepository subscriptionRepository)
         {
-            _dbContext = dbContext;
+            _subscriptionRepository = subscriptionRepository;
         }
 
         public async Task<Unit> Handle(CancelSubscriptionCommand command, CancellationToken cancellationToken)
         {
-            var subscription = await _dbContext.Subscriptions.FindAsync(command.SubscriptionId);
+            var subscription = await _subscriptionRepository.GetByIdAsync(command.SubscriptionId);
             if (subscription == null || subscription.UserId != command.UserId)
                 throw new DomainException("Subscription not found or unauthorized");
 
             subscription.Status = "cancelled";
             subscription.UpdatedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _subscriptionRepository.UpdateAsync(subscription);
 
-            // Returning Unit.Value to indicate that the operation completed successfully with no result.
             return Unit.Value;
         }
     }
