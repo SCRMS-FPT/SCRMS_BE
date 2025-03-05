@@ -1,20 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Identity.Application.Identity.Commands.ChangePassword;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
+using Identity.Domain.Models;
+using MediatR;
+using Moq;
+using Xunit;
 
 namespace Identity.Test.Application.Identity.Commands
 {
     public class ChangePasswordHandlerTests
     {
-        private readonly Mock<UserManager<User>> _userManagerMock;
+        private readonly Mock<IUserRepository> _userRepositoryMock;
 
         public ChangePasswordHandlerTests()
         {
-            var store = new Mock<IUserStore<User>>();
-            _userManagerMock = new Mock<UserManager<User>>(store.Object, null, null, null, null, null, null, null, null);
+            _userRepositoryMock = new Mock<IUserRepository>();
         }
 
         [Fact]
@@ -22,12 +27,12 @@ namespace Identity.Test.Application.Identity.Commands
         {
             // Arrange
             var user = new User { Id = Guid.NewGuid(), UserName = "test@example.com" };
-            _userManagerMock.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            _userRepositoryMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
-            _userManagerMock.Setup(x => x.ChangePasswordAsync(user, "oldPass", "newPass"))
+            _userRepositoryMock.Setup(x => x.UpdatePasswordAsync(user, "oldPass", "newPass"))
                 .ReturnsAsync(IdentityResult.Success);
 
-            var handler = new ChangePasswordHandler(_userManagerMock.Object);
+            var handler = new ChangePasswordHandler(_userRepositoryMock.Object);
             var command = new ChangePasswordCommand(user.Id, "oldPass", "newPass");
 
             // Act
@@ -35,25 +40,23 @@ namespace Identity.Test.Application.Identity.Commands
 
             // Assert
             result.Should().Be(Unit.Value);
-            _userManagerMock.Verify(x => x.ChangePasswordAsync(user, "oldPass", "newPass"), Times.Once);
+            _userRepositoryMock.Verify(x => x.UpdatePasswordAsync(user, "oldPass", "newPass"), Times.Once);
         }
 
         [Fact]
         public async Task Handle_ShouldThrowException_WhenUserNotFound()
         {
             // Arrange
-            _userManagerMock.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            _userRepositoryMock.Setup(x => x.GetUserByIdAsync(It.IsAny<Guid>()))
                 .ReturnsAsync((User)null);
-
-            var handler = new ChangePasswordHandler(_userManagerMock.Object);
+            var handler = new ChangePasswordHandler(_userRepositoryMock.Object);
             var command = new ChangePasswordCommand(Guid.NewGuid(), "oldPass", "newPass");
 
             // Act
-            Func<Task> act = async () => { await handler.Handle(command, CancellationToken.None); };
+            Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
             // Assert
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage("User not found");
+            await act.Should().ThrowAsync<DomainException>().WithMessage("User not found");
         }
 
         [Fact]
@@ -61,17 +64,17 @@ namespace Identity.Test.Application.Identity.Commands
         {
             // Arrange
             var user = new User { Id = Guid.NewGuid(), UserName = "test@example.com" };
-            _userManagerMock.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            _userRepositoryMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
             var failedResult = IdentityResult.Failed(new IdentityError { Description = "Error changing password" });
-            _userManagerMock.Setup(x => x.ChangePasswordAsync(user, "oldPass", "newPass"))
+            _userRepositoryMock.Setup(x => x.UpdatePasswordAsync(user, "oldPass", "newPass"))
                 .ReturnsAsync(failedResult);
 
-            var handler = new ChangePasswordHandler(_userManagerMock.Object);
+            var handler = new ChangePasswordHandler(_userRepositoryMock.Object);
             var command = new ChangePasswordCommand(user.Id, "oldPass", "newPass");
 
             // Act
-            Func<Task> act = async () => { await handler.Handle(command, CancellationToken.None); };
+            Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
             // Assert
             await act.Should().ThrowAsync<DomainException>()

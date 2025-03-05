@@ -1,40 +1,56 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Identity.Application.ServicePackages.Commands.SubscribeToServicePackage;
+using Identity.Application.Exceptions;
+using Identity.Domain.Models;
+using Identity.Test.Fakes;
 using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+using Identity.Application.Data.Repositories;
 
 namespace Identity.Test.Application.ServicePackages
 {
     public class SubscribeToServicePackageHandlerTests
     {
+        private DbContextOptions<IdentityDbContext> GetOptions(string dbName) => new DbContextOptionsBuilder<IdentityDbContext>().UseInMemoryDatabase(databaseName: dbName).Options;
+
         [Fact]
         public async Task Handle_ShouldSubscribeSuccessfullyAndAssignRole()
         {
-            var options = new DbContextOptionsBuilder<IdentityDbContext>().UseInMemoryDatabase("SubscribeTest").Options; using var context = new IdentityDbContext(options);
+            // Arrange
+            var options = GetOptions("SubscribeTest");
+            using var context = new IdentityDbContext(options);
 
-            // Seed một service package
+            // Seed a service package
             var package = ServicePackage.Create("Test Package", "Description", 100, 30, "Premium");
             context.ServicePackages.Add(package);
             await context.SaveChangesAsync();
 
-            // Setup UserManager
+            // Setup UserRepository using Moq for user-related operations
             var user = new User { Id = Guid.NewGuid(), Email = "test@example.com", UserName = "test@example.com" };
-            var userManagerMock = new Mock<UserManager<User>>(Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
-            userManagerMock.Setup(x => x.FindByIdAsync(user.Id.ToString()))
+            var userRepoMock = new Mock<IUserRepository>();
+            userRepoMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
-            userManagerMock.Setup(x => x.IsInRoleAsync(user, "Premium"))
-                .ReturnsAsync(false);
-            userManagerMock.Setup(x => x.AddToRoleAsync(user, "Premium"))
+            userRepoMock.Setup(x => x.GetRolesAsync(user))
+                .ReturnsAsync(new System.Collections.Generic.List<string> { "User" });
+            userRepoMock.Setup(x => x.AddToRoleAsync(user, package.AssociatedRole))
                 .ReturnsAsync(IdentityResult.Success);
 
-            var handler = new SubscribeToServicePackageHandler(context, userManagerMock.Object);
+            var handler = new SubscribeToServicePackageHandler(
+                packageRepository: new FakeServicePackageRepository(context),
+                subscriptionRepository: new FakeSubscriptionRepository(context),
+                userRepository: userRepoMock.Object);
+
             var command = new SubscribeToServicePackageCommand(user.Id, package.Id);
 
+            // Act
             var result = await handler.Handle(command, CancellationToken.None);
 
+            // Assert
             result.Should().NotBeNull();
             result.PackageId.Should().Be(package.Id);
             result.AssignedRole.Should().Be("Premium");
@@ -47,23 +63,27 @@ namespace Identity.Test.Application.ServicePackages
         [Fact]
         public async Task Handle_ShouldThrowException_WhenPackageNotFound()
         {
-            var options = new DbContextOptionsBuilder<IdentityDbContext>()
-                .UseInMemoryDatabase("SubscribeTest_NotFound")
-                .Options;
+            // Arrange
+            var options = GetOptions("SubscribeTest_NotFound");
             using var context = new IdentityDbContext(options);
 
             var user = new User { Id = Guid.NewGuid(), Email = "test@example.com", UserName = "test@example.com" };
-            var userManagerMock = new Mock<UserManager<User>>(Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
-            userManagerMock.Setup(x => x.FindByIdAsync(user.Id.ToString()))
+            var userRepoMock = new Mock<IUserRepository>();
+            userRepoMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
 
-            var handler = new SubscribeToServicePackageHandler(context, userManagerMock.Object);
+            var handler = new SubscribeToServicePackageHandler(
+                packageRepository: new FakeServicePackageRepository(context),
+                subscriptionRepository: new FakeSubscriptionRepository(context),
+                userRepository: userRepoMock.Object);
+
             var command = new SubscribeToServicePackageCommand(user.Id, Guid.NewGuid());
 
-            Func<Task> act = async () => { await handler.Handle(command, CancellationToken.None); };
+            // Act
+            Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage("Service package not found");
+            // Assert
+            await act.Should().ThrowAsync<DomainException>().WithMessage("Service package not found");
         }
     }
 }

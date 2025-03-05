@@ -15,7 +15,7 @@ namespace Identity.Application.Identity.Queries.GetProfile
 
         public async Task<UserDto> Handle(GetProfileQuery query, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(query.UserId);
+            var user = await _userRepository.GetUserByIdAsync(query.UserId);
             if (user == null)
             {
                 throw new DomainException("User not found", 404, "The requested user could not be located in the system.");

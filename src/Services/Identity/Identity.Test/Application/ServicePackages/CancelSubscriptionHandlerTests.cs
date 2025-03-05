@@ -1,35 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Identity.Application.ServicePackages.Commands.CancelSubscription;
+using Identity.Application.Exceptions;
+using Identity.Domain.Models;
+using Identity.Test.Fakes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Identity.Infrastructure.Data;
+using Xunit;
 
 namespace Identity.Test.Application.ServicePackages
 {
     public class CancelSubscriptionHandlerTests
     {
+        private DbContextOptions<IdentityDbContext> GetOptions(string dbName) => new DbContextOptionsBuilder<IdentityDbContext>().UseInMemoryDatabase(databaseName: dbName).Options;
+
         [Fact]
         public async Task Handle_ShouldCancelSubscriptionSuccessfully()
-        { // Arrange: Use InMemoryDatabase cho IApplicationDbContext
-            var options = new DbContextOptionsBuilder<IdentityDbContext>().UseInMemoryDatabase(databaseName: "CancelSubscriptionTest").Options;
+        {
+            // Arrange
+            var options = GetOptions("CancelSubscriptionTest");
             using var context = new IdentityDbContext(options);
-            // Seed subscription
             var subscription = new ServicePackageSubscription
             {
                 UserId = Guid.NewGuid(),
                 PackageId = Guid.NewGuid(),
                 Status = "active",
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddDays(30),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
             context.Subscriptions.Add(subscription);
             await context.SaveChangesAsync();
 
-            var handler = new CancelSubscriptionHandler(context);
+            var handler = new CancelSubscriptionHandler(new FakeSubscriptionRepository(context));
             var command = new CancelSubscriptionCommand(subscription.Id, subscription.UserId);
 
             // Act
@@ -45,20 +50,16 @@ namespace Identity.Test.Application.ServicePackages
         public async Task Handle_ShouldThrowException_WhenSubscriptionNotFound()
         {
             // Arrange
-            var options = new DbContextOptionsBuilder<IdentityDbContext>()
-                .UseInMemoryDatabase(databaseName: "CancelSubscriptionTest_NotFound")
-                .Options;
-
+            var options = GetOptions("CancelSubscriptionTest_NotFound");
             using var context = new IdentityDbContext(options);
-            var handler = new CancelSubscriptionHandler(context);
+            var handler = new CancelSubscriptionHandler(new FakeSubscriptionRepository(context));
             var command = new CancelSubscriptionCommand(Guid.NewGuid(), Guid.NewGuid());
 
             // Act
-            Func<Task> act = async () => { await handler.Handle(command, CancellationToken.None); };
+            Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
             // Assert
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage("Subscription not found or unauthorized");
+            await act.Should().ThrowAsync<DomainException>().WithMessage("Subscription not found or unauthorized");
         }
     }
 }
