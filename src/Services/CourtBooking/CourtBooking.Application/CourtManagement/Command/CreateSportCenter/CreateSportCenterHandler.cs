@@ -42,7 +42,7 @@ public class CreateSportCenterHandler(IApplicationDbContext _context)
                 });
                 var newCourtId = CourtId.Of(Guid.NewGuid());
                 sportCenter.AddCourt(Court.Create(newCourtId,CourtName.Of(court.CourtName), newId,
-                    court.SportId, court.SlotDuration,
+                    SportId.Of(court.SportId), court.SlotDuration,
                     court.Description, facilitiesJson));
             }
 

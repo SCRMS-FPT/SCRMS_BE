@@ -7,14 +7,18 @@ using System.Threading.Tasks;
 
 namespace CourtBooking.Application.DTOs
 {
-    public record CourtDTO
-    (
-        string CourtName, 
-        string Description,
-        SportId SportId,
-        TimeSpan SlotDuration,
-        List<FacilityDTO> Facilities,
-        CourtStatus Status,
-        List<CourtScheduleDTO> CourtSlots
+    public record CourtDTO(
+    Guid Id,
+    string CourtName,
+    Guid SportId,
+    Guid SportCenterId,
+    string Description,
+    List<FacilityDTO>? Facilities,
+    TimeSpan SlotDuration,
+    CourtStatus Status,
+    string? SportName,
+    string? SportCenterName,
+    DateTime CreatedAt,
+    DateTime? LastModified
     );
 }

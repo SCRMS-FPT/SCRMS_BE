@@ -1,50 +1,56 @@
-//using MediatR;
-//using CourtBooking.Application.Data;
-//using CourtBooking.Application.DTOs;
-//using Microsoft.EntityFrameworkCore;
-//using System.Text.Json;
+// language: csharp
+using MediatR;
+using CourtBooking.Application.Data;
+using CourtBooking.Application.DTOs;
+using Microsoft.EntityFrameworkCore;
+using CourtBooking.Domain.ValueObjects;
+using System.Text.Json;
+using CourtBooking.Domain.Models;
 
-//public class GetCourtDetailsHandler(IApplicationDbContext _context)
-//    : IQueryHandler<GetCourtDetailsQuery, GetCourtDetailsResult>
-//{
-//    public async Task<GetCourtDetailsResult> Handle(GetCourtDetailsQuery query, CancellationToken cancellationToken)
-//    {
-//        var court = await _context.Courts
-//            //.Include(c => c.OperatingHours)
-//            .Join(
-//                _context.Sports,
-//                court => court.SportId,
-//                sport => sport.Id,
-//                (court, sport) => new { Court = court, Sport = sport }
-//            )
-//            .FirstOrDefaultAsync(x => x.Court.Id == CourtId.Of(query.CourtId), cancellationToken);
+public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHandler<GetCourtDetailsQuery, GetCourtDetailsResult>
+{
+    public async Task<GetCourtDetailsResult> Handle(GetCourtDetailsQuery query, CancellationToken cancellationToken)
+    {
+        var courtId = CourtId.Of(query.CourtId);
 
-//        if (court == null)
-//        {
-//            throw new KeyNotFoundException("Court not found");
-//        }
+        var court = await _context.Courts
+            .Include(c => c.CourtSlots)
+            .FirstOrDefaultAsync(c => c.Id == courtId, cancellationToken);
 
-//        //var courtDto = new CourtDTO(
-//        //    Id: court.Court.Id.Value,
-//        //    CourtName: court.Court.CourtName.Value,
-//        //    Description: court.Court.Description,
-//        //    Sport: new SportDTO(
-//        //        Name: court.Sport.Name,
-//        //        Description: court.Sport.Description
-//        //    ),
-//        //    //OwnerId: court.Court.OwnerId.Value,
+        if (court == null)
+        {
+            throw new KeyNotFoundException("Court not found");
+        }
 
-//        //);
-//        var courtDto = new CourtDTO(
-//            //Id: court.Court.Id.Value,
-//            CourtName: court.Court.CourtName.Value,
-//            Description: court.Court.Description
+        // Get related sport
+        var sport = await _context.Sports
+            .FirstOrDefaultAsync(s => s.Id == court.SportId, cancellationToken);
 
-            
-//            //OwnerId: court.Court.O,
-//            //Facilities: JsonSerializer.Deserialize<Dictionary<string, string>>(court.Court.Facilities)
-//        );
+        // Get related sport center
+        var sportCenter = await _context.SportCenters
+            .FirstOrDefaultAsync(sc => sc.Id == court.SportCenterId, cancellationToken);
 
-//        return new GetCourtDetailsResult(courtDto);
-//    }
-//}
+        List<FacilityDTO>? facilities = null;
+        if (!string.IsNullOrEmpty(court.Facilities))
+        {
+            facilities = JsonSerializer.Deserialize<List<FacilityDTO>>(court.Facilities);
+        }
+
+        var courtDto = new CourtDTO(
+            Id: court.Id.Value,
+            CourtName: court.CourtName.Value,
+            SportId: court.SportId.Value,
+            SportCenterId: court.SportCenterId.Value,
+            Description: court.Description,
+            Facilities: facilities,
+            SlotDuration: court.SlotDuration,
+            Status: court.Status,
+            SportName: sport?.Name,
+            SportCenterName: sportCenter?.Name,
+            CreatedAt: court.CreatedAt,
+            LastModified: court.LastModified
+        );
+
+        return new GetCourtDetailsResult(courtDto);
+    }
+}
