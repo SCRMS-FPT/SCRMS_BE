@@ -1,14 +1,34 @@
-version: '3.4'
+version: '3.8'
 
 services:
-  identitydb:
-    container_name: identitydb
+  courtbookingdb:
+    image: postgres:latest
+    container_name: courtbookingdb
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=IdentityDb
-    restart: always
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=CourtBookingDB
     ports:
-        - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_identity:/var/lib/postgresql/data/     
+      - postgres_courtbooking:/var/lib/postgresql/data
+
+  courtbooking.api:
+    image: courtbooking-api
+    build:
+      context: .
+      dockerfile: src/Services/CourtBooking/CourtBooking.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Database=Host=courtbookingdb;Port=5432;Database=CourtBookingDB;Username=postgres;Password=2405
+    ports:
+      - "6003:8080"
+      - "6063:8081"
+    depends_on:
+      - courtbookingdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+volumes:
+  postgres_courtbooking:

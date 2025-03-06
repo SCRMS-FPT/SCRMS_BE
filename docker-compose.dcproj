@@ -12,8 +12,5 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
-    <None Include="src\Services\CourtBooking\CourtBooking.API\Endpoints\GetCourtDetails.cs" />
-    <None Include="src\Services\CourtBooking\CourtBooking.Application\CourtManagement\Queries\GetCourtDetails\GetCourtDetailsHandler.cs" />
-    <None Include="src\Services\CourtBooking\CourtBooking.Application\CourtManagement\Queries\GetCourtDetails\GetCourtDetailsQuery.cs" />
   </ItemGroup>
 </Project>
