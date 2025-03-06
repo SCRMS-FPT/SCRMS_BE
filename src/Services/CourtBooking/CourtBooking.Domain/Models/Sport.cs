@@ -24,9 +24,18 @@ namespace CourtBooking.Domain.Models
                 Id = sportId,
                 Name = name,
                 Description = description,
-                Icon = icon
+                Icon = icon,
+                CreatedAt = DateTime.UtcNow
             };
             return sport;
+        }
+
+        public void Update(string name, string description, string icon)
+        {
+            Name = name;
+            Description = description;
+            Icon = icon;
+            SetLastModified(DateTime.UtcNow);
         }
     }
 }

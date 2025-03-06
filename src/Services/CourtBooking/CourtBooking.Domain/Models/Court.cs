@@ -37,12 +37,11 @@ namespace CourtBooking.Domain.Models
             return court;
         }
 
-        public void UpdateCourt(CourtName courtName, SportCenterId sportCenterId,
+        public void UpdateCourt(CourtName courtName,
             SportId sportId, TimeSpan slotDuration, string? description, 
             string? facilities, CourtStatus courtStatus)
         {
             CourtName = courtName;
-            SportCenterId = sportCenterId;
             SportId = sportId;
             SlotDuration = slotDuration;
             Description = description;

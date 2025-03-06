@@ -12,6 +12,7 @@ namespace CourtBooking.Application.DTOs
         int[] DayOfWeek, 
         TimeSpan StartTime, 
         TimeSpan EndTime, 
-        decimal PriceSlot
+        decimal PriceSlot,
+        int Status
     );
 }
