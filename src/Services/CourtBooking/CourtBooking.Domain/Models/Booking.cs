@@ -14,6 +14,7 @@ namespace CourtBooking.Domain.Models
         public TimeSpan StartTime { get; private set; }
         public TimeSpan EndTime { get; private set; }
         public BookingStatus Status { get; private set; }
+        public decimal TotalPrice { get; private set; }
         public PromotionId? PromotionId { get; private set; }
         private List<BookingPrice> _bookingPrices = new();
         public IReadOnlyCollection<BookingPrice> BookingPrices => _bookingPrices.AsReadOnly();
@@ -62,9 +63,19 @@ namespace CourtBooking.Domain.Models
             Status = BookingStatus.Cancelled;
         }
 
-        public decimal GetTotalPrice()
+        public void CalculateTotalPrice(IEnumerable<CourtSchedule> courtSchedules)
         {
-            return _bookingPrices.Sum(bp => bp.Price);
+            TotalPrice = 0;
+            foreach (var schedule in courtSchedules)
+            {
+                if (StartTime < schedule.EndTime && EndTime > schedule.StartTime)
+                {
+                    var overlapStart = StartTime > schedule.StartTime ? StartTime : schedule.StartTime;
+                    var overlapEnd = EndTime < schedule.EndTime ? EndTime : schedule.EndTime;
+                    var overlapDuration = overlapEnd - overlapStart;
+                    TotalPrice += (decimal)overlapDuration.TotalHours * schedule.PriceSlot;
+                }
+            }
         }
     }
 }

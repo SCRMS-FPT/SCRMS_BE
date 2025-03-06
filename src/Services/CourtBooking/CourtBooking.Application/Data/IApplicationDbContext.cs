@@ -12,6 +12,9 @@ namespace CourtBooking.Application.Data
         DbSet<CourtSchedule> CourtSlots { get; }
         DbSet<Sport> Sports { get; }
         DbSet<SportCenter> SportCenters { get; }
+        DbSet<Booking> Bookings { get; }
+        DbSet<BookingPrice> BookingPrices { get; }
+        DbSet<CourtPromotion> CourtPromotions { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
 }

@@ -43,6 +43,10 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                 .HasColumnType("TIME")
                 .IsRequired();
 
+            builder.Property(b => b.TotalPrice)
+                .HasColumnType("DECIMAL")
+                .IsRequired();
+
             builder.Property(b => b.Status)
                 .HasConversion(
                     status => (int)status,
