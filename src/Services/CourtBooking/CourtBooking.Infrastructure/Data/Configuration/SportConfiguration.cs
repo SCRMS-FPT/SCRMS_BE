@@ -20,8 +20,12 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                 .HasMaxLength(50)
                 .IsRequired();
 
-            builder.Property(s => s.Description)
+            builder.Property(s => s.Icon)
                 .HasColumnType("TEXT");
+
+            builder.Property(s => s.Description)
+                .HasColumnType("TEXT")
+                .IsRequired(false);
         }
     }
 }
