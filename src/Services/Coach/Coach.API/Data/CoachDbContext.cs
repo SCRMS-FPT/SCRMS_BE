@@ -15,6 +15,8 @@ namespace Coach.API.Data
         public DbSet<CoachBooking> CoachBookings => Set<CoachBooking>();
         public DbSet<CoachSport> CoachSports => Set<CoachSport>();
         public DbSet<CoachPackage> CoachPackages => Set<CoachPackage>();
+        public DbSet<CoachPackagePurchase> CoachPackagePurchases { get; set; }
+        public DbSet<CoachPromotion> CoachPromotions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +56,8 @@ namespace Coach.API.Data
                     .WithMany(p => p.Bookings) // Chỉ định navigation trong CoachPackage
                     .HasForeignKey(cb => cb.PackageId)
                     .IsRequired(false);
+                entity.Property(cb => cb.Status)
+                    .HasMaxLength(20);
                 entity.HasIndex(cb => cb.SportId);
             });
 
@@ -63,10 +67,28 @@ namespace Coach.API.Data
                 entity.Property(p => p.Name).HasMaxLength(255);
                 entity.Property(p => p.Description).HasMaxLength(1000);
                 entity.Property(p => p.Price).HasColumnType("decimal(18,2)");
-                entity.HasOne<Models.Coach>()
-                    .WithMany()
-                    .HasForeignKey(p => p.CoachId);
+                entity.HasOne(cp => cp.Coach)
+                    .WithMany(c => c.Packages)
+                    .HasForeignKey(cp => cp.CoachId);
             });
+
+            modelBuilder.Entity<CoachPackagePurchase>()
+           .HasKey(cpp => cpp.Id);
+            modelBuilder.Entity<CoachPackagePurchase>()
+                .HasOne(cpp => cpp.CoachPackage)
+                .WithMany(cp => cp.Purchases)
+                .HasForeignKey(cpp => cpp.CoachPackageId);
+
+            // **CoachPromotion**
+            modelBuilder.Entity<CoachPromotion>()
+                .HasKey(cp => cp.Id);
+            modelBuilder.Entity<CoachPromotion>()
+                .HasOne(cp => cp.Coach)
+                .WithMany(c => c.Promotions)
+                .HasForeignKey(cp => cp.CoachId);
+            modelBuilder.Entity<CoachPromotion>()
+                .Property(cp => cp.DiscountType)
+                .HasMaxLength(50);
         }
     }
 }

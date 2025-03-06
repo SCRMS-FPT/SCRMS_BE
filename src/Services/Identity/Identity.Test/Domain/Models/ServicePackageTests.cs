@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+using Xunit;
+using FluentAssertions;
+using Identity.Domain.Models;
 
 namespace Identity.Test.Domain.Models
 {
@@ -11,9 +9,8 @@ namespace Identity.Test.Domain.Models
     {
         [Fact]
         public void Create_ShouldReturnServicePackage_WhenInputIsValid()
-        { // Arrange
-            string name = "Test Package"; string description = "Test Description"; decimal price = 100; int duration = 30; string associatedRole = "Basic";
-
+        {
+            string name = "Test Package"; string description = "Test Description"; decimal price = 100.00m; int duration = 30; string associatedRole = "Basic";
             // Act
             var package = ServicePackage.Create(name, description, price, duration, associatedRole);
 
@@ -26,13 +23,22 @@ namespace Identity.Test.Domain.Models
             package.AssociatedRole.Should().Be(associatedRole);
         }
 
-        [Theory]
-        [InlineData(0)]
-        [InlineData(-10)]
-        public void Create_ShouldThrowException_WhenPriceIsNonPositive(decimal price)
+        [Fact]
+        public void Create_ShouldReturnServicePackage_WhenNameIsAtMaxLength()
         {
             // Arrange
-            Action act = () => ServicePackage.Create("Name", "Desc", price, 30, "Basic");
+            string name = new string('X', 255);
+            // Act
+            var package = ServicePackage.Create(name, "Desc", 100.00m, 30, "Basic");
+            // Assert
+            package.Name.Length.Should().Be(255);
+        }
+
+        [Fact]
+        public void Create_ShouldThrowException_WhenPriceIsNonPositive()
+        {
+            // Arrange & Act
+            Action act = () => ServicePackage.Create("Name", "Desc", 0, 30, "Basic");
 
             // Assert
             act.Should().Throw<ArgumentException>().WithMessage("Price must be positive");

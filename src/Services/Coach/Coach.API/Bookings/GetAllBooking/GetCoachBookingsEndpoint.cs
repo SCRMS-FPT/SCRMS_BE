@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Bookings.GetAllBooking
@@ -10,17 +11,22 @@ namespace Coach.API.Bookings.GetAllBooking
             app.MapGet("/bookings", async (
                 [FromServices] ISender sender,
                 HttpContext httpContext,
-                int Page,
-                int RecordPerPage) =>
+                [FromQuery] DateOnly? StartDate,
+                [FromQuery] DateOnly? EndDate,
+                [FromQuery] String? Status,
+                [FromQuery] int Page,
+                [FromQuery] int RecordPerPage) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                     ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                var result = await sender.Send(new GetCoachBookingsQuery(coachUserId, Page, RecordPerPage));
+                var result = await sender.Send(new GetCoachBookingsQuery(coachUserId, Page, RecordPerPage, Status, StartDate, EndDate));
+
                 return Results.Ok(result);
             })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("GetCoachBookings")
             .Produces<List<BookingHistoryResult>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)

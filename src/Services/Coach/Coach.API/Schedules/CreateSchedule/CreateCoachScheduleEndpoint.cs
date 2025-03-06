@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 
 namespace Coach.API.Schedules.AddSchedule
 {
@@ -8,8 +9,6 @@ namespace Coach.API.Schedules.AddSchedule
         TimeOnly StartTime,
         TimeOnly EndTime);
 
-    public record AddCoachScheduleResponse(Guid Id);
-
     public class AddCoachScheduleEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -17,7 +16,8 @@ namespace Coach.API.Schedules.AddSchedule
             app.MapPost("/schedules",
                 async ([FromBody] AddCoachScheduleRequest request, [FromServices] ISender sender, HttpContext httpContext) =>
                 {
-                    var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                    var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                     if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                         return Results.Unauthorized();
@@ -32,9 +32,9 @@ namespace Coach.API.Schedules.AddSchedule
 
                     return Results.Created($"/schedules/{result.Id}", result);
                 })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("CreateCoachSchedule")
-            .Produces<AddCoachScheduleResponse>(StatusCodes.Status201Created)
+            .Produces<CreateCoachScheduleResult>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .WithSummary("Create Coach Schedule")

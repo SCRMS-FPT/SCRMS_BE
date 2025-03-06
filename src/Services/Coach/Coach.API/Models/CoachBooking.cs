@@ -18,7 +18,7 @@ namespace Coach.API.Models
         public Guid? PackageId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public Coach Coach { get; set; }
-        public CoachPackage Package { get; set; }
+        public virtual Coach Coach { get; set; }
+        public virtual CoachPackage Package { get; set; }
     }
 }

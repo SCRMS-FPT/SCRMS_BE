@@ -1,4 +1,5 @@
 ﻿using Matching.API.Data;
+using Matching.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matching.API.Features.Matches.GetMatches
@@ -7,30 +8,22 @@ namespace Matching.API.Features.Matches.GetMatches
 
     public class GetMatchesHandler : IRequestHandler<GetMatchesQuery, List<MatchResponse>>
     {
-        private readonly MatchingDbContext _context;
+        private readonly IMatchRepository _matchRepository;
 
-        public GetMatchesHandler(MatchingDbContext context)
+        public GetMatchesHandler(IMatchRepository matchRepository)
         {
-            _context = context;
+            _matchRepository = matchRepository;
         }
 
         public async Task<List<MatchResponse>> Handle(GetMatchesQuery request, CancellationToken cancellationToken)
         {
-            var userId = request.UserId;
-            var matches = await _context.Matches
-                .Where(m => m.InitiatorId == userId || m.MatchedUserId == userId)
-                .Skip((request.Page - 1) * request.Limit)
-                .Take(request.Limit)
-                .Select(m => new MatchResponse
-                {
-                    Id = m.Id,
-                    PartnerId = m.InitiatorId == userId ? m.MatchedUserId : m.InitiatorId,
-                    MatchTime = m.MatchTime,
-                    Status = m.Status
-                })
-                .ToListAsync(cancellationToken);
-
-            return matches;
+            var matches = await _matchRepository.GetMatchesByUserIdAsync(request.UserId, request.Page, request.Limit, cancellationToken);
+            return matches.Select(m => new MatchResponse
+            {
+                Id = m.Id,
+                PartnerId = m.InitiatorId == request.UserId ? m.MatchedUserId : m.InitiatorId,
+                MatchTime = m.MatchTime
+            }).ToList();
         }
     }
 
@@ -39,6 +32,5 @@ namespace Matching.API.Features.Matches.GetMatches
         public Guid Id { get; set; }
         public Guid PartnerId { get; set; }
         public DateTime MatchTime { get; set; }
-        public string Status { get; set; }
     }
 }

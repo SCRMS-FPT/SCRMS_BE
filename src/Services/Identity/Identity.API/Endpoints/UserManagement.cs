@@ -10,7 +10,7 @@ namespace Identity.API.Endpoints
         {
             var group = app.MapGroup("/api/users").RequireAuthorization("Admin");
 
-            group.MapDelete("/users/{userId}", async (Guid userId, ISender sender) =>
+            group.MapDelete("/{userId}", async (Guid userId, ISender sender) =>
             {
                 await sender.Send(new DeleteUserCommand(userId));
                 return Results.NoContent();
@@ -39,7 +39,7 @@ namespace Identity.API.Endpoints
        string FirstName,
        string LastName,
        DateTime BirthDate,
-       Gender Gender
+       string Gender
    );
     }
 }

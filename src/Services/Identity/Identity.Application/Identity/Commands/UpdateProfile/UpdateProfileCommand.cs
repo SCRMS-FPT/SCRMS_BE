@@ -8,7 +8,8 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
         string LastName,
         string Phone,
         DateTime BirthDate,
-        string Gender
+        string Gender,
+        string SelfIntroduction = null
     ) : ICommand<UserDto>;
 
     public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>

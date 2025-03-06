@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Schedules.ViewAvailableSchedule
@@ -13,17 +14,18 @@ namespace Coach.API.Schedules.ViewAvailableSchedule
                 int Page = 1,
                 int RecordPerPage = 10) =>
             {
-                var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                var command = new ViewCoachAvailabilityCommand(coachUserId, Page, RecordPerPage);
+                var command = new ViewCoachAvailabilityQuery(coachUserId, Page, RecordPerPage);
                 var availableSlots = await sender.Send(command);
 
                 return Results.Ok(availableSlots);
             })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("ViewCoachAvailability")
             .Produces<List<AvailableScheduleSlot>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)

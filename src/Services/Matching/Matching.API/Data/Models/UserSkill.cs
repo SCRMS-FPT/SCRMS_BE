@@ -8,7 +8,7 @@ namespace Matching.API.Data.Models
         public Guid UserId { get; set; }
 
         [Required]
-        public int SportId { get; set; }
+        public Guid SportId { get; set; }
 
         [Required]
         [MaxLength(20)]

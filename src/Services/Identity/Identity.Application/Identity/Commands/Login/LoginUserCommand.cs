@@ -10,7 +10,7 @@ namespace Identity.Application.Identity.Commands.Login
     public record LoginUserResult(
         string Token,
         Guid UserId,
-        string Email
+        UserDto User
     );
 
     public class LoginUserValidator : AbstractValidator<LoginUserCommand>

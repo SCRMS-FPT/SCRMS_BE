@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Coach.API.Schedules.DeleteSchedule
@@ -12,7 +13,8 @@ namespace Coach.API.Schedules.DeleteSchedule
                 [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
@@ -22,7 +24,7 @@ namespace Coach.API.Schedules.DeleteSchedule
 
                 return result.IsDeleted ? Results.NoContent() : Results.Problem("Failed to delete schedule.");
             })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("DeleteCoachSchedule")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)

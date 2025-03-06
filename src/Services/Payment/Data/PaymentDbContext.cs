@@ -16,8 +16,9 @@ namespace Payment.API.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<WalletTransaction>()
-                .HasIndex(w => w.UserId)
-                .HasDatabaseName("IX_WalletTransactions_UserId");
+                .HasIndex(t => new { t.UserId, t.CreatedAt })
+                .IncludeProperties(t => t.Amount)
+                .HasDatabaseName("IX_Transactions_User_CreatedAt");
 
             modelBuilder.Entity<UserWallet>()
                 .HasKey(u => u.UserId);

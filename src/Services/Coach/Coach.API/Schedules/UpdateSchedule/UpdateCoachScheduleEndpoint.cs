@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Coach.API.Schedules.UpdateSchedule
 {
@@ -18,7 +19,8 @@ namespace Coach.API.Schedules.UpdateSchedule
             [FromServices] ISender sender,
             HttpContext httpContext) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
@@ -48,7 +50,7 @@ namespace Coach.API.Schedules.UpdateSchedule
                 //    return Results.Problem(title: "An error occurred", detail: ex.Message, statusCode: 500);
                 //}
             })
-        .RequireAuthorization()
+        .RequireAuthorization("Coach")
         .WithName("UpdateCoachSchedule")
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)

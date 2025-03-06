@@ -1,33 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Mapster;
 
 namespace Identity.Application.ServicePackages.Queries.GetServicePackages
 {
     public class GetServicePackagesHandler : IQueryHandler<GetServicePackagesQuery, List<ServicePackageDto>>
     {
-        private readonly IApplicationDbContext _dbContext;
+        private readonly IServicePackageRepository _packageRepository;
 
-        public GetServicePackagesHandler(IApplicationDbContext dbContext)
+        public GetServicePackagesHandler(IServicePackageRepository packageRepository)
         {
-            _dbContext = dbContext;
+            _packageRepository = packageRepository;
         }
 
         public async Task<List<ServicePackageDto>> Handle(GetServicePackagesQuery query, CancellationToken cancellationToken)
         {
-            return await _dbContext.ServicePackages
-                .Select(p => new ServicePackageDto(
-                    p.Id,
-                    p.Name,
-                    p.Description,
-                    p.Price,
-                    p.DurationDays,
-                    p.AssociatedRole,
-                    p.CreatedAt
-                ))
-                .ToListAsync(cancellationToken);
+            var packages = await _packageRepository.GetAllServicePackageAsync();
+            return packages.Select(p => p.Adapt<ServicePackageDto>()).ToList();
         }
     }
 }

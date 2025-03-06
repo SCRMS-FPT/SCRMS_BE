@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Reviews.API.Data.Repositories;
 
 namespace Reviews.API.Features.DeleteReview
 {
@@ -6,18 +7,21 @@ namespace Reviews.API.Features.DeleteReview
 
     public class DeleteReviewHandler : IRequestHandler<DeleteReviewCommand>
     {
-        private readonly ReviewDbContext _context;
+        private readonly IReviewRepository _reviewRepository;
 
-        public DeleteReviewHandler(ReviewDbContext context) => _context = context;
+        public DeleteReviewHandler(IReviewRepository reviewRepository)
+        {
+            _reviewRepository = reviewRepository;
+        }
 
         public async Task Handle(DeleteReviewCommand request, CancellationToken cancellationToken)
         {
-            var review = await _context.Reviews
-                .FirstOrDefaultAsync(r => r.Id == request.ReviewId && r.ReviewerId == request.UserId, cancellationToken)
-                ?? throw new Exception("Review not found or unauthorized");
+            var review = await _reviewRepository.GetReviewByIdAsync(request.ReviewId, cancellationToken);
+            if (review == null || review.ReviewerId != request.UserId)
+                throw new Exception("Review not found or unauthorized");
 
-            _context.Reviews.Remove(review);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _reviewRepository.RemoveReviewAsync(review, cancellationToken);
+            await _reviewRepository.SaveChangesAsync(cancellationToken);
         }
     }
 }

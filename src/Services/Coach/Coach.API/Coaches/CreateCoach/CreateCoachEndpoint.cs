@@ -40,7 +40,7 @@ namespace Coach.API.Coaches.CreateCoach
                 var result = await sender.Send(command);
                 return Results.Created($"/coaches/{result.Id}", result);
             })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("CreateCoach")
             .Produces<CreateCoachResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)

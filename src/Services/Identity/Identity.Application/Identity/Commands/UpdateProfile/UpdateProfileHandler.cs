@@ -1,32 +1,32 @@
-﻿using Identity.Domain.Exceptions;
-using Microsoft.AspNetCore.Identity;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
 
 namespace Identity.Application.Identity.Commands.UpdateProfile
 {
     public sealed class UpdateProfileHandler : ICommandHandler<UpdateProfileCommand, UserDto>
     {
-        private readonly UserManager<User> _userManager;
+        private readonly IUserRepository _userRepository;
 
-        public UpdateProfileHandler(UserManager<User> userManager)
+        public UpdateProfileHandler(IUserRepository userRepository)
         {
-            _userManager = userManager;
+            _userRepository = userRepository;
         }
 
         public async Task<UserDto> Handle(UpdateProfileCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userManager.FindByIdAsync(command.UserId.ToString());
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null)
                 throw new DomainException("User not found");
 
-            // Cập nhật thông tin người dùng
             user.FirstName = command.FirstName;
             user.LastName = command.LastName;
             user.PhoneNumber = command.Phone;
             user.BirthDate = command.BirthDate;
-            // Chuyển đổi string sang enum (giả sử enum Gender đã được định nghĩa)
             user.Gender = Enum.Parse<Gender>(command.Gender, true);
+            user.SelfIntroduction = command.SelfIntroduction;
 
-            var result = await _userManager.UpdateAsync(user);
+            var result = await _userRepository.UpdateUserAsync(user);
             if (!result.Succeeded)
             {
                 throw new DomainException($"Failed to update profile: {string.Join(", ", result.Errors.Select(e => e.Description))}");
@@ -40,6 +40,7 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
                 user.PhoneNumber,
                 user.BirthDate,
                 user.Gender.ToString(),
+                user.SelfIntroduction,
                 user.CreatedAt
             );
         }

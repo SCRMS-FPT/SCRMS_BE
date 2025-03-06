@@ -9,7 +9,7 @@ using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-// Đăng ký các dịch vụ từ các tầng
+
 builder.Services
     .AddApplicationServices(builder.Configuration)
     .AddInfrastructureServices(builder.Configuration)
@@ -33,6 +33,7 @@ builder.Services.AddAuthentication(options =>
         RoleClaimType = ClaimTypes.Role
     };
 });
+builder.Services.AddCors();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy =>
@@ -68,9 +69,21 @@ builder.Services.AddSwaggerGen(c =>
                         }
                     });
 });
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+builder.Services.AddHttpClient("NotificationAPI", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7069"); 
+});
+
 
 var app = builder.Build();
-
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseApiServices();

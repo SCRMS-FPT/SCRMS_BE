@@ -1,5 +1,7 @@
 ﻿using BuildingBlocks.Exceptions.Handler;
 using HealthChecks.UI.Client;
+using Identity.Application.Data.Repositories;
+using Identity.Infrastructure.Data.Repositories;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 namespace Identity.API
@@ -10,6 +12,10 @@ namespace Identity.API
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IServicePackageRepository, ServicePackageRepository>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+
             services.AddCarter();
             services.AddExceptionHandler<CustomExceptionHandler>();
             services.AddHealthChecks()

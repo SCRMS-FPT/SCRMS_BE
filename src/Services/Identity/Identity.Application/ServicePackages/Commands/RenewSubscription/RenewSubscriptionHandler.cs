@@ -1,31 +1,28 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
-using MediatR;
 
 namespace Identity.Application.ServicePackages.Commands.RenewSubscription
 {
     public class RenewSubscriptionHandler : ICommandHandler<RenewSubscriptionCommand, Unit>
     {
-        private readonly IApplicationDbContext _dbContext;
+        private readonly ISubscriptionRepository _subscriptionRepository;
 
-        public RenewSubscriptionHandler(IApplicationDbContext dbContext)
+        public RenewSubscriptionHandler(ISubscriptionRepository subscriptionRepository)
         {
-            _dbContext = dbContext;
+            _subscriptionRepository = subscriptionRepository;
         }
 
         public async Task<Unit> Handle(RenewSubscriptionCommand command, CancellationToken cancellationToken)
         {
-            var subscription = await _dbContext.Subscriptions.FindAsync(command.SubscriptionId);
+            var subscription = await _subscriptionRepository.GetSubscriptionByIdAsync(command.SubscriptionId);
             if (subscription == null || subscription.UserId != command.UserId)
                 throw new DomainException("Subscription not found or unauthorized");
 
             subscription.EndDate = subscription.EndDate.AddDays(command.AdditionalDurationDays);
             subscription.UpdatedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _subscriptionRepository.UpdateSubscriptionAsync(subscription);
 
-            // Return Unit.Value to indicate successful completion with no result
             return Unit.Value;
         }
     }

@@ -7,7 +7,7 @@ namespace Identity.Application.Identity.Commands.UserManagement
         string FirstName,
         string LastName,
         DateTime BirthDate,
-        Gender Gender
+        string Gender
     ) : ICommand<UserDto>;
 
     public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>

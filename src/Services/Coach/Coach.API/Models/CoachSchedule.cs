@@ -13,6 +13,6 @@ namespace Coach.API.Models
         public TimeOnly EndTime { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-        public Coach Coach { get; set; }
+        public virtual Coach Coach { get; set; }
     }
 }

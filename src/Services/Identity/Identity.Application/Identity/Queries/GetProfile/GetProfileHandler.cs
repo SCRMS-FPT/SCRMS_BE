@@ -1,20 +1,21 @@
-﻿using Identity.Domain.Exceptions;
+﻿using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Application.Identity.Queries.GetProfile
 {
     public sealed class GetProfileHandler : IQueryHandler<GetProfileQuery, UserDto>
     {
-        private readonly UserManager<User> _userManager;
+        private readonly IUserRepository _userRepository;
 
-        public GetProfileHandler(UserManager<User> userManager)
+        public GetProfileHandler(IUserRepository userRepository)
         {
-            _userManager = userManager;
+            _userRepository = userRepository;
         }
 
         public async Task<UserDto> Handle(GetProfileQuery query, CancellationToken cancellationToken)
         {
-            var user = await _userManager.FindByIdAsync(query.UserId.ToString());
+            var user = await _userRepository.GetUserByIdAsync(query.UserId);
             if (user == null)
             {
                 throw new DomainException("User not found", 404, "The requested user could not be located in the system.");
@@ -27,7 +28,7 @@ namespace Identity.Application.Identity.Queries.GetProfile
                 user.Email,
                 user.PhoneNumber,
                 user.BirthDate,
-                user.Gender.ToString(),
+                user.Gender.ToString(), null,
                 user.CreatedAt
             );
         }

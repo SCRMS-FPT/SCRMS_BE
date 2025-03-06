@@ -1,4 +1,5 @@
 ﻿using Coach.API.Data;
+using Coach.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Schedules.UpdateSchedule
@@ -26,55 +27,48 @@ namespace Coach.API.Schedules.UpdateSchedule
 
     internal class UpdateScheduleCommandHandler : ICommandHandler<UpdateScheduleCommand, UpdateScheduleResult>
     {
-        private readonly CoachDbContext context;
-        private readonly IMediator mediator;
+        private readonly ICoachScheduleRepository _scheduleRepository;
+        private readonly CoachDbContext _context;
+        private readonly IMediator _mediator;
 
-        public UpdateScheduleCommandHandler(CoachDbContext context, IMediator mediator)
+        public UpdateScheduleCommandHandler(
+            ICoachScheduleRepository scheduleRepository,
+            CoachDbContext context,
+            IMediator mediator)
         {
-            this.context = context;
-            this.mediator = mediator;
+            _scheduleRepository = scheduleRepository;
+            _context = context;
+            _mediator = mediator;
         }
 
         public async Task<UpdateScheduleResult> Handle(UpdateScheduleCommand command, CancellationToken cancellationToken)
         {
-            var schedule = await context.CoachSchedules
-                .FirstOrDefaultAsync(s => s.Id == command.ScheduleId, cancellationToken);
-
+            var schedule = await _scheduleRepository.GetCoachScheduleByIdAsync(command.ScheduleId, cancellationToken);
             if (schedule == null)
-            {
                 throw new ScheduleNotFoundException(command.ScheduleId);
-            }
 
             if (schedule.CoachId != command.CoachId)
-            {
                 throw new UnauthorizedAccessException("You are not authorized to update this schedule.");
-            }
 
-            var hasConflict = await context.CoachSchedules
-                .AnyAsync(s =>
-                    s.CoachId == command.CoachId &&
-                    s.Id != command.ScheduleId &&
-                    s.DayOfWeek == command.DayOfWeek &&
-                    (
-                        (command.StartTime >= s.StartTime && command.StartTime < s.EndTime) ||
-                        (command.EndTime > s.StartTime && command.EndTime <= s.EndTime) ||
-                        (command.StartTime <= s.StartTime && command.EndTime >= s.EndTime)
-                    ),
-                    cancellationToken);
+            var hasConflict = await _scheduleRepository.HasCoachScheduleConflictAsync(
+                command.CoachId,
+                command.DayOfWeek,
+                command.StartTime,
+                command.EndTime,
+                cancellationToken);
 
             if (hasConflict)
-            {
                 throw new ScheduleConflictException("The updated schedule conflicts with an existing schedule.");
-            }
 
             schedule.DayOfWeek = command.DayOfWeek;
             schedule.StartTime = command.StartTime;
             schedule.EndTime = command.EndTime;
             schedule.UpdatedAt = DateTime.UtcNow;
 
-            await context.SaveChangesAsync(cancellationToken);
+            await _scheduleRepository.UpdateCoachScheduleAsync(schedule, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
-            await mediator.Publish(new ScheduleUpdatedEvent(schedule.Id, schedule.CoachId), cancellationToken);
+            await _mediator.Publish(new ScheduleUpdatedEvent(schedule.Id, schedule.CoachId), cancellationToken);
 
             return new UpdateScheduleResult(true);
         }
@@ -87,5 +81,4 @@ namespace Coach.API.Schedules.UpdateSchedule
             // Nothing
         }
     }
-
 }

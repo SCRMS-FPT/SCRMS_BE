@@ -1,36 +1,38 @@
-﻿using Identity.Domain.Exceptions;
-using Microsoft.AspNetCore.Identity;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
 
 namespace Identity.Application.ServicePackages.Commands.SubscribeToServicePackage
 {
     public class SubscribeToServicePackageHandler : ICommandHandler<SubscribeToServicePackageCommand, SubscribeToServicePackageResult>
     {
-        private readonly IApplicationDbContext _dbContext;
-        private readonly UserManager<User> _userManager;
+        private readonly IServicePackageRepository _packageRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
+        private readonly IUserRepository _userRepository;
 
-        public SubscribeToServicePackageHandler(IApplicationDbContext dbContext, UserManager<User> userManager)
+        public SubscribeToServicePackageHandler(
+            IServicePackageRepository packageRepository,
+            ISubscriptionRepository subscriptionRepository,
+            IUserRepository userRepository)
         {
-            _dbContext = dbContext;
-            _userManager = userManager;
+            _packageRepository = packageRepository;
+            _subscriptionRepository = subscriptionRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<SubscribeToServicePackageResult> Handle(SubscribeToServicePackageCommand command, CancellationToken cancellationToken)
         {
-            // Tìm gói dịch vụ
-            var package = await _dbContext.ServicePackages.FindAsync(command.PackageId);
+            var package = await _packageRepository.GetServicePackageByIdAsync(command.PackageId);
             if (package == null)
                 throw new DomainException("Service package not found");
 
-            // Kiểm tra trạng thái gói dịch vụ
             if (package.Status != "active")
                 throw new DomainException("Cannot subscribe to an inactive service package");
 
-            // Tìm người dùng
-            var user = await _userManager.FindByIdAsync(command.UserId.ToString());
+            var user = await _userRepository.GetUserByIdAsync(command.UserId);
             if (user == null)
                 throw new DomainException("User not found");
 
-            // Tạo đăng ký gói dịch vụ
             var startDate = DateTime.UtcNow;
             var endDate = startDate.AddDays(package.DurationDays);
 
@@ -45,13 +47,11 @@ namespace Identity.Application.ServicePackages.Commands.SubscribeToServicePackag
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.Subscriptions.Add(subscription);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _subscriptionRepository.AddSubscriptionAsync(subscription);
 
-            // Gán vai trò nếu chưa có
-            if (!await _userManager.IsInRoleAsync(user, package.AssociatedRole))
+            if (!(await _userRepository.GetRolesAsync(user)).Contains(package.AssociatedRole))
             {
-                var result = await _userManager.AddToRoleAsync(user, package.AssociatedRole);
+                var result = await _userRepository.AddToRoleAsync(user, package.AssociatedRole);
                 if (!result.Succeeded)
                     throw new DomainException($"Failed to assign role: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             }

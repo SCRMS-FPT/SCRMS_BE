@@ -3,7 +3,6 @@ using Identity.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace Identity.Infrastructure.Data
 {
@@ -12,8 +11,11 @@ namespace Identity.Infrastructure.Data
         public DbSet<ServicePackage> ServicePackages { get; set; }
         public DbSet<ServicePackageSubscription> Subscriptions { get; set; }
 
+        public DbSet<ServicePackagePromotion> ServicePackagePromotions { get; set; }
+
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
         {
+
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -43,6 +45,20 @@ namespace Identity.Infrastructure.Data
                 .HasOne(s => s.User)
                 .WithMany()
                 .HasForeignKey(s => s.UserId);
+
+            builder.Entity<ServicePackagePromotion>()
+                .HasOne(p => p.ServicePackage)
+                .WithMany(sp => sp.Promotions) // Giả sử ServicePackage có thuộc tính Promotions
+                .HasForeignKey(p => p.ServicePackageId);
+
+            // Cấu hình giá trị mặc định cho CreatedAt và UpdatedAt
+            builder.Entity<ServicePackagePromotion>()
+                .Property(p => p.CreatedAt)
+                .HasDefaultValueSql("NOW()");
+
+            builder.Entity<ServicePackagePromotion>()
+                .Property(p => p.UpdatedAt)
+                .HasDefaultValueSql("NOW()");
         }
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken)

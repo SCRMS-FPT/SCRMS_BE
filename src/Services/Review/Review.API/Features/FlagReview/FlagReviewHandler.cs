@@ -1,12 +1,17 @@
-﻿namespace Reviews.API.Features.FlagReview
+﻿using Reviews.API.Data.Repositories;
+
+namespace Reviews.API.Features.FlagReview
 {
     public record FlagReviewCommand(Guid ReviewId, Guid ReportedBy, string FlagReason) : IRequest<Guid>;
 
     public class FlagReviewHandler : IRequestHandler<FlagReviewCommand, Guid>
     {
-        private readonly ReviewDbContext _context;
+        private readonly IReviewRepository _reviewRepository;
 
-        public FlagReviewHandler(ReviewDbContext context) => _context = context;
+        public FlagReviewHandler(IReviewRepository reviewRepository)
+        {
+            _reviewRepository = reviewRepository;
+        }
 
         public async Task<Guid> Handle(FlagReviewCommand request, CancellationToken cancellationToken)
         {
@@ -21,8 +26,8 @@
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.ReviewFlags.Add(flag);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _reviewRepository.AddReviewFlagAsync(flag, cancellationToken);
+            await _reviewRepository.SaveChangesAsync(cancellationToken);
             return flag.Id;
         }
     }

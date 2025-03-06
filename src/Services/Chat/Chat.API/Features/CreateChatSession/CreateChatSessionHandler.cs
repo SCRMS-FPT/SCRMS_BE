@@ -1,5 +1,4 @@
-﻿using Chat.API.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Chat.API.Features.CreateChatSession
 {
@@ -18,6 +17,7 @@ namespace Chat.API.Features.CreateChatSession
 
         public async Task<CreateChatSessionResult> Handle(CreateChatSessionCommand request, CancellationToken cancellationToken)
         {
+            // Kiểm tra phiên chat đã tồn tại chưa
             var existingSession = await _context.ChatSessions
                 .FirstOrDefaultAsync(cs => (cs.User1Id == request.User1Id && cs.User2Id == request.User2Id) ||
                                            (cs.User1Id == request.User2Id && cs.User2Id == request.User1Id), cancellationToken);
@@ -25,6 +25,7 @@ namespace Chat.API.Features.CreateChatSession
             if (existingSession != null)
                 return new CreateChatSessionResult(existingSession.Id);
 
+            // Tạo phiên chat mới
             var chatSession = new ChatSession
             {
                 Id = Guid.NewGuid(),

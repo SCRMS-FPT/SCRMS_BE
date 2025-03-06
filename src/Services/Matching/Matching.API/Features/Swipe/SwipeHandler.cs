@@ -1,31 +1,70 @@
-﻿using Matching.API.Data;
-using System.Security.Claims;
-using Microsoft.IdentityModel.JsonWebTokens;
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Matching.API.Data;
+using Matching.API.Data.Models;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Matching.API.Data.Repositories;
 
 namespace Matching.API.Features.Swipe
 {
-    public class SwipeEndpoint : ICarterModule
+    public record SwipeCommand(Guid SwipedUserId, string Decision, Guid SwiperId) : IRequest<SwipeResult>;
+
+    public record SwipeResult(bool IsMatch);
+
+    public class SwipeHandler : IRequestHandler<SwipeCommand, SwipeResult>
     {
-        public void AddRoutes(IEndpointRouteBuilder app)
+        private readonly ISwipeActionRepository _swipeActionRepository;
+        private readonly IMatchRepository _matchRepository;
+        private readonly MatchingDbContext _context;
+
+        public SwipeHandler(
+            ISwipeActionRepository swipeActionRepository,
+            IMatchRepository matchRepository,
+            MatchingDbContext context)
         {
-            app.MapPost("/api/matches/swipe", async (SwipeRequest request, ISender sender, HttpContext httpContext) =>
+            _swipeActionRepository = swipeActionRepository;
+            _matchRepository = matchRepository;
+            _context = context;
+        }
+
+        public async Task<SwipeResult> Handle(SwipeCommand request, CancellationToken cancellationToken)
+        {
+            var reverseSwipe = await _swipeActionRepository.GetBySwiperAndSwipedAsync(request.SwipedUserId, request.SwiperId, cancellationToken);
+            string finalDecision = reverseSwipe == null ? "pending" : "accepted";
+            if (request.Decision == "reject") finalDecision = "rejected";
+
+            var swipeAction = new SwipeAction
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
-                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                    return Results.Unauthorized();
+                Id = Guid.NewGuid(),
+                SwiperId = request.SwiperId,
+                SwipedUserId = request.SwipedUserId,
+                Decision = finalDecision,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _swipeActionRepository.AddSwipeActionAsync(swipeAction, cancellationToken);
 
-                if (!Guid.TryParse(userIdClaim.Value, out var userId))
-                    return Results.BadRequest("Invalid user id in token");
+            bool isMatch = false;
+            if (finalDecision == "accepted" && reverseSwipe != null)
+            {
+                reverseSwipe.Decision = "accepted";
+                await _swipeActionRepository.UpdateSwipeActionAsync(reverseSwipe, cancellationToken);
 
-                var command = new SwipeCommand(request.SwipedUserId, request.Decision, userId);
-                var result = await sender.Send(command);
-                return Results.Ok(result);
-            })
-            .RequireAuthorization()
-            .WithName("Swipe");
+                var match = new Match
+                {
+                    Id = Guid.NewGuid(),
+                    InitiatorId = request.SwipedUserId,
+                    MatchedUserId = request.SwiperId,
+                    MatchTime = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _matchRepository.AddMatchAsync(match, cancellationToken);
+                isMatch = true;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            return new SwipeResult(isMatch);
         }
     }
-
-    public record SwipeRequest(Guid SwipedUserId, string Decision);
 }

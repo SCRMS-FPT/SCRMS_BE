@@ -1,9 +1,4 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Application.Identity.Commands.ResetPassword
 {
@@ -15,7 +10,7 @@ namespace Identity.Application.Identity.Commands.ResetPassword
     {
         public ResetPasswordCommandValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().WithMessage("Old password is required");
+            RuleFor(x => x.Email).NotEmpty().WithMessage("Email is required");
         }
     }
 }

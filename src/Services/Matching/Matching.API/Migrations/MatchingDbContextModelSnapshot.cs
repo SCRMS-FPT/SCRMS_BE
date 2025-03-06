@@ -40,11 +40,6 @@ namespace Matching.API.Migrations
                     b.Property<Guid>("MatchedUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.HasKey("Id");
 
                     b.ToTable("Matches");
@@ -77,28 +72,13 @@ namespace Matching.API.Migrations
                     b.ToTable("SwipeActions");
                 });
 
-            modelBuilder.Entity("Matching.API.Data.Models.UserMatchInfo", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SelfIntroduction")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("UserMatchInfos");
-                });
-
             modelBuilder.Entity("Matching.API.Data.Models.UserSkill", b =>
                 {
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("SportId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("SportId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("SkillLevel")
                         .IsRequired()

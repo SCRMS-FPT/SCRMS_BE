@@ -1,4 +1,5 @@
 ﻿using Matching.API.Data;
+using Matching.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matching.API.Features.Suggestions
@@ -7,29 +8,25 @@ namespace Matching.API.Features.Suggestions
 
     public class GetSuggestionsHandler : IRequestHandler<GetSuggestionsQuery, List<UserProfile>>
     {
-        private readonly MatchingDbContext _context;
+        private readonly IUserSkillRepository _userSkillRepository;
 
-        public GetSuggestionsHandler(MatchingDbContext context)
+        public GetSuggestionsHandler(IUserSkillRepository userSkillRepository)
         {
-            _context = context;
+            _userSkillRepository = userSkillRepository;
         }
 
         public async Task<List<UserProfile>> Handle(GetSuggestionsQuery request, CancellationToken cancellationToken)
         {
-            var userId = request.UserId;
-            var swipedUserIds = await _context.SwipeActions
-                .Where(sa => sa.SwiperId == userId)
-                .Select(sa => sa.SwipedUserId)
-                .ToListAsync(cancellationToken);
+            // Gọi repository để lấy danh sách ID gợi ý
+            var suggestionUserIds = await _userSkillRepository.GetSuggestionUserIdsAsync(
+                request.UserId,
+                request.Page,
+                request.Limit,
+                cancellationToken
+            );
 
-            var suggestions = await _context.UserSkills
-                .Where(u => u.UserId != userId && !swipedUserIds.Contains(u.UserId))
-                .Skip((request.Page - 1) * request.Limit)
-                .Take(request.Limit)
-                .Select(u => new UserProfile { Id = u.UserId })
-                .ToListAsync(cancellationToken);
-
-            return suggestions;
+            // Chuyển đổi danh sách ID thành danh sách UserProfile
+            return suggestionUserIds.Select(id => new UserProfile { Id = id }).ToList();
         }
     }
 

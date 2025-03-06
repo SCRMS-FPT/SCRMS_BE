@@ -73,8 +73,8 @@ namespace Coach.API.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
@@ -100,9 +100,6 @@ namespace Coach.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("CoachId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CoachUserId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -131,9 +128,81 @@ namespace Coach.API.Migrations
 
                     b.HasIndex("CoachId");
 
-                    b.HasIndex("CoachUserId");
-
                     b.ToTable("CoachPackages");
+                });
+
+            modelBuilder.Entity("Coach.API.Models.CoachPackagePurchase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CoachPackageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PurchaseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SessionsUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachPackageId");
+
+                    b.ToTable("CoachPackagePurchases");
+                });
+
+            modelBuilder.Entity("Coach.API.Models.CoachPromotion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("ValidTo")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.ToTable("CoachPromotions");
                 });
 
             modelBuilder.Entity("Coach.API.Models.CoachSchedule", b =>
@@ -202,15 +271,35 @@ namespace Coach.API.Migrations
 
             modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", null)
-                        .WithMany()
+                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                        .WithMany("Packages")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Coach.API.Models.Coach", null)
-                        .WithMany("Packages")
-                        .HasForeignKey("CoachUserId");
+                    b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("Coach.API.Models.CoachPackagePurchase", b =>
+                {
+                    b.HasOne("Coach.API.Models.CoachPackage", "CoachPackage")
+                        .WithMany("Purchases")
+                        .HasForeignKey("CoachPackageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CoachPackage");
+                });
+
+            modelBuilder.Entity("Coach.API.Models.CoachPromotion", b =>
+                {
+                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                        .WithMany("Promotions")
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
                 });
 
             modelBuilder.Entity("Coach.API.Models.CoachSchedule", b =>
@@ -243,12 +332,16 @@ namespace Coach.API.Migrations
 
                     b.Navigation("Packages");
 
+                    b.Navigation("Promotions");
+
                     b.Navigation("Schedules");
                 });
 
             modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("Purchases");
                 });
 #pragma warning restore 612, 618
         }

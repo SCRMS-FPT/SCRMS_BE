@@ -1,22 +1,29 @@
-﻿using Mapster;
-using Microsoft.AspNetCore.Identity;
+﻿using Identity.Application.Data;
+using Identity.Application.Data.Repositories;
+using Mapster;
 
 namespace Identity.Application.Identity.Queries.UserManagement
 {
-    public class GetUserByIdQueryHandler(
-        UserManager<User> userManager)
-        : IQueryHandler<GetUserByIdQuery, UserDto?>
+    public class GetUserByIdQueryHandler : IQueryHandler<GetUserByIdQuery, UserDto?>
     {
+        private readonly IUserRepository _userRepository;
+
+        public GetUserByIdQueryHandler(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
         public async Task<UserDto?> Handle(
             GetUserByIdQuery request,
             CancellationToken cancellationToken)
         {
-            var user = await userManager.Users
-                .Where(u => u.Id == request.UserId && !u.IsDeleted)
-                .ProjectToType<UserDto>()
-                .FirstOrDefaultAsync(cancellationToken);
+            var user = await _userRepository.GetUserByIdAsync(request.UserId);
+            if (user == null || user.IsDeleted)
+            {
+                return null;
+            }
 
-            return user;
+            return user.Adapt<UserDto>();
         }
     }
 }

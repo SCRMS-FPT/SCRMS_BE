@@ -1,4 +1,4 @@
-﻿using Identity.Application.Identity.Commands.Register;
+﻿using Identity.Application.Identity.Commands.ResetPassword;
 
 namespace Identity.API.Endpoints
 {
@@ -10,7 +10,7 @@ namespace Identity.API.Endpoints
 
             group.MapPost("/users/reset-password", async (ResetPasswordRequest request, ISender sender) =>
             {
-                var command = request.Adapt<RegisterUserCommand>();
+                var command = request.Adapt<ResetPasswordCommand>();
 
                 var result = await sender.Send(command);
 

@@ -1,31 +1,46 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
+using Identity.Application.Dtos;
+using Identity.Domain.Exceptions;
+using Identity.Domain.Models;
+using MediatR;
+using Moq;
+using Xunit;
+using Identity.Application.Data.Repositories;
 using Identity.Application.Identity.Queries.GetProfile;
 
 namespace Identity.Test.Application.Identity.Queries
 {
     public class GetProfileHandlerTests
     {
-        private readonly Mock<UserManager<User>> _userManagerMock;
+        private readonly Mock<IUserRepository> _userRepositoryMock;
 
         public GetProfileHandlerTests()
         {
-            var store = new Mock<IUserStore<User>>();
-            _userManagerMock = new Mock<UserManager<User>>(store.Object, null, null, null, null, null, null, null, null);
+            _userRepositoryMock = new Mock<IUserRepository>();
         }
 
         [Fact]
         public async Task Handle_ShouldReturnUserProfile_WhenUserExists()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), FirstName = "John", LastName = "Doe", Email = "john@example.com", PhoneNumber = "123456789", BirthDate = DateTime.UtcNow.AddYears(-30), Gender = Gender.Male, CreatedAt = DateTime.UtcNow };
-            _userManagerMock.Setup(x => x.FindByIdAsync(user.Id.ToString()))
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "john@example.com",
+                PhoneNumber = "123456789",
+                BirthDate = DateTime.UtcNow.AddYears(-30),
+                Gender = Gender.Male,
+                CreatedAt = DateTime.UtcNow
+            };
+            _userRepositoryMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
 
-            var handler = new GetProfileHandler(_userManagerMock.Object);
+            var handler = new GetProfileHandler(_userRepositoryMock.Object);
             var query = new GetProfileQuery(user.Id);
 
             // Act
@@ -40,18 +55,16 @@ namespace Identity.Test.Application.Identity.Queries
         public async Task Handle_ShouldThrowException_WhenUserNotFound()
         {
             // Arrange
-            _userManagerMock.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            _userRepositoryMock.Setup(x => x.GetUserByIdAsync(It.IsAny<Guid>()))
                 .ReturnsAsync((User)null);
-
-            var handler = new GetProfileHandler(_userManagerMock.Object);
+            var handler = new GetProfileHandler(_userRepositoryMock.Object);
             var query = new GetProfileQuery(Guid.NewGuid());
 
             // Act
-            Func<Task> act = async () => { await handler.Handle(query, CancellationToken.None); };
+            Func<Task> act = async () => await handler.Handle(query, CancellationToken.None);
 
             // Assert
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage("User not found");
+            await act.Should().ThrowAsync<DomainException>().WithMessage("User not found");
         }
     }
 }

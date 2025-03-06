@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Coach.API.Bookings.UpdateBooking
 {
@@ -13,15 +14,16 @@ namespace Coach.API.Bookings.UpdateBooking
                 [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {
-                var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var coachIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
                 if (coachIdClaim == null || !Guid.TryParse(coachIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 
-                await sender.Send(new UpdateBookingStatusQuery(bookingId, status));
+                await sender.Send(new UpdateBookingStatusCommand(bookingId, status, coachUserId));
                 return Results.NoContent();
             })
-            .RequireAuthorization()
+            .RequireAuthorization("Coach")
             .WithName("UpdateBookingStatus")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
