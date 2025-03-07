@@ -1,13 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Reviews.API.Data.Models;
 
 namespace Reviews.API.Data.Repositories
 {
     public class ReviewRepository : IReviewRepository
     {
-        private readonly ReviewDbContext _context;
+        private readonly IReviewDbContext _context;
 
-        public ReviewRepository(ReviewDbContext context)
+        public ReviewRepository(IReviewDbContext context)
         {
             _context = context;
         }
