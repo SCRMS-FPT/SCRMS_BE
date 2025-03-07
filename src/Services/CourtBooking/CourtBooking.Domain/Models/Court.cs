@@ -1,6 +1,7 @@
 ﻿using CourtBooking.Domain.ValueObjects;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Domain.Models
 {
@@ -13,6 +14,7 @@ namespace CourtBooking.Domain.Models
         public string? Description { get; private set; }
         public string? Facilities { get; private set; }
         public CourtStatus Status { get; private set; }
+        public CourtType CourtType { get; private set; }
 
         private List<CourtSchedule> _courtSlots = new();
         public IReadOnlyCollection<CourtSchedule> CourtSlots => _courtSlots.AsReadOnly();
@@ -20,7 +22,7 @@ namespace CourtBooking.Domain.Models
 
         public static Court Create(CourtId courtId,CourtName courtName, SportCenterId sportCenterId,
             SportId sportId, TimeSpan slotDuration, string? description,
-            string? facilities)
+            string? facilities, CourtType courtType)
         {
             var court = new Court
             {
@@ -31,6 +33,7 @@ namespace CourtBooking.Domain.Models
                 SlotDuration = slotDuration,
                 Description = description,
                 Facilities = facilities,
+                CourtType = courtType,
                 Status = CourtStatus.Open,
                 CreatedAt = DateTime.UtcNow,
             };
@@ -39,7 +42,7 @@ namespace CourtBooking.Domain.Models
 
         public void UpdateCourt(CourtName courtName,
             SportId sportId, TimeSpan slotDuration, string? description, 
-            string? facilities, CourtStatus courtStatus)
+            string? facilities, CourtStatus courtStatus, CourtType courtType)
         {
             CourtName = courtName;
             SportId = sportId;
@@ -47,6 +50,7 @@ namespace CourtBooking.Domain.Models
             Description = description;
             Facilities = facilities;
             Status = courtStatus;
+            CourtType = courtType;
             SetLastModified(DateTime.UtcNow);
         }
 

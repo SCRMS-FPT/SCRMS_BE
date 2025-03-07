@@ -13,6 +13,7 @@ public record CourtUpdateDTO(
     Guid SportId,
     string Description,
     List<FacilityDTO> Facilities,
+    int CourtType,
     TimeSpan SlotDuration,
     int Status
     //List<CourtScheduleDTO> CourtSlots

@@ -67,6 +67,7 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
                         Facilities: facilities,
                         SlotDuration: court.SlotDuration,
                         Status: court.Status,
+                        CourtType: court.CourtType,
                         SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
                         SportCenterName: sportCenter.Name,
                         CreatedAt: court.CreatedAt,

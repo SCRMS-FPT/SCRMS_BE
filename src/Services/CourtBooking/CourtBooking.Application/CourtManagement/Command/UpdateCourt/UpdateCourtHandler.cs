@@ -27,7 +27,8 @@ public class UpdateCourtHandler(IApplicationDbContext _context)
             request.Court.SlotDuration,
             request.Court.Description,
             JsonSerializer.Serialize(request.Court.Facilities, new JsonSerializerOptions { WriteIndented = true }),
-            (CourtStatus)request.Court.Status
+            (CourtStatus)request.Court.Status,
+            (CourtType)request.Court.CourtType
         );
 
         await _context.SaveChangesAsync(cancellationToken);

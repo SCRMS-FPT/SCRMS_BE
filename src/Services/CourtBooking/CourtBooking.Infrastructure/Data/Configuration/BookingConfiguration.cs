@@ -63,6 +63,11 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                 .WithOne()
                 .HasForeignKey(bp => bp.BookingId)
                 .IsRequired();
+
+            builder.HasOne<Court>()
+                .WithMany()
+                .HasForeignKey(b => b.CourtId)
+                .IsRequired();
         }
     }
 }

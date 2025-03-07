@@ -45,6 +45,7 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
             Facilities: facilities,
             SlotDuration: court.SlotDuration,
             Status: court.Status,
+            CourtType: court.CourtType,
             SportName: sport?.Name,
             SportCenterName: sportCenter?.Name,
             CreatedAt: court.CreatedAt,

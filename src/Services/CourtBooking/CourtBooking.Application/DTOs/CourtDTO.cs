@@ -16,6 +16,7 @@ namespace CourtBooking.Application.DTOs
     List<FacilityDTO>? Facilities,
     TimeSpan SlotDuration,
     CourtStatus Status,
+    CourtType CourtType,
     string? SportName,
     string? SportCenterName,
     DateTime CreatedAt,
