@@ -1,7 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore.Query;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Reviews.Test.Helper
+namespace Reviews.Test.Repositories
 {
     public class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
     {
@@ -34,19 +39,13 @@ namespace Reviews.Test.Helper
 
         public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
         {
-            // TResult is Task<T>, where T is the entity type (e.g., Task<Review>)
-            var resultType = typeof(TResult).GetGenericArguments()[0]; // Extract T from Task<T>
-            var result = _inner.Execute(expression); // Execute synchronously
+            // TResult is Task<TEntity>, e.g., Task<Review>
+            Type entityType = typeof(TResult).GetGenericArguments()[0]; // Extract TEntity (e.g., Review)
+            object result = _inner.Execute(expression); // Execute synchronously, returns TEntity or null
 
-            // If result is null, return a completed Task with null
-            if (result == null)
-            {
-                return (TResult)Task.FromResult(default(object));
-            }
-
-            // Wrap the result in a Task<T>
-            var task = Task.FromResult(result);
-            return (TResult)(object)task; // Cast to TResult (e.g., Task<Review>)
+            // Create a Task<TEntity> with the result
+            object taskResult = Task.FromResult(result != null ? (TEntity)result : default);
+            return (TResult)taskResult; // Cast to TResult (e.g., Task<Review>)
         }
     }
 

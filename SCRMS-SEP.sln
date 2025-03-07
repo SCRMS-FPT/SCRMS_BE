@@ -61,7 +61,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gateway", "Gateway", "{011A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiGateway", "src\Gateway\ApiGateway\ApiGateway.csproj", "{064858EB-A8E2-4E26-9947-DD071654E0E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Review.Test", "src\Services\Review\Reviews.Test\Review.Test.csproj", "{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reviews.Test", "src\Services\Review\Reviews.Test\Reviews.Test.csproj", "{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

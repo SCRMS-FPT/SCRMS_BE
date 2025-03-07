@@ -1,4 +1,6 @@
-﻿namespace Coach.API.Data.Repositories
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Coach.API.Data.Repositories
 {
     public class CoachPackagePurchaseRepository : ICoachPackagePurchaseRepository
     {
