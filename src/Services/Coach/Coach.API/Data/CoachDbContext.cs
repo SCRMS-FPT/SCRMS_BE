@@ -6,6 +6,9 @@ namespace Coach.API.Data
 {
     public class CoachDbContext : DbContext
     {
+        public CoachDbContext()
+        { }
+
         public CoachDbContext(DbContextOptions<CoachDbContext> options) : base(options)
         {
         }

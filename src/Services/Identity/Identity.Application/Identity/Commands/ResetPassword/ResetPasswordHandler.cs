@@ -2,6 +2,7 @@ using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using Identity.Application.Data.Repositories;
 
 namespace Identity.Application.Identity.Commands.ResetPassword
 {
@@ -50,6 +51,7 @@ namespace Identity.Application.Identity.Commands.ResetPassword
             }
             return Unit.Value;
         }
+
         private static string GenerateSecurePassword(int length)
         {
             const string validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
@@ -66,12 +68,12 @@ namespace Identity.Application.Identity.Commands.ResetPassword
             }
             return new string(passwordChars);
         }
+
         public string GeneratePasswordResetEmail(string user, string newPassword)
         {
             string loginUrl = "https://localhost:7105";
             string address = "Thach That, Hoa Lac, Ha Noi";
             string companyName = "Sports Court Management and Reservation System";
-
 
             string htmlTemplate = $@"
 <!DOCTYPE html>
@@ -187,6 +189,5 @@ namespace Identity.Application.Identity.Commands.ResetPassword
 
             return htmlTemplate;
         }
-
     }
 }

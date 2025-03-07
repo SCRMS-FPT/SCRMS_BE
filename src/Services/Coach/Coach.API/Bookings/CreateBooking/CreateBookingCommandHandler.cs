@@ -40,37 +40,85 @@ namespace Coach.API.Bookings.CreateBooking
         }
     }
 
-    internal class CreatePackageCommandHandler : ICommandHandler<CreatePackageCommand, CreatePackageResult>
+    internal class CreateBookingCommandHandler : ICommandHandler<CreateBookingCommand, CreateBookingResult>
     {
+        private readonly ICoachRepository _coachRepository;
+        private readonly ICoachScheduleRepository _scheduleRepository;
+        private readonly ICoachBookingRepository _bookingRepository;
         private readonly ICoachPackageRepository _packageRepository;
         private readonly CoachDbContext _context;
+        private readonly IMediator _mediator;
 
-        public CreatePackageCommandHandler(ICoachPackageRepository packageRepository, CoachDbContext context)
+        public CreateBookingCommandHandler(
+            ICoachRepository coachRepository,
+            ICoachScheduleRepository scheduleRepository,
+            ICoachBookingRepository bookingRepository,
+            ICoachPackageRepository packageRepository,
+            CoachDbContext context,
+            IMediator mediator)
         {
+            _coachRepository = coachRepository;
+            _scheduleRepository = scheduleRepository;
+            _bookingRepository = bookingRepository;
             _packageRepository = packageRepository;
             _context = context;
+            _mediator = mediator;
         }
 
-        public async Task<CreatePackageResult> Handle(
-            CreatePackageCommand command,
-            CancellationToken cancellationToken)
+        public async Task<CreateBookingResult> Handle(CreateBookingCommand command, CancellationToken cancellationToken)
         {
-            var package = new CoachPackage
+            var coach = await _coachRepository.GetCoachByIdAsync(command.CoachId, cancellationToken);
+            if (coach == null)
+                throw new Exception("Coach not found");
+
+            var dayOfWeek = (int)command.BookingDate.DayOfWeek + 1;
+            var schedules = await _scheduleRepository.GetCoachSchedulesByCoachIdAsync(command.CoachId, cancellationToken);
+            var isValidTime = schedules.Any(s => s.DayOfWeek == dayOfWeek && command.StartTime >= s.StartTime && command.EndTime <= s.EndTime);
+            if (!isValidTime)
+                throw new Exception("Booking time is outside coach's available hours");
+
+            var hasOverlap = await _bookingRepository.HasOverlappingCoachBookingAsync(
+                command.CoachId,
+                command.BookingDate,
+                command.StartTime,
+                command.EndTime,
+                cancellationToken);
+            if (hasOverlap)
+                throw new Exception("The selected time slot is already booked");
+
+            var duration = (command.EndTime - command.StartTime).TotalHours;
+            var totalPrice = coach.RatePerHour * (decimal)duration;
+
+            var booking = new CoachBooking
             {
                 Id = Guid.NewGuid(),
+                UserId = command.UserId,
                 CoachId = command.CoachId,
-                Name = command.Name,
-                Description = command.Description,
-                Price = command.Price,
-                SessionCount = command.SessionCount,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                SportId = command.SportId,
+                BookingDate = command.BookingDate,
+                StartTime = command.StartTime,
+                EndTime = command.EndTime,
+                Status = "pending",
+                TotalPrice = totalPrice,
+                PackageId = command.PackageId,
+                CreatedAt = DateTime.UtcNow
             };
 
-            await _packageRepository.AddCoachPackageAsync(package, cancellationToken);
+            await _bookingRepository.AddCoachBookingAsync(booking, cancellationToken);
+            int sessionsRemaining = 0;
+            if (command.PackageId.HasValue)
+            {
+                var package = await _packageRepository.GetCoachPackageByIdAsync(command.PackageId.Value, cancellationToken);
+                if (package == null)
+                    throw new Exception("Package not found");
+
+                // Logic xử lý package purchase nếu cần...
+            }
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new CreatePackageResult(package.Id);
+            await _mediator.Publish(new BookingCreatedEvent(booking.Id, booking.UserId, booking.CoachId), cancellationToken);
+
+            return new CreateBookingResult(booking.Id, sessionsRemaining);
         }
     }
 

@@ -13,7 +13,29 @@ namespace Coach.API.Data.Repositories
 
         public async Task AddCoachSportAsync(CoachSport coachSport, CancellationToken cancellationToken)
         {
+            var errorMessages = new List<string>();
+
+            // Validate CoachId
+            if (coachSport.CoachId == Guid.Empty)
+            {
+                errorMessages.Add("CoachId is required");
+            }
+
+            // Validate SportId
+            if (coachSport.SportId == Guid.Empty)
+            {
+                errorMessages.Add("SportId is required");
+            }
+
+            // If there are any validation errors, throw an exception
+            if (errorMessages.Any())
+            {
+                throw new ArgumentException(string.Join(", ", errorMessages));
+            }
+
+            // Proceed with the original logic if validation is successful
             await _context.CoachSports.AddAsync(coachSport, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<List<CoachSport>> GetCoachSportsByCoachIdAsync(Guid coachId, CancellationToken cancellationToken)
@@ -23,8 +45,16 @@ namespace Coach.API.Data.Repositories
 
         public async Task DeleteCoachSportAsync(CoachSport coachSport, CancellationToken cancellationToken)
         {
+            var existingCoachSport = await _context.CoachSports
+        .FindAsync(new object[] { coachSport.CoachId, coachSport.SportId }, cancellationToken);
+
+            if (existingCoachSport == null)
+            {
+                // If the entity doesn't exist, throw a DbUpdateConcurrencyException
+                throw new DbUpdateConcurrencyException("The CoachSport entity could not be found.");
+            }
             _context.CoachSports.Remove(coachSport);
-            await Task.CompletedTask;
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }
