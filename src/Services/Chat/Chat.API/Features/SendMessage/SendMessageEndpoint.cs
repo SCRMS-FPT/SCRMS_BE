@@ -7,7 +7,7 @@ namespace Chat.API.Features.SendMessage
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/chats/{chatSessionId}/messages", async (Guid chatSessionId,[FromBody] SendMessageRequest request, ISender sender, HttpContext httpContext) =>
+            app.MapPost("/api/chats/{chatSessionId}/messages", async (Guid chatSessionId, [FromBody] SendMessageRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null) return Results.Unauthorized();
@@ -17,7 +17,7 @@ namespace Chat.API.Features.SendMessage
 
                 var command = new SendMessageCommand(chatSessionId, senderId, request.MessageText);
                 var result = await sender.Send(command);
-                return Results.Created($"/api/chats/{chatSessionId}/messages/{result.MessageId}", result);
+                return Results.Created($"/api/chats/{chatSessionId}/messages/{result.Id}", result);
             })
             .RequireAuthorization()
             .WithName("SendMessage");

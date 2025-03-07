@@ -1,4 +1,5 @@
 ﻿using Chat.API.Data;
+using Chat.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chat.API.Features.EditMessage
@@ -7,24 +8,22 @@ namespace Chat.API.Features.EditMessage
 
     public class EditMessageHandler : IRequestHandler<EditMessageCommand>
     {
-        private readonly ChatDbContext _context;
+        private readonly IChatMessageRepository _chatMessageRepository;
 
-        public EditMessageHandler(ChatDbContext context)
+        public EditMessageHandler(IChatMessageRepository chatMessageRepository)
         {
-            _context = context;
+            _chatMessageRepository = chatMessageRepository;
         }
 
         public async Task Handle(EditMessageCommand request, CancellationToken cancellationToken)
         {
-            var message = await _context.ChatMessages
-                .FirstOrDefaultAsync(cm => cm.Id == request.MessageId && cm.ChatSessionId == request.ChatSessionId && cm.SenderId == request.UserId, cancellationToken);
-
+            var message = await _chatMessageRepository.GetChatMessageByIdAndSessionAsync(request.MessageId, request.ChatSessionId, request.UserId);
             if (message == null)
                 throw new Exception("Message not found or not authorized");
 
             message.MessageText = request.MessageText;
             message.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync(cancellationToken);
+            await _chatMessageRepository.UpdateChatMessageAsync(message);
         }
     }
 }

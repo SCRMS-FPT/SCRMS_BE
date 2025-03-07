@@ -1,4 +1,5 @@
 ﻿using Chat.API.Data;
+using Chat.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chat.API.Features.MarkMessageAsRead
@@ -7,23 +8,21 @@ namespace Chat.API.Features.MarkMessageAsRead
 
     public class MarkMessageAsReadHandler : IRequestHandler<MarkMessageAsReadCommand>
     {
-        private readonly ChatDbContext _context;
+        private readonly IChatMessageRepository _chatMessageRepository;
 
-        public MarkMessageAsReadHandler(ChatDbContext context)
+        public MarkMessageAsReadHandler(IChatMessageRepository chatMessageRepository)
         {
-            _context = context;
+            _chatMessageRepository = chatMessageRepository;
         }
 
         public async Task Handle(MarkMessageAsReadCommand request, CancellationToken cancellationToken)
         {
-            var message = await _context.ChatMessages
-                .FirstOrDefaultAsync(cm => cm.Id == request.MessageId && cm.ChatSessionId == request.ChatSessionId && cm.SenderId != request.UserId, cancellationToken);
-
+            var message = await _chatMessageRepository.GetChatMessageByIdAsync(request.MessageId);
             if (message == null)
-                throw new Exception("Message not found or not authorized");
+                throw new Exception("Message not found");
 
             message.ReadAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync(cancellationToken);
+            await _chatMessageRepository.UpdateChatMessageAsync(message);
         }
     }
 }
