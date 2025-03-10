@@ -28,7 +28,7 @@ namespace Notification.API.Features.SendNotification
                 })
             .RequireAuthorization("Admin")
             .WithName("SendNotification")
-            .Produces<SendNotificationResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Send notification")
             .WithDescription("Send notification to user");
