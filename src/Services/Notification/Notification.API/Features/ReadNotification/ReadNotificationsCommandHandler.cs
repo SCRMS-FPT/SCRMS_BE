@@ -7,8 +7,7 @@ using Notification.API.Data;
 
 namespace Notification.API.Features.ReadNotification
 {
-    public record ReadNotificationCommand(Guid NotificationId, Guid UserId) : ICommand<ReadNotificationResponse>;
-    public record ReadNotificationResponse(Boolean IsSuccess);
+    public record ReadNotificationCommand(Guid NotificationId, Guid UserId) : ICommand<Unit>;
     public class ReadNotificationsCommandValidator : AbstractValidator<ReadNotificationCommand>
     {
         public ReadNotificationsCommandValidator()
@@ -17,7 +16,7 @@ namespace Notification.API.Features.ReadNotification
             RuleFor(x => x.NotificationId).NotEmpty().WithMessage("NotificationId is required");
         }
     }
-    internal class ReadNotificationsCommandHandler : ICommandHandler<ReadNotificationCommand, ReadNotificationResponse>
+    public class ReadNotificationsCommandHandler : ICommandHandler<ReadNotificationCommand, Unit>
     {
         private readonly NotificationDbContext context;
         private readonly IMediator mediator;
@@ -27,7 +26,7 @@ namespace Notification.API.Features.ReadNotification
             this.mediator = mediator;
         }
 
-        public async Task<ReadNotificationResponse> Handle(ReadNotificationCommand command, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(ReadNotificationCommand command, CancellationToken cancellationToken)
         {
             var notification = await context.MessageNotifications.FirstOrDefaultAsync(mn => mn.Id == command.NotificationId);
             if (notification == null)
@@ -41,8 +40,7 @@ namespace Notification.API.Features.ReadNotification
             notification.IsRead = true;
             context.MessageNotifications.Update(notification);
             await context.SaveChangesAsync();
-            return new ReadNotificationResponse(true);
-
+            return Unit.Value;
         }
     }
 }

@@ -26,10 +26,10 @@ namespace Notification.API.Features.ReadNotification
 
                     var result = await sender.Send(command);
 
-                    return (result.IsSuccess ? Results.Ok() : Results.BadRequest());
+                    return Results.Ok();
                 })
             .WithName("ReadNotification")
-            .Produces<ReadNotificationResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Mark a notification as read")
             .WithDescription("Updates the notification status to read for the user");
