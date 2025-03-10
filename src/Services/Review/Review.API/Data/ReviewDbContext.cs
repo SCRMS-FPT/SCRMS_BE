@@ -2,7 +2,7 @@
 
 namespace Reviews.API.Data
 {
-    public class ReviewDbContext : DbContext, IReviewDbContext
+    public class ReviewDbContext : DbContext
     {
         public ReviewDbContext(DbContextOptions<ReviewDbContext> options) : base(options)
         {
