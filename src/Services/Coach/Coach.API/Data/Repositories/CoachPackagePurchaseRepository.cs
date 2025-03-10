@@ -13,7 +13,18 @@ namespace Coach.API.Data.Repositories
 
         public async Task AddCoachPackagePurchaseAsync(CoachPackagePurchase purchase, CancellationToken cancellationToken)
         {
+            if (purchase.UserId == Guid.Empty)
+            {
+                throw new ArgumentException("UserId is required", nameof(purchase.UserId));
+            }
+
+            if (purchase.CoachPackageId == Guid.Empty)
+            {
+                throw new ArgumentException("CoachPackageId is required", nameof(purchase.CoachPackageId));
+            }
+
             await _context.CoachPackagePurchases.AddAsync(purchase, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<CoachPackagePurchase?> GetCoachPackagePurchaseByIdAsync(Guid purchaseId, CancellationToken cancellationToken)
@@ -28,8 +39,17 @@ namespace Coach.API.Data.Repositories
 
         public async Task UpdateCoachPackagePurchaseAsync(CoachPackagePurchase purchase, CancellationToken cancellationToken)
         {
+            var existingPurchase = await _context.CoachPackagePurchases
+                .FirstOrDefaultAsync(p => p.Id == purchase.Id, cancellationToken);
+
+            if (existingPurchase == null)
+            {
+                throw new DbUpdateConcurrencyException("The purchase does not exist.");
+            }
+
+            // If the purchase exists, update it
             _context.CoachPackagePurchases.Update(purchase);
-            await Task.CompletedTask;
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

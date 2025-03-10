@@ -1,34 +1,31 @@
 ﻿using Chat.API.Data;
+using Chat.API.Data.Repositories;
 using Chat.API.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chat.API.Features.SendMessage
 {
-    public record SendMessageCommand(Guid ChatSessionId, Guid SenderId, string MessageText) : IRequest<SendMessageResult>;
+    public record SendMessageCommand(Guid ChatSessionId, Guid SenderId, string MessageText) : IRequest<ChatMessage>;
 
-    public record SendMessageResult(Guid MessageId);
-
-    public class SendMessageHandler : IRequestHandler<SendMessageCommand, SendMessageResult>
+    public class SendMessageHandler : IRequestHandler<SendMessageCommand, ChatMessage>
     {
-        private readonly ChatDbContext _context;
-        private readonly IHubContext<ChatHub> _hubContext;
+        private readonly IChatMessageRepository _chatMessageRepository;
 
-        public SendMessageHandler(ChatDbContext context, IHubContext<ChatHub> hubContext)
+        public SendMessageHandler(IChatMessageRepository chatMessageRepository)
         {
-            _context = context;
-            _hubContext = hubContext;
+            _chatMessageRepository = chatMessageRepository;
         }
 
-        public async Task<SendMessageResult> Handle(SendMessageCommand request, CancellationToken cancellationToken)
+        public async Task<ChatMessage> Handle(SendMessageCommand request, CancellationToken cancellationToken)
         {
-            var chatSession = await _context.ChatSessions
-                .FirstOrDefaultAsync(cs => cs.Id == request.ChatSessionId, cancellationToken);
+            if (request.ChatSessionId == Guid.Empty)
+                throw new Exception("ChatSessionId cannot be empty");
 
-            if (chatSession == null)
-                throw new Exception("Chat session not found");
+            if (string.IsNullOrWhiteSpace(request.MessageText))
+                throw new Exception("Message text cannot be empty");
 
-            var message = new ChatMessage
+            var chatMessage = new ChatMessage
             {
                 Id = Guid.NewGuid(),
                 ChatSessionId = request.ChatSessionId,
@@ -38,22 +35,8 @@ namespace Chat.API.Features.SendMessage
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.ChatMessages.Add(message);
-            chatSession.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // Thông báo qua SignalR
-            var partnerId = chatSession.User1Id == request.SenderId ? chatSession.User2Id : chatSession.User1Id;
-            await _hubContext.Clients.User(partnerId.ToString()).SendAsync("ReceiveMessage", new
-            {
-                message.Id,
-                message.ChatSessionId,
-                message.SenderId,
-                message.MessageText,
-                message.SentAt
-            });
-
-            return new SendMessageResult(message.Id);
+            await _chatMessageRepository.AddChatMessageAsync(chatMessage);
+            return chatMessage;
         }
     }
 }
