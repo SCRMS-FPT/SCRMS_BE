@@ -25,7 +25,7 @@ namespace Notification.API.Features.SendEmail
                     return Results.Ok();
                 })
             .WithName("SendMail")
-            .Produces<SendEmailResult>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Send mail")
             .WithDescription("Send mail to user using GMAIL");

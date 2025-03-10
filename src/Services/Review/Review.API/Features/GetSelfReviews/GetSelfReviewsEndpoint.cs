@@ -1,6 +1,5 @@
-﻿using Reviews.API.Features.GetReviewsByCoachId;
-using Reviews.API.Features.GetSelfReviews;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Reviews.API.Features.GetSelfReviews
 {
@@ -13,7 +12,8 @@ namespace Reviews.API.Features.GetSelfReviews
                 HttpContext httpContext,
                 int page = 1, int limit = 10) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
                     return Results.Unauthorized();
 

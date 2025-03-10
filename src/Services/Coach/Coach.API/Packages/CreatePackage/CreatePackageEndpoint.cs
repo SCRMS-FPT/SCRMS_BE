@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 
 namespace Coach.API.Packages.CreatePackage
 {
@@ -16,8 +17,20 @@ namespace Coach.API.Packages.CreatePackage
         {
             app.MapPost("/packages", async (HttpContext httpContext, ISender sender) =>
             {
-                var request = await httpContext.Request.ReadFromJsonAsync<CreatePackageRequest>();
-                return await HandleCreatePackage(request, sender, httpContext);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                        ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachUserId))
+                    return Results.Unauthorized();
+
+                var command = new CreatePackageCommand(
+                    coachUserId,
+                    request.Name,
+                    request.Description,
+                    request.Price,
+                    request.SessionCount
+                );
+                var result = await sender.Send(command);
+                return Results.Created($"/packages/{result.Id}", result);
             })
             .RequireAuthorization("Coach")
             .WithName("CreatePackage")

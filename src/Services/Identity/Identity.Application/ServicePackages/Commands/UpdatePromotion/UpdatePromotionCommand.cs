@@ -1,15 +1,9 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Application.ServicePackages.Commands.UpdatePromotion
 {
     public record UpdatePromotionCommand(
         Guid Id,
-        Guid CoachId,
         Guid ServicePackageId,
         string Description,
         string Type,
