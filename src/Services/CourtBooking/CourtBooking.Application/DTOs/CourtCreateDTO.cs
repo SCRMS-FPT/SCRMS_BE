@@ -9,12 +9,11 @@ namespace CourtBooking.Application.DTOs
     public record CourtCreateDTO
     (
         string CourtName,
+        Guid SportCenterId,
         Guid SportId,
         string Description,
         List<FacilityDTO> Facilities,
-        decimal PricePerHour,
-        LocationDTO Address,
-        Guid OwnerId,
-        List<CourtOperatingHourDTO> OperatingHours
+        TimeSpan SlotDuration,
+        List<CourtScheduleDTO> CourtSlots
      );
 }

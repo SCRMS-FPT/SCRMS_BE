@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace CourtBooking.Application.DTOs
 {
-    public record LocationDTO(string Address, string Commune, string District, string City);
+    public record LocationDTO(string AddressLine, string Commune, string District, string City);
 }

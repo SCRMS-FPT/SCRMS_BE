@@ -25,48 +25,38 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
                      .IsRequired();
              });
 
-        builder.Property(c => c.OwnerId)
+        builder.Property(c => c.SportCenterId)
             .HasConversion(
                 id => id.Value,
-                value => OwnerId.Of(value));
-
-        builder.HasMany(c => c.OperatingHours)
-            .WithOne()
-            .HasForeignKey(c => c.CourtId)
+                value => SportCenterId.Of(value))
             .IsRequired();
 
-         builder.HasOne(c => c.Sport)
-                .WithMany()
-                .HasForeignKey(c => c.SportId)
-                .IsRequired();
+        builder.Property(c => c.SportId)
+            .HasConversion(
+                id => id.Value,
+                value => SportId.Of(value))
+            .IsRequired();
 
-        builder.ComplexProperty(
-            c => c.Location, locationBuilder =>
-            {
-                locationBuilder.Property(l => l.Address)
-                .HasMaxLength(255)
-                .IsRequired();
-
-                locationBuilder.Property(l => l.City)
-                .HasMaxLength(50);
-
-                locationBuilder.Property(l => l.District)
-                .HasMaxLength(50);
-
-                locationBuilder.Property(l => l.Commune)
-                .HasMaxLength(50);
-            });
+        builder.Property(c => c.SlotDuration)
+            .HasConversion(
+                duration => duration.TotalMinutes, 
+                minutes => TimeSpan.FromMinutes(minutes))
+            .IsRequired();
 
         builder.Property(c => c.Description)
             .HasColumnType("TEXT");
 
         builder.Property(c => c.Facilities)
-            .HasColumnType("JSON");
+            .HasColumnType("JSONB");
         
         builder.Property(c => c.Status)
             .HasDefaultValue(CourtStatus.Open)
             .HasConversion(builder => builder.ToString(), 
-            value => (CourtStatus)Enum.Parse(typeof(CourtStatus), value));    
+            value => (CourtStatus)Enum.Parse(typeof(CourtStatus), value));
 
+        builder.HasMany(c => c.CourtSlots)
+            .WithOne()
+            .HasForeignKey(c => c.CourtId)
+            .IsRequired();
     }
 }
