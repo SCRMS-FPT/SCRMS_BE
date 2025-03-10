@@ -31,7 +31,7 @@ namespace Notification.API.Features.DeleteNotification
                 })
             .RequireAuthorization("Admin")
             .WithName("DeleteNotification")
-            .Produces<DeleteNotificationResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Delete a notification")
             .WithDescription("Deletes a specific notification for the user");

@@ -1,3 +1,4 @@
+using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using System.Net.Http.Json;
