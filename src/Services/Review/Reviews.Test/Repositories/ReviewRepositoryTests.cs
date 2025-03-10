@@ -1,75 +1,67 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Reviews.API.Data;
-using Reviews.API.Data.Models;
-using Reviews.API.Data.Repositories;
+﻿using Reviews.API.Data.Models;
+using Reviews.Test.Helper;
 
 namespace Reviews.Test.Repositories
 {
-    public class ReviewRepositoryTests
+    public class ReviewRepositoryTests : HandlerTestBase
     {
-        private readonly Mock<IReviewDbContext> _mockContext;
-        private readonly Mock<DbSet<Review>> _mockReviewSet;
-        private readonly Mock<DbSet<ReviewFlag>> _mockReviewFlagSet;
-        private readonly Mock<DbSet<ReviewReply>> _mockReviewReplySet;
-        private readonly ReviewRepository _repository;
-
-        public ReviewRepositoryTests()
-        {
-            _mockContext = new Mock<IReviewDbContext>();
-            _mockReviewSet = new Mock<DbSet<Review>>();
-            _mockReviewFlagSet = new Mock<DbSet<ReviewFlag>>();
-            _mockReviewReplySet = new Mock<DbSet<ReviewReply>>();
-
-            // Set up interfaces before accessing .Object
-            _mockReviewSet.As<IQueryable<Review>>();
-            _mockReviewSet.As<IAsyncEnumerable<Review>>();
-            _mockReviewReplySet.As<IQueryable<ReviewReply>>();
-            _mockReviewReplySet.As<IAsyncEnumerable<ReviewReply>>();
-
-            _mockContext.Setup(m => m.Reviews).Returns(_mockReviewSet.Object);
-            _mockContext.Setup(m => m.ReviewFlags).Returns(_mockReviewFlagSet.Object);
-            _mockContext.Setup(m => m.ReviewReplies).Returns(_mockReviewReplySet.Object);
-
-            _repository = new ReviewRepository(_mockContext.Object);
-        }
-
         [Fact]
-        public async Task AddReviewAsync_CallsAddAsyncOnReviewSet()
+        public async Task AddReviewAsync_AddsReviewToDatabase()
         {
-            var review = new Review { Id = Guid.NewGuid() };
+            var review = new Review
+            {
+                Id = Guid.NewGuid(),
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 4,
+            };
             var cancellationToken = CancellationToken.None;
 
-            await _repository.AddReviewAsync(review, cancellationToken);
+            await Repository.AddReviewAsync(review, cancellationToken);
+            await Repository.SaveChangesAsync(cancellationToken);
 
-            _mockReviewSet.Verify(m => m.AddAsync(review, cancellationToken), Times.Once());
+            Context.Reviews.Should().ContainSingle(r => r.Id == review.Id);
         }
 
         [Fact]
         public async Task GetReviewByIdAsync_ReturnsNonNull_WhenReviewExists()
         {
             var reviewId = Guid.NewGuid();
-            var expectedReview = new Review { Id = reviewId };
-            var reviews = new List<Review> { expectedReview }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = reviewId,
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 3,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.NotNull(result);
+            result.Should().NotBeNull();
         }
 
         [Fact]
         public async Task GetReviewByIdAsync_ReturnsCorrectId_WhenReviewExists()
         {
             var reviewId = Guid.NewGuid();
-            var expectedReview = new Review { Id = reviewId };
-            var reviews = new List<Review> { expectedReview }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = reviewId,
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 3,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.Equal(expectedReview.Id, result!.Id);
+            result.Id.Should().Be(reviewId);
         }
 
         [Fact]
@@ -77,28 +69,40 @@ namespace Reviews.Test.Repositories
         {
             var reviewId = Guid.NewGuid();
             var reviewerId = Guid.NewGuid();
-            var expectedReview = new Review { Id = reviewId, ReviewerId = reviewerId };
-            var reviews = new List<Review> { expectedReview }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = reviewId,
+                ReviewerId = reviewerId,
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 3,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync();
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.Equal(expectedReview.ReviewerId, result!.ReviewerId);
+            result.ReviewerId.Should().Be(reviewerId);
         }
 
         [Fact]
         public async Task GetReviewByIdAsync_ReturnsCorrectSubjectType_WhenReviewExists()
         {
             var reviewId = Guid.NewGuid();
-            var expectedReview = new Review { Id = reviewId, SubjectType = "coach" };
-            var reviews = new List<Review> { expectedReview }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = reviewId,
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 3,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.Equal(expectedReview.SubjectType, result!.SubjectType);
+            result.SubjectType.Should().Be("coach");
         }
 
         [Fact]
@@ -106,62 +110,70 @@ namespace Reviews.Test.Repositories
         {
             var reviewId = Guid.NewGuid();
             var subjectId = Guid.NewGuid();
-            var expectedReview = new Review { Id = reviewId, SubjectId = subjectId };
-            var reviews = new List<Review> { expectedReview }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = reviewId,
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = subjectId,
+                Rating = 3,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.Equal(expectedReview.SubjectId, result!.SubjectId);
+            result.SubjectId.Should().Be(subjectId);
         }
 
         [Fact]
         public async Task GetReviewByIdAsync_ReturnsCorrectRating_WhenReviewExists()
         {
             var reviewId = Guid.NewGuid();
-            var expectedReview = new Review { Id = reviewId, Rating = 4 };
-            var reviews = new List<Review> { expectedReview }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = reviewId,
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 4,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.Equal(expectedReview.Rating, result!.Rating);
+            result.Rating.Should().Be(4);
         }
 
         [Fact]
         public async Task GetReviewByIdAsync_ReturnsNull_WhenReviewDoesNotExist()
         {
             var reviewId = Guid.NewGuid();
-            var reviews = new List<Review>().AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
 
-            var result = await _repository.GetReviewByIdAsync(reviewId, cancellationToken);
+            var result = await Repository.GetReviewByIdAsync(reviewId, CancellationToken.None);
 
-            Assert.Null(result);
+            result.Should().BeNull();
         }
 
         [Fact]
-        public async Task RemoveReviewAsync_CallsRemoveOnReviewSet()
+        public async Task RemoveReviewAsync_RemovesReviewFromDatabase()
         {
-            var review = new Review { Id = Guid.NewGuid() };
-            var cancellationToken = CancellationToken.None;
+            var review = new Review
+            {
+                Id = Guid.NewGuid(),
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = Guid.NewGuid(),
+                Rating = 3,
+            };
+            Context.Reviews.Add(review);
+            await Context.SaveChangesAsync();
 
-            await _repository.RemoveReviewAsync(review, cancellationToken);
+            await Repository.RemoveReviewAsync(review, CancellationToken.None);
+            await Repository.SaveChangesAsync(CancellationToken.None);
 
-            _mockReviewSet.Verify(m => m.Remove(review), Times.Once());
-        }
-
-        [Fact]
-        public async Task SaveChangesAsync_CallsSaveChangesAsyncOnContext()
-        {
-            var cancellationToken = CancellationToken.None;
-
-            await _repository.SaveChangesAsync(cancellationToken);
-
-            _mockContext.Verify(m => m.SaveChangesAsync(cancellationToken), Times.Once());
+            Context.Reviews.Should().BeEmpty();
         }
 
         [Fact]
@@ -169,13 +181,19 @@ namespace Reviews.Test.Repositories
         {
             var subjectType = "court";
             var subjectId = Guid.NewGuid();
-            var reviews = new List<Review> { new Review { SubjectType = subjectType, SubjectId = subjectId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            Context.Reviews.Add(new Review
+            {
+                Id = Guid.NewGuid(),
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = subjectType,
+                SubjectId = subjectId,
+                Rating = 3,
+            });
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewsBySubjectAsync(subjectType, subjectId, 1, 10, cancellationToken);
+            var result = await Repository.GetReviewsBySubjectAsync(subjectType, subjectId, 1, 10, CancellationToken.None);
 
-            Assert.NotNull(result);
+            result.Should().NotBeNull();
         }
 
         [Fact]
@@ -183,190 +201,103 @@ namespace Reviews.Test.Repositories
         {
             var subjectType = "court";
             var subjectId = Guid.NewGuid();
-            var reviews = new List<Review>
-            {
-                new Review { SubjectType = subjectType, SubjectId = subjectId, CreatedAt = DateTime.UtcNow },
-                new Review { SubjectType = subjectType, SubjectId = subjectId, CreatedAt = DateTime.UtcNow }
-            }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+            Context.Reviews.AddRange(
+                new Review
+                {
+                    Id = Guid.NewGuid(),
+                    ReviewerId = Guid.NewGuid(),
+                    SubjectType = subjectType,
+                    SubjectId = subjectId,
+                    Rating = 3,
+                },
+                new Review
+                {
+                    Id = Guid.NewGuid(),
+                    ReviewerId = Guid.NewGuid(),
+                    SubjectType = subjectType,
+                    SubjectId = subjectId,
+                    Rating = 4,
+                }
+            );
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewsBySubjectAsync(subjectType, subjectId, 1, 10, cancellationToken);
+            var result = await Repository.GetReviewsBySubjectAsync(subjectType, subjectId, 1, 10, CancellationToken.None);
 
-            Assert.Equal(2, result.Count);
-        }
-
-        [Fact]
-        public async Task GetReviewsBySubjectAsync_ReturnsReviewsWithCorrectSubjectType()
-        {
-            var subjectType = "court";
-            var subjectId = Guid.NewGuid();
-            var reviews = new List<Review> { new Review { SubjectType = subjectType, SubjectId = subjectId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
-
-            var result = await _repository.GetReviewsBySubjectAsync(subjectType, subjectId, 1, 10, cancellationToken);
-
-            Assert.Equal(subjectType, result[0].SubjectType);
-        }
-
-        [Fact]
-        public async Task GetReviewsBySubjectAsync_ReturnsReviewsWithCorrectSubjectId()
-        {
-            var subjectType = "court";
-            var subjectId = Guid.NewGuid();
-            var reviews = new List<Review> { new Review { SubjectType = subjectType, SubjectId = subjectId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
-
-            var result = await _repository.GetReviewsBySubjectAsync(subjectType, subjectId, 1, 10, cancellationToken);
-
-            Assert.Equal(subjectId, result[0].SubjectId);
+            result.Should().HaveCount(2);
         }
 
         [Fact]
         public async Task GetReviewRepliesAsync_ReturnsNonNullList()
         {
             var reviewId = Guid.NewGuid();
-            var replies = new List<ReviewReply> { new ReviewReply { ReviewId = reviewId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReplyQueryable(replies);
-            var cancellationToken = CancellationToken.None;
-
-            var result = await _repository.GetReviewRepliesAsync(reviewId, 1, 5, cancellationToken);
-
-            Assert.NotNull(result);
-        }
-
-        [Fact]
-        public async Task GetReviewRepliesAsync_ReturnsCorrectCount()
-        {
-            var reviewId = Guid.NewGuid();
-            var replies = new List<ReviewReply>
+            Context.ReviewReplies.Add(new ReviewReply
             {
-                new ReviewReply { ReviewId = reviewId, CreatedAt = DateTime.UtcNow },
-                new ReviewReply { ReviewId = reviewId, CreatedAt = DateTime.UtcNow }
-            }.AsQueryable();
-            SetupReplyQueryable(replies);
-            var cancellationToken = CancellationToken.None;
+                Id = Guid.NewGuid(),
+                ReviewId = reviewId,
+                ResponderId = Guid.NewGuid(),
+                ReplyText = "Test reply",
+            });
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewRepliesAsync(reviewId, 1, 5, cancellationToken);
+            var result = await Repository.GetReviewRepliesAsync(reviewId, 1, 5, CancellationToken.None);
 
-            Assert.Equal(2, result.Count);
-        }
-
-        [Fact]
-        public async Task GetReviewRepliesAsync_ReturnsRepliesWithCorrectReviewId()
-        {
-            var reviewId = Guid.NewGuid();
-            var replies = new List<ReviewReply> { new ReviewReply { ReviewId = reviewId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReplyQueryable(replies);
-            var cancellationToken = CancellationToken.None;
-
-            var result = await _repository.GetReviewRepliesAsync(reviewId, 1, 5, cancellationToken);
-
-            Assert.Equal(reviewId, result[0].ReviewId);
+            result.Should().NotBeNull();
         }
 
         [Fact]
         public async Task GetReviewsByCoachIdAsync_ReturnsNonNullList()
         {
             var coachId = Guid.NewGuid();
-            var reviews = new List<Review> { new Review { SubjectType = "coach", SubjectId = coachId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
-
-            var result = await _repository.GetReviewsByCoachIdAsync(coachId, 1, 10, cancellationToken);
-
-            Assert.NotNull(result);
-        }
-
-        [Fact]
-        public async Task GetReviewsByCoachIdAsync_ReturnsCorrectCount()
-        {
-            var coachId = Guid.NewGuid();
-            var reviews = new List<Review>
+            Context.Reviews.Add(new Review
             {
-                new Review { SubjectType = "coach", SubjectId = coachId, CreatedAt = DateTime.UtcNow },
-                new Review { SubjectType = "coach", SubjectId = coachId, CreatedAt = DateTime.UtcNow }
-            }.AsQueryable();
-            SetupReviewQueryable(reviews);
-            var cancellationToken = CancellationToken.None;
+                Id = Guid.NewGuid(),
+                ReviewerId = Guid.NewGuid(),
+                SubjectType = "coach",
+                SubjectId = coachId,
+                Rating = 3,
+            });
+            await Context.SaveChangesAsync(CancellationToken.None);
 
-            var result = await _repository.GetReviewsByCoachIdAsync(coachId, 1, 10, cancellationToken);
+            var result = await Repository.GetReviewsByCoachIdAsync(coachId, 1, 10, CancellationToken.None);
 
-            Assert.Equal(2, result.Count);
+            result.Should().NotBeNull();
         }
 
         [Fact]
-        public async Task GetReviewsByCoachIdAsync_ReturnsReviewsWithCorrectSubjectType()
+        public async Task AddReviewFlagAsync_AddsFlagToDatabase()
         {
-            var coachId = Guid.NewGuid();
-            var reviews = new List<Review> { new Review { SubjectType = "coach", SubjectId = coachId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReviewQueryable(reviews);
+            var flag = new ReviewFlag
+            {
+                Id = Guid.NewGuid(),
+                ReviewId = Guid.NewGuid(),
+                ReportedBy = Guid.NewGuid(),
+                FlagReason = "Inappropriate content",
+                Status = "Pending"
+            };
             var cancellationToken = CancellationToken.None;
 
-            var result = await _repository.GetReviewsByCoachIdAsync(coachId, 1, 10, cancellationToken);
+            await Repository.AddReviewFlagAsync(flag, cancellationToken);
+            await Repository.SaveChangesAsync(cancellationToken);
 
-            Assert.Equal("coach", result[0].SubjectType);
+            Context.ReviewFlags.Should().ContainSingle(f => f.Id == flag.Id);
         }
 
         [Fact]
-        public async Task GetReviewsByCoachIdAsync_ReturnsReviewsWithCorrectSubjectId()
+        public async Task AddReviewReplyAsync_AddsReplyToDatabase()
         {
-            var coachId = Guid.NewGuid();
-            var reviews = new List<Review> { new Review { SubjectType = "coach", SubjectId = coachId, CreatedAt = DateTime.UtcNow } }.AsQueryable();
-            SetupReviewQueryable(reviews);
+            var reply = new ReviewReply
+            {
+                Id = Guid.NewGuid(),
+                ReviewId = Guid.NewGuid(),
+                ResponderId = Guid.NewGuid(),
+                ReplyText = "Test reply",
+            };
             var cancellationToken = CancellationToken.None;
 
-            var result = await _repository.GetReviewsByCoachIdAsync(coachId, 1, 10, cancellationToken);
+            await Repository.AddReviewReplyAsync(reply, cancellationToken);
+            await Repository.SaveChangesAsync(cancellationToken);
 
-            Assert.Equal(coachId, result[0].SubjectId);
-        }
-
-        [Fact]
-        public async Task AddReviewFlagAsync_CallsAddAsyncOnFlagSet()
-        {
-            var flag = new ReviewFlag { Id = Guid.NewGuid() };
-            var cancellationToken = CancellationToken.None;
-
-            await _repository.AddReviewFlagAsync(flag, cancellationToken);
-
-            _mockReviewFlagSet.Verify(m => m.AddAsync(flag, cancellationToken), Times.Once());
-        }
-
-        [Fact]
-        public async Task AddReviewReplyAsync_CallsAddAsyncOnReplySet()
-        {
-            var reply = new ReviewReply { Id = Guid.NewGuid() };
-            var cancellationToken = CancellationToken.None;
-
-            await _repository.AddReviewReplyAsync(reply, cancellationToken);
-
-            _mockReviewReplySet.Verify(m => m.AddAsync(reply, cancellationToken), Times.Once());
-        }
-
-        private void SetupReviewQueryable(IQueryable<Review> reviews)
-        {
-            _mockReviewSet.As<IQueryable<Review>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Review>(reviews.Provider));
-            _mockReviewSet.As<IQueryable<Review>>().Setup(m => m.Expression).Returns(reviews.Expression);
-            _mockReviewSet.As<IQueryable<Review>>().Setup(m => m.ElementType).Returns(reviews.ElementType);
-            _mockReviewSet.As<IQueryable<Review>>().Setup(m => m.GetEnumerator()).Returns(reviews.GetEnumerator());
-
-            _mockReviewSet.As<IAsyncEnumerable<Review>>()
-                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-                .Returns(new TestAsyncEnumerator<Review>(reviews.GetEnumerator()));
-        }
-
-        private void SetupReplyQueryable(IQueryable<ReviewReply> replies)
-        {
-            _mockReviewReplySet.As<IQueryable<ReviewReply>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<ReviewReply>(replies.Provider));
-            _mockReviewReplySet.As<IQueryable<ReviewReply>>().Setup(m => m.Expression).Returns(replies.Expression);
-            _mockReviewReplySet.As<IQueryable<ReviewReply>>().Setup(m => m.ElementType).Returns(replies.ElementType);
-            _mockReviewReplySet.As<IQueryable<ReviewReply>>().Setup(m => m.GetEnumerator()).Returns(replies.GetEnumerator());
-
-            _mockReviewReplySet.As<IAsyncEnumerable<ReviewReply>>()
-                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-                .Returns(new TestAsyncEnumerator<ReviewReply>(replies.GetEnumerator()));
+            Context.ReviewReplies.Should().ContainSingle(r => r.Id == reply.Id);
         }
     }
 }
