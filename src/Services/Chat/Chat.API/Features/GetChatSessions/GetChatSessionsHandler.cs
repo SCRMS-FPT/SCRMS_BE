@@ -19,6 +19,9 @@ namespace Chat.API.Features.GetChatSessions
 
         public async Task<List<ChatSessionResponse>> Handle(GetChatSessionsQuery request, CancellationToken cancellationToken)
         {
+            if (request.UserId == Guid.Empty)
+                throw new Exception("UserId cannot be empty");
+
             return await _chatSessionRepository.GetChatSessionByUserIdAsync(request.UserId);
         }
     }

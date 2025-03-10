@@ -17,6 +17,9 @@ namespace Chat.API.Features.GetChatMessages
 
         public async Task<List<ChatMessage>> Handle(GetChatMessagesQuery request, CancellationToken cancellationToken)
         {
+            if (request.Page <= 0)
+                throw new Exception("Page must be greater than 0");
+
             return await _chatMessageRepository.GetChatMessageByChatSessionIdAsync(request.ChatSessionId, request.Page, request.Limit);
         }
     }

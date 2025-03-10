@@ -7,6 +7,15 @@ namespace Chat.API.Features.CreateChatSession
 
     public record CreateChatSessionResult(Guid ChatSessionId);
 
+    public class CreateChatSessionCommandValidator : AbstractValidator<CreateChatSessionCommand>
+    {
+        public CreateChatSessionCommandValidator()
+        {
+            RuleFor(x => x.User2Id)
+                .NotEmpty().WithMessage("User2Id cannot be empty");
+        }
+    }
+
     public class CreateChatSessionHandler : IRequestHandler<CreateChatSessionCommand, CreateChatSessionResult>
     {
         private readonly IChatSessionRepository _chatSessionRepository;
@@ -18,6 +27,9 @@ namespace Chat.API.Features.CreateChatSession
 
         public async Task<CreateChatSessionResult> Handle(CreateChatSessionCommand request, CancellationToken cancellationToken)
         {
+            if (request.User1Id == request.User2Id)
+                throw new Exception("User1Id and User2Id cannot be the same");
+
             var existingSession = await _chatSessionRepository.GetChatSessionByUsersAsync(request.User1Id, request.User2Id);
             if (existingSession != null)
                 return new CreateChatSessionResult(existingSession.Id);

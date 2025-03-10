@@ -17,6 +17,9 @@ namespace Chat.API.Features.MarkMessageAsRead
 
         public async Task Handle(MarkMessageAsReadCommand request, CancellationToken cancellationToken)
         {
+            if (request.MessageId == Guid.Empty)
+                throw new Exception("MessageId cannot be empty");
+
             var message = await _chatMessageRepository.GetChatMessageByIdAsync(request.MessageId);
             if (message == null)
                 throw new Exception("Message not found");

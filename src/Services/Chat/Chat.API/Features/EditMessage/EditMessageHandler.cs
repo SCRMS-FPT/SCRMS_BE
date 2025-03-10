@@ -17,6 +17,10 @@ namespace Chat.API.Features.EditMessage
 
         public async Task Handle(EditMessageCommand request, CancellationToken cancellationToken)
         {
+            // Kiểm tra nếu MessageText rỗng hoặc chỉ chứa khoảng trắng
+            if (string.IsNullOrWhiteSpace(request.MessageText))
+                throw new Exception("Message text cannot be empty");
+
             var message = await _chatMessageRepository.GetChatMessageByIdAndSessionAsync(request.MessageId, request.ChatSessionId, request.UserId);
             if (message == null)
                 throw new Exception("Message not found or not authorized");

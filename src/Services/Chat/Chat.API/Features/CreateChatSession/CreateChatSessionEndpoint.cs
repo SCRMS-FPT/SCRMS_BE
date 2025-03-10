@@ -11,6 +11,9 @@
                 if (userIdClaim == null)
                     return Results.Unauthorized();
 
+                if (request.User2Id == Guid.Empty)
+                    return Results.BadRequest("User2Id cannot be empty");
+
                 if (!Guid.TryParse(userIdClaim.Value, out var user1Id))
                     return Results.BadRequest("Invalid user ID in token");
 

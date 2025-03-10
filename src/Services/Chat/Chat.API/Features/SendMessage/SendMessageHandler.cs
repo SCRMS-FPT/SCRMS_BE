@@ -19,6 +19,12 @@ namespace Chat.API.Features.SendMessage
 
         public async Task<ChatMessage> Handle(SendMessageCommand request, CancellationToken cancellationToken)
         {
+            if (request.ChatSessionId == Guid.Empty)
+                throw new Exception("ChatSessionId cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(request.MessageText))
+                throw new Exception("Message text cannot be empty");
+
             var chatMessage = new ChatMessage
             {
                 Id = Guid.NewGuid(),
