@@ -15,7 +15,7 @@ namespace Coach.API.Packages.CreatePackage
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/packages", async (HttpContext httpContext, ISender sender) =>
+            app.MapPost("/packages", async (CreatePackageRequest request, HttpContext httpContext, ISender sender) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                         ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
