@@ -15,14 +15,19 @@ namespace CourtBooking.Infrastructure.Data
 
         public DbSet<Court> Courts { get; set; }
 
-        public DbSet<CourtOperatingHour> CourtOperatingHours { get; set; }
+        public DbSet<CourtSchedule> CourtSlots { get; set; }
 
         public DbSet<Sport> Sports { get; set; }
+        public DbSet<SportCenter> SportCenters { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<BookingPrice> BookingPrices { get; set; }
+        public DbSet<CourtPromotion> CourtPromotions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(modelBuilder);
+            
         }
     }
 }

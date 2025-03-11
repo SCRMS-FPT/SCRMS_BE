@@ -1,42 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions; // Đảm bảo đã import
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Query;
+﻿using Microsoft.EntityFrameworkCore.Query;
+using System.Linq.Expressions;
 
-namespace Identity.Test.Helpers
+namespace Reviews.Test.Helper
 {
-    /// <summary>
-    /// Hỗ trợ async enumerator cho các truy vấn
-    /// </summary>
-    public class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-    {
-        private readonly IEnumerator<T> _innerEnumerator;
-
-        public TestAsyncEnumerator(IEnumerator<T> innerEnumerator)
-        {
-            _innerEnumerator = innerEnumerator;
-        }
-
-        public T Current => _innerEnumerator.Current;
-
-        public ValueTask DisposeAsync()
-        {
-            _innerEnumerator.Dispose();
-            return ValueTask.CompletedTask;
-        }
-
-        public ValueTask<bool> MoveNextAsync() =>
-            new ValueTask<bool>(_innerEnumerator.MoveNext());
-    }
-
-    /// <summary>
-    /// Async query provider dùng để hỗ trợ các thao tác async như ToListAsync
-    /// </summary>
-    public class TestAsyncQueryProvider<T> : IAsyncQueryProvider
+    public class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
     {
         private readonly IQueryProvider _inner;
 
@@ -47,7 +14,7 @@ namespace Identity.Test.Helpers
 
         public IQueryable CreateQuery(Expression expression)
         {
-            return new TestAsyncEnumerable<T>(expression);
+            return new TestAsyncEnumerable<TEntity>(expression);
         }
 
         public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
@@ -65,32 +32,57 @@ namespace Identity.Test.Helpers
             return _inner.Execute<TResult>(expression);
         }
 
-        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
         {
-            var t = Expression.Lambda(expression).Compile().DynamicInvoke();
-            return Task.FromResult(t as dynamic);
+            // TResult is Task<T>, where T is the entity type (e.g., Task<Review>)
+            var resultType = typeof(TResult).GetGenericArguments()[0]; // Extract T from Task<T>
+            var result = _inner.Execute(expression); // Execute synchronously
+
+            // If result is null, return a completed Task with null
+            if (result == null)
+            {
+                return (TResult)Task.FromResult(default(object));
+            }
+
+            // Wrap the result in a Task<T>
+            var task = Task.FromResult(result);
+            return (TResult)(object)task; // Cast to TResult (e.g., Task<Review>)
         }
     }
 
-    /// <summary>
-    /// Lớp hỗ trợ chuyển IEnumerable/Expression thành IAsyncEnumerable và IQueryable
-    /// </summary>
     public class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
     {
-        public TestAsyncEnumerable(IEnumerable<T> enumerable)
-            : base(enumerable)
-        { }
-
-        public TestAsyncEnumerable(Expression expression)
-            : base(expression)
-        { }
+        public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
+        public TestAsyncEnumerable(Expression expression) : base(expression) { }
 
         public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
         }
 
-        // Trả về một IQueryProvider hỗ trợ async
         IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+    }
+
+    public class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+    {
+        private readonly IEnumerator<T> _inner;
+
+        public TestAsyncEnumerator(IEnumerator<T> inner)
+        {
+            _inner = inner;
+        }
+
+        public T Current => _inner.Current;
+
+        public ValueTask<bool> MoveNextAsync()
+        {
+            return new ValueTask<bool>(_inner.MoveNext());
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            _inner.Dispose();
+            return default;
+        }
     }
 }

@@ -1,11 +1,11 @@
 ﻿using BuildingBlocks.CQRS;
 using FluentValidation;
+using MediatR;
 using Notification.API.Services;
 
 namespace Notification.Api.Features.SendEmail
 {
-    public record SendEmailCommand(string To, string Subject, string Body, Boolean IsHtml) : ICommand<SendEmailResult>;
-    public record SendEmailResult(Boolean Sent);
+    public record SendEmailCommand(string To, string Subject, string Body, Boolean IsHtml) : ICommand<Unit>;
     public class SendEmailCommandValidator : AbstractValidator<SendEmailCommand>
     {
         public SendEmailCommandValidator()
@@ -21,7 +21,7 @@ namespace Notification.Api.Features.SendEmail
                 .NotEmpty().WithMessage("Email body is required.");
         }
     }
-    public class SendEmailCommandHandler : ICommandHandler<SendEmailCommand, SendEmailResult>
+    public class SendEmailCommandHandler : ICommandHandler<SendEmailCommand, Unit>
     {
         private readonly IEmailService _emailService;
 
@@ -30,10 +30,10 @@ namespace Notification.Api.Features.SendEmail
             _emailService = emailService;
         }
 
-        public async Task<SendEmailResult> Handle(SendEmailCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(SendEmailCommand request, CancellationToken cancellationToken)
         {
-            var result = new SendEmailResult(await _emailService.SendEmailAsync(request.To, request.Subject, request.Body, request.IsHtml));
-            return result;
+            await _emailService.SendEmailAsync(request.To, request.Subject, request.Body, request.IsHtml);
+            return Unit.Value;
         }
     }
 }

@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CourtBooking.Infrastructure.Data.Migrations
+namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -23,6 +23,76 @@ namespace CourtBooking.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CourtBooking.Domain.Models.Booking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("DATE");
+
+                    b.Property<Guid>("CourtId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("TIME");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PromotionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("TIME");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("bookings", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.BookingPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("TIME");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("TIME");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.ToTable("booking_prices", (string)null);
+                });
+
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
                 {
                     b.Property<Guid>("Id")
@@ -32,21 +102,19 @@ namespace CourtBooking.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Facilities")
-                        .IsRequired()
-                        .HasColumnType("JSON");
+                        .HasColumnType("JSONB");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid");
+                    b.Property<double>("SlotDuration")
+                        .HasColumnType("double precision");
 
-                    b.Property<decimal>("PricePerHour")
-                        .HasColumnType("numeric");
+                    b.Property<Guid>("SportCenterId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("SportId")
                         .HasColumnType("uuid");
@@ -68,11 +136,147 @@ namespace CourtBooking.Infrastructure.Data.Migrations
                                 .HasColumnName("CourtName");
                         });
 
-                    b.ComplexProperty<Dictionary<string, object>>("Location", "CourtBooking.Domain.Models.Court.Location#Location", b1 =>
+                    b.HasKey("Id");
+
+                    b.HasIndex("SportCenterId");
+
+                    b.ToTable("courts", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.CourtPromotion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourtId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(50)");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("DATE");
+
+                    b.Property<DateTime>("ValidTo")
+                        .HasColumnType("DATE");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.ToTable("court_promotions", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.CourtSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourtId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int[]>("DayOfWeek")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("TIME");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("PriceSlot")
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("TIME");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.ToTable("court_schedules", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.Sport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("sports", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.SportCenter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
+
+                    b.ComplexProperty<Dictionary<string, object>>("Address", "CourtBooking.Domain.Models.SportCenter.Address#Location", b1 =>
                         {
                             b1.IsRequired();
 
-                            b1.Property<string>("Address")
+                            b1.Property<string>("AddressLine")
                                 .IsRequired()
                                 .HasMaxLength(255)
                                 .HasColumnType("character varying(255)");
@@ -93,91 +297,99 @@ namespace CourtBooking.Infrastructure.Data.Migrations
                                 .HasColumnType("character varying(50)");
                         });
 
+                    b.ComplexProperty<Dictionary<string, object>>("LocationPoint", "CourtBooking.Domain.Models.SportCenter.LocationPoint#GeoLocation", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("DOUBLE PRECISION");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("DOUBLE PRECISION");
+                        });
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SportId");
-
-                    b.ToTable("courts", (string)null);
+                    b.ToTable("sport_centers", (string)null);
                 });
 
-            modelBuilder.Entity("CourtBooking.Domain.Models.CourtOperatingHour", b =>
+            modelBuilder.Entity("CourtBooking.Domain.Models.BookingPrice", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<TimeSpan>("CloseTime")
-                        .HasColumnType("interval");
-
-                    b.Property<Guid>("CourtId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<TimeSpan>("OpenTime")
-                        .HasColumnType("interval");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourtId");
-
-                    b.ToTable("court_operating_hours", (string)null);
-                });
-
-            modelBuilder.Entity("CourtBooking.Domain.Models.Sport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LastModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("sports", (string)null);
+                    b.HasOne("CourtBooking.Domain.Models.Booking", null)
+                        .WithMany("BookingPrices")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
                 {
-                    b.HasOne("CourtBooking.Domain.Models.Sport", "Sport")
-                        .WithMany()
-                        .HasForeignKey("SportId")
+                    b.HasOne("CourtBooking.Domain.Models.SportCenter", null)
+                        .WithMany("Courts")
+                        .HasForeignKey("SportCenterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Sport");
                 });
 
-            modelBuilder.Entity("CourtBooking.Domain.Models.CourtOperatingHour", b =>
+            modelBuilder.Entity("CourtBooking.Domain.Models.CourtPromotion", b =>
                 {
                     b.HasOne("CourtBooking.Domain.Models.Court", null)
-                        .WithMany("OperatingHours")
+                        .WithMany()
                         .HasForeignKey("CourtId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CourtBooking.Domain.Models.CourtSchedule", b =>
+                {
+                    b.HasOne("CourtBooking.Domain.Models.Court", null)
+                        .WithMany("CourtSlots")
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.SportCenter", b =>
+                {
+                    b.OwnsOne("CourtBooking.Domain.ValueObjects.SportCenterImages", "Images", b1 =>
+                        {
+                            b1.Property<Guid>("SportCenterId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Avatar")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<string>("ImageUrls")
+                                .IsRequired()
+                                .HasColumnType("jsonb");
+
+                            b1.HasKey("SportCenterId");
+
+                            b1.ToTable("sport_centers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SportCenterId");
+                        });
+
+                    b.Navigation("Images")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.Booking", b =>
+                {
+                    b.Navigation("BookingPrices");
+                });
+
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
                 {
-                    b.Navigation("OperatingHours");
+                    b.Navigation("CourtSlots");
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.SportCenter", b =>
+                {
+                    b.Navigation("Courts");
                 });
 #pragma warning restore 612, 618
         }

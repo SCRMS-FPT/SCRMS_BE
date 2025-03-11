@@ -7,8 +7,7 @@ using Notification.API.Data;
 
 namespace Notification.API.Features.DeleteNotification
 {
-    public record DeleteNotificationCommand(Guid NotificationId, Guid UserId) : ICommand<DeleteNotificationResponse>;
-    public record DeleteNotificationResponse(Boolean IsDeleted);
+    public record DeleteNotificationCommand(Guid NotificationId, Guid UserId) : ICommand<Unit>;
     public class DeleteNotificationCommandValidator : AbstractValidator<DeleteNotificationCommand>
     {
         public DeleteNotificationCommandValidator()
@@ -17,7 +16,7 @@ namespace Notification.API.Features.DeleteNotification
             RuleFor(x => x.NotificationId).NotEmpty().WithMessage("NotificationId is required");
         }
     }
-    internal class DeleteNotificationCommandHandler : ICommandHandler<DeleteNotificationCommand, DeleteNotificationResponse>
+    public class DeleteNotificationCommandHandler : ICommandHandler<DeleteNotificationCommand, Unit>
     {
         private readonly NotificationDbContext context;
         private readonly IMediator mediator;
@@ -28,20 +27,20 @@ namespace Notification.API.Features.DeleteNotification
             this.mediator = mediator;
         }
 
-        public async Task<DeleteNotificationResponse> Handle(DeleteNotificationCommand command, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DeleteNotificationCommand command, CancellationToken cancellationToken)
         {
             var notification = await context.MessageNotifications.FirstOrDefaultAsync(mn => mn.Id == command.NotificationId);
             if (notification == null)
             {
                 throw new NotFoundException("Notifications", command.NotificationId);
-            } 
+            }
             if (notification.Receiver != command.UserId)
             {
                 throw new BadRequestException("Notification not belongs to user");
             }
             context.MessageNotifications.Remove(notification);
             await context.SaveChangesAsync();
-            return new DeleteNotificationResponse(true);
+            return Unit.Value;
 
         }
     }
