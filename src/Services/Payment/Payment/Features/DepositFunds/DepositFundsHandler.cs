@@ -1,4 +1,6 @@
-﻿using Payment.API.Data.Repositories;
+﻿using MassTransit;
+using Payment.API.Data.Repositories;
+using BuildingBlocks.Messaging.Events;
 
 namespace Payment.API.Features.DepositFunds
 {
@@ -8,6 +10,7 @@ namespace Payment.API.Features.DepositFunds
     {
         private readonly IUserWalletRepository _userWalletRepository;
         private readonly IWalletTransactionRepository _walletTransactionRepository;
+        private readonly IPublishEndpoint _publishEndpoint;
         private readonly PaymentDbContext _context;
 
         public DepositFundsHandler(
@@ -52,6 +55,15 @@ namespace Payment.API.Features.DepositFunds
                 await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
                 await _context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
+
+                // Publish event after successful commit
+                await _publishEndpoint.Publish(new PaymentSucceededEvent(
+                    transactionRecord.Id,
+                    request.UserId,
+                    request.Amount,
+                    DateTime.UtcNow,
+                    "Deposit succeeded"
+                ));
 
                 return transactionRecord.Id;
             }
