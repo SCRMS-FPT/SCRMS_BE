@@ -16,8 +16,8 @@ namespace CourtBooking.Domain.Models
         public CourtStatus Status { get; private set; }
         public CourtType CourtType { get; private set; }
 
-        private List<CourtSchedule> _courtSlots = new();
-        public IReadOnlyCollection<CourtSchedule> CourtSlots => _courtSlots.AsReadOnly();
+        private List<CourtSchedule> _courtSchedules = new();
+        public IReadOnlyCollection<CourtSchedule> CourtSchedules => _courtSchedules.AsReadOnly();
 
 
         public static Court Create(CourtId courtId,CourtName courtName, SportCenterId sportCenterId,
@@ -60,7 +60,7 @@ namespace CourtBooking.Domain.Models
             var courtSlot =  CourtSchedule.Create(CourtScheduleId.Of(Guid.NewGuid()), courtId,
                 dayOfWeekValue, startTime, endTime, priceSlot);
             courtSlot.CreatedAt = DateTime.UtcNow;
-            _courtSlots.Add(courtSlot);
+            _courtSchedules.Add(courtSlot);
         }
     }
 

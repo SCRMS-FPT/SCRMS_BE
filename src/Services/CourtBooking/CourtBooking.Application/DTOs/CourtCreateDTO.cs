@@ -16,6 +16,6 @@ namespace CourtBooking.Application.DTOs
         List<FacilityDTO> Facilities,
         int CourtType,
         TimeSpan SlotDuration,
-        List<CourtScheduleDTO> CourtSlots
+        List<CourtScheduleDTO> CourtSchedules
      );
 }

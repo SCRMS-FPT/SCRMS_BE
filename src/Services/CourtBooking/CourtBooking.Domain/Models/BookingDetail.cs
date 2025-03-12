@@ -17,7 +17,7 @@ namespace CourtBooking.Domain.Models
 
         public static BookingDetail Create(BookingId bookingId, CourtId courtId, TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules)
         {
-            if (startTime <= endTime)
+            if (startTime >= endTime)
                 throw new DomainException("Start time must be lower than end time");
 
             decimal totalPrice = CalculatePrice(startTime, endTime, schedules);

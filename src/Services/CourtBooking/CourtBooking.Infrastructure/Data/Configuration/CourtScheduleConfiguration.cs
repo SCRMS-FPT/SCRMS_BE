@@ -48,7 +48,7 @@ namespace CourtBooking.Infrastructure.Data.Configuration
             builder.Property(cs => cs.Status)
                 .HasConversion(
                     status => (int)status,
-                    value => (CourtSlotStatus)value)
+                    value => (CourtScheduleStatus)value)
                 .IsRequired();
         }
     }

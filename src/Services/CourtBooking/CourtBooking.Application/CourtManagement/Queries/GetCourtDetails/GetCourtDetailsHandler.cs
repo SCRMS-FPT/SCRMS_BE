@@ -14,7 +14,7 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
         var courtId = CourtId.Of(query.CourtId);
 
         var court = await _context.Courts
-            .Include(c => c.CourtSlots)
+            .Include(c => c.CourtSchedules)
             .FirstOrDefaultAsync(c => c.Id == courtId, cancellationToken);
 
         if (court == null)

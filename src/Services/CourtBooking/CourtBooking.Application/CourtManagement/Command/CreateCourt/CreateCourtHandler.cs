@@ -36,7 +36,7 @@ public class CreateCourtHandler(IApplicationDbContext context)
             facilities: facilitiesJson,
             courtType: (CourtType)courtDTO.CourtType
          );
-        foreach (var slot in courtDTO.CourtSlots)
+        foreach (var slot in courtDTO.CourtSchedules)
         {
             newCourt.AddCourtSlot(newId, slot.DayOfWeek, slot.StartTime, slot.EndTime, slot.PriceSlot);
         }
