@@ -20,7 +20,7 @@ namespace CourtBooking.Infrastructure.Data
         public DbSet<Sport> Sports { get; set; }
         public DbSet<SportCenter> SportCenters { get; set; }
         public DbSet<Booking> Bookings { get; set; }
-        public DbSet<BookingPrice> BookingPrices { get; set; }
+        public DbSet<BookingDetail> BookingPrices { get; set; }
         public DbSet<CourtPromotion> CourtPromotions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

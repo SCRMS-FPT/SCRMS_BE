@@ -9,44 +9,46 @@ namespace CourtBooking.Domain.Models
     public class Booking : Aggregate<BookingId>
     {
         public UserId UserId { get; private set; }
-        public CourtId CourtId { get; private set; }
         public DateTime BookingDate { get; private set; }
-        public TimeSpan StartTime { get; private set; }
-        public TimeSpan EndTime { get; private set; }
         public BookingStatus Status { get; private set; }
+        public decimal TotalTime { get; private set; }
         public decimal TotalPrice { get; private set; }
+        public string? Note { get; private set; }
         public PromotionId? PromotionId { get; private set; }
-        private List<BookingPrice> _bookingPrices = new();
-        public IReadOnlyCollection<BookingPrice> BookingPrices => _bookingPrices.AsReadOnly();
+
+        private List<BookingDetail> _bookingDetails = new();
+        public IReadOnlyCollection<BookingDetail> BookingDetails => _bookingDetails.AsReadOnly();
 
         private Booking() { } // For ORM
 
-        public static Booking Create(UserId userId, CourtId courtId, DateTime bookingDate, TimeSpan startTime, TimeSpan endTime, PromotionId? promotionId = null)
+        public static Booking Create(UserId userId, DateTime bookingDate, string? note = null, PromotionId? promotionId = null)
         {
-            if (endTime <= startTime)
-                throw new DomainException("End time must be after start time.");
-
             return new Booking
             {
                 Id = BookingId.Of(Guid.NewGuid()),
                 UserId = userId,
-                CourtId = courtId,
                 BookingDate = bookingDate,
-                StartTime = startTime,
-                EndTime = endTime,
                 Status = BookingStatus.Pending,
+                Note = note,
                 PromotionId = promotionId
             };
         }
 
-        public void AddPriceSegment(TimeSpan start, TimeSpan end, decimal price)
+        public void AddBookingDetail(CourtId courtId, TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules)
         {
-            if (end <= start)
-                throw new DomainException("End time must be after start time.");
-            if (price < 0)
-                throw new DomainException("Price must be non-negative.");
+            var bookingDetail = BookingDetail.Create(Id, courtId, startTime, endTime, schedules);
+            _bookingDetails.Add(bookingDetail);
+            RecalculateTotals();
+        }
 
-            _bookingPrices.Add(BookingPrice.Create(Id, start, end, price));
+        public void RemoveBookingDetail(BookingDetailId detailId)
+        {
+            var detail = _bookingDetails.FirstOrDefault(d => d.Id == detailId);
+            if (detail != null)
+            {
+                _bookingDetails.Remove(detail);
+                RecalculateTotals();
+            }
         }
 
         public void Confirm()
@@ -63,19 +65,10 @@ namespace CourtBooking.Domain.Models
             Status = BookingStatus.Cancelled;
         }
 
-        public void CalculateTotalPrice(IEnumerable<CourtSchedule> courtSchedules)
+        private void RecalculateTotals()
         {
-            TotalPrice = 0;
-            foreach (var schedule in courtSchedules)
-            {
-                if (StartTime < schedule.EndTime && EndTime > schedule.StartTime)
-                {
-                    var overlapStart = StartTime > schedule.StartTime ? StartTime : schedule.StartTime;
-                    var overlapEnd = EndTime < schedule.EndTime ? EndTime : schedule.EndTime;
-                    var overlapDuration = overlapEnd - overlapStart;
-                    TotalPrice += (decimal)overlapDuration.TotalHours * schedule.PriceSlot;
-                }
-            }
+            TotalTime = _bookingDetails.Sum(d => (decimal)(d.EndTime - d.StartTime).TotalHours);
+            TotalPrice = _bookingDetails.Sum(d => d.TotalPrice);
         }
     }
 }
