@@ -47,12 +47,6 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                 .HasColumnType("TEXT")
                 .IsRequired(false);
 
-            builder.Property(b => b.PromotionId)
-                .HasConversion(
-                    id => id.Value,
-                    value => PromotionId.Of(value))
-                .IsRequired(false);
-
             builder.HasMany(b => b.BookingDetails)
                 .WithOne()
                 .HasForeignKey(bp => bp.BookingId)

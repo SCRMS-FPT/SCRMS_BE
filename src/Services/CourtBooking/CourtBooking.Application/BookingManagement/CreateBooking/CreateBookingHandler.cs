@@ -17,14 +17,11 @@ namespace CourtBooking.Application.BookingManagement.Commands.CreateBooking
         public async Task<CreateBookingResult> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
             var userId = UserId.Of(request.Booking.UserId);
-            var promotionId = request.Booking.PromotionId.HasValue ?
-                             PromotionId.Of(request.Booking.PromotionId.Value) : null;
 
             var booking = Booking.Create(
                 userId,
                 request.Booking.BookingDate,
-                request.Booking.Note,
-                promotionId
+                request.Booking.Note
             );
 
             foreach (var detail in request.Booking.BookingDetails)

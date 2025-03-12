@@ -14,14 +14,13 @@ namespace CourtBooking.Domain.Models
         public decimal TotalTime { get; private set; }
         public decimal TotalPrice { get; private set; }
         public string? Note { get; private set; }
-        public PromotionId? PromotionId { get; private set; }
 
         private List<BookingDetail> _bookingDetails = new();
         public IReadOnlyCollection<BookingDetail> BookingDetails => _bookingDetails.AsReadOnly();
 
         private Booking() { } // For ORM
 
-        public static Booking Create(UserId userId, DateTime bookingDate, string? note = null, PromotionId? promotionId = null)
+        public static Booking Create(UserId userId, DateTime bookingDate, string? note = null)
         {
             return new Booking
             {
@@ -30,7 +29,7 @@ namespace CourtBooking.Domain.Models
                 BookingDate = bookingDate,
                 Status = BookingStatus.Pending,
                 Note = note,
-                PromotionId = promotionId
+                CreatedAt = DateTime.UtcNow
             };
         }
 

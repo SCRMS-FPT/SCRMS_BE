@@ -9,14 +9,15 @@ namespace CourtBooking.API.Endpoints
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/sport-centers", async ([FromBody] CreateSportCenterRequest request, ISender sender) =>
+            app.MapPost("/api/sportcenters", async ([FromBody] CreateSportCenterRequest request, ISender sender) =>
             {
                 var command = request.SportCenter.Adapt<CreateSportCenterCommand>();
                 var result = await sender.Send(command);
                 var response = result.Adapt<CreateSportCenterResponse>();
-                return Results.Created($"/api/sport-centers/{response.Id}", response);
+                return Results.Created($"/api/sportcenters/{response.Id}", response);
             })
             .WithName("CreateSportCenter")
+            .WithGroupName("SportCenter")
             .Produces<CreateSportCenterResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Create Sport Center")

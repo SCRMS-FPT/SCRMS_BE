@@ -41,6 +41,11 @@ namespace CourtBooking.Infrastructure.Data.Configuration
             builder.Property(bp => bp.TotalPrice)
                 .HasColumnType("DECIMAL")
                 .IsRequired();
+
+            builder.HasOne<Court>()
+            .WithMany()
+            .HasForeignKey(c => c.CourtId)
+            .IsRequired();
         }
     }
 }

@@ -6,7 +6,6 @@
         DateTime BookingDate,
         decimal TotalPrice,
         string? Note,
-        Guid? PromotionId,
         //list booking details
         List<BookingDetailCreateDTO> BookingDetails
     );
