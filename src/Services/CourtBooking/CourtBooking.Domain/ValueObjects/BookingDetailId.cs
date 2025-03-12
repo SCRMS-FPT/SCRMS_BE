@@ -7,19 +7,19 @@ using System.Threading.Tasks;
 namespace CourtBooking.Domain.ValueObjects
 {
 
-    public record BookingPriceId
+    public record BookingDetailId
     {
         public Guid Value { get; }
-        public BookingPriceId(Guid value) => Value = value;
-        public static BookingPriceId Of(Guid value)
+        public BookingDetailId(Guid value) => Value = value;
+        public static BookingDetailId Of(Guid value)
         {
             ArgumentNullException.ThrowIfNull(value);
             if (value == Guid.Empty)
             {
-                throw new DomainException("BookingPriceId cannot be empty.");
+                throw new DomainException("BookingDetailId cannot be empty.");
             }
 
-            return new BookingPriceId(value);
+            return new BookingDetailId(value);
         }
     }
 }

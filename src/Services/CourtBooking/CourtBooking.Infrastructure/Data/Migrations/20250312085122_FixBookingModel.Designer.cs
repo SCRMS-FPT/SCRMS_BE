@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using CourtBooking.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250312085122_FixBookingModel")]
+    partial class FixBookingModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,6 +42,9 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<string>("Note")
                         .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("PromotionId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -86,8 +92,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
-
-                    b.HasIndex("CourtId");
 
                     b.ToTable("booking_details", (string)null);
                 });
@@ -327,12 +331,6 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("CourtBooking.Domain.Models.Court", null)
-                        .WithMany()
-                        .HasForeignKey("CourtId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
@@ -362,7 +360,7 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Models.CourtSchedule", b =>
                 {
                     b.HasOne("CourtBooking.Domain.Models.Court", null)
-                        .WithMany("CourtSchedules")
+                        .WithMany("CourtSlots")
                         .HasForeignKey("CourtId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -403,7 +401,7 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
                 {
-                    b.Navigation("CourtSchedules");
+                    b.Navigation("CourtSlots");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Models.SportCenter", b =>

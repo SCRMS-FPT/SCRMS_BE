@@ -1,4 +1,5 @@
 ﻿using CourtBooking.Application.DTOs;
+using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.Models;
 using System;
 using System.Collections.Generic;
@@ -40,6 +41,7 @@ public class GetAllCourtsOfSportCenterHandler(IApplicationDbContext _context) : 
                 Facilities: facilities,
                 SlotDuration: court.SlotDuration,
                 Status: court.Status,
+                CourtType: court.CourtType,
                 SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"), // Truy xuất nhanh
                 SportCenterName: null,
                 CreatedAt: court.CreatedAt,

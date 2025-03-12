@@ -54,9 +54,20 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
             .HasConversion(builder => builder.ToString(), 
             value => (CourtStatus)Enum.Parse(typeof(CourtStatus), value));
 
-        builder.HasMany(c => c.CourtSlots)
+        builder.HasMany(c => c.CourtSchedules)
             .WithOne()
             .HasForeignKey(c => c.CourtId)
             .IsRequired();
+
+        builder.Property(c => c.CourtType)
+            .HasDefaultValue(CourtType.Indoor)
+            .HasConversion(builder => builder.ToString(),
+            value => (CourtType)Enum.Parse(typeof(CourtType), value));
+
+        builder.HasOne<Sport>()
+            .WithMany()
+            .HasForeignKey(c => c.SportId)
+            .IsRequired();
+
     }
 }

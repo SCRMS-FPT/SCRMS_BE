@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CourtBooking.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,8 @@ namespace CourtBooking.Application.DTOs
         Guid SportId,
         string Description,
         List<FacilityDTO> Facilities,
+        int CourtType,
         TimeSpan SlotDuration,
-        List<CourtScheduleDTO> CourtSlots
+        List<CourtScheduleDTO> CourtSchedules
      );
 }

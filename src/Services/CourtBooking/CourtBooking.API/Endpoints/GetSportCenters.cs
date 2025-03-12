@@ -17,6 +17,7 @@ namespace CourtBooking.API.Endpoints
                 return Results.Ok(response);
             })
             .WithName("GetSportCenters")
+            .WithGroupName("SportCenter")
             .Produces<GetSportCentersResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)

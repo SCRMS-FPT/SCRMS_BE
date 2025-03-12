@@ -9,7 +9,7 @@ public class UpdateCourtScheduleHandler(IApplicationDbContext _context)
     public async Task<UpdateCourtScheduleResult> Handle(UpdateCourtScheduleCommand request, CancellationToken cancellationToken)
     {
         var scheduleId = CourtScheduleId.Of(request.CourtSchedule.Id);
-        var courtSchedule = await _context.CourtSlots.FindAsync(scheduleId, cancellationToken);
+        var courtSchedule = await _context.CourtSchedules.FindAsync(scheduleId, cancellationToken);
         if (courtSchedule == null)
         {
             throw new KeyNotFoundException("Court schedule not found");
@@ -20,7 +20,7 @@ public class UpdateCourtScheduleHandler(IApplicationDbContext _context)
             request.CourtSchedule.StartTime,
             request.CourtSchedule.EndTime,
             request.CourtSchedule.PriceSlot,
-            (CourtSlotStatus)request.CourtSchedule.Status
+            (CourtScheduleStatus)request.CourtSchedule.Status
         );
 
         await _context.SaveChangesAsync(cancellationToken);

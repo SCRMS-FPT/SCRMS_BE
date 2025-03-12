@@ -9,7 +9,7 @@ namespace CourtBooking.Domain.Models
         public TimeSpan StartTime { get; private set; }
         public TimeSpan EndTime { get; private set; }
         public decimal PriceSlot { get; private set; }
-        public CourtSlotStatus Status { get; private set; }
+        public CourtScheduleStatus Status { get; private set; }
 
         public CourtSchedule() { } // For EF Core
 
@@ -40,11 +40,11 @@ namespace CourtBooking.Domain.Models
                 StartTime = startTime,
                 EndTime = endTime,
                 PriceSlot = priceSlot,
-                Status = CourtSlotStatus.Available
+                Status = CourtScheduleStatus.Available
             };
         }
 
-        public void Update(DayOfWeekValue dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot, CourtSlotStatus status)
+        public void Update(DayOfWeekValue dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot, CourtScheduleStatus status)
         {
             if (startTime >= endTime)
                 throw new DomainException("StartTime must be before EndTime");

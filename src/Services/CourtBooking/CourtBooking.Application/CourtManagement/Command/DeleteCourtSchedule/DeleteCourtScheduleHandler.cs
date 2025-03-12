@@ -11,13 +11,13 @@ public class DeleteCourtScheduleHandler(IApplicationDbContext _context)
     public async Task<DeleteCourtScheduleResult> Handle(DeleteCourtScheduleCommand request, CancellationToken cancellationToken)
     {
         var scheduleId = CourtScheduleId.Of(request.CourtScheduleId);
-        var courtSchedule = await _context.CourtSlots.FindAsync(new object[] { scheduleId }, cancellationToken);
+        var courtSchedule = await _context.CourtSchedules.FindAsync(new object[] { scheduleId }, cancellationToken);
         if (courtSchedule == null)
         {
             throw new KeyNotFoundException("Court schedule not found");
         }
 
-        _context.CourtSlots.Remove(courtSchedule);
+        _context.CourtSchedules.Remove(courtSchedule);
         await _context.SaveChangesAsync(cancellationToken);
 
         return new DeleteCourtScheduleResult(true);

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using CourtBooking.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250306222303_AddForeignKey")]
+    partial class AddForeignKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,40 +34,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("DATE");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LastModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("DECIMAL");
-
-                    b.Property<decimal>("TotalTime")
-                        .HasColumnType("DECIMAL");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("bookings", (string)null);
-                });
-
-            modelBuilder.Entity("CourtBooking.Domain.Models.BookingDetail", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BookingId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("CourtId")
                         .HasColumnType("uuid");
 
@@ -77,31 +46,62 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("PromotionId")
+                        .HasColumnType("uuid");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("TIME");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("DECIMAL");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.ToTable("bookings", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.BookingPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("TIME");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("TIME");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
 
-                    b.HasIndex("CourtId");
-
-                    b.ToTable("booking_details", (string)null);
+                    b.ToTable("booking_prices", (string)null);
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("CourtType")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Indoor");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -320,17 +320,20 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.ToTable("sport_centers", (string)null);
                 });
 
-            modelBuilder.Entity("CourtBooking.Domain.Models.BookingDetail", b =>
+            modelBuilder.Entity("CourtBooking.Domain.Models.Booking", b =>
                 {
-                    b.HasOne("CourtBooking.Domain.Models.Booking", null)
-                        .WithMany("BookingDetails")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("CourtBooking.Domain.Models.Court", null)
                         .WithMany()
                         .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Models.BookingPrice", b =>
+                {
+                    b.HasOne("CourtBooking.Domain.Models.Booking", null)
+                        .WithMany("BookingPrices")
+                        .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -362,7 +365,7 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Models.CourtSchedule", b =>
                 {
                     b.HasOne("CourtBooking.Domain.Models.Court", null)
-                        .WithMany("CourtSchedules")
+                        .WithMany("CourtSlots")
                         .HasForeignKey("CourtId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -398,12 +401,12 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Models.Booking", b =>
                 {
-                    b.Navigation("BookingDetails");
+                    b.Navigation("BookingPrices");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Models.Court", b =>
                 {
-                    b.Navigation("CourtSchedules");
+                    b.Navigation("CourtSlots");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Models.SportCenter", b =>

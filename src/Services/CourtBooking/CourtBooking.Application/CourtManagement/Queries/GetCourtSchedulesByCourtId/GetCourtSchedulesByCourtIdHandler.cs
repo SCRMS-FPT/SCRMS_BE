@@ -12,7 +12,7 @@ public class GetCourtSchedulesByCourtIdHandler(IApplicationDbContext _context)
     public async Task<GetCourtSchedulesByCourtIdResult> Handle(GetCourtSchedulesByCourtIdQuery query, CancellationToken cancellationToken)
     {
         var court = await _context.Courts
-            .Include(c => c.CourtSlots)
+            .Include(c => c.CourtSchedules)
             .FirstOrDefaultAsync(c => c.Id == CourtId.Of(query.CourtId), cancellationToken);
 
         if (court == null)
@@ -20,7 +20,7 @@ public class GetCourtSchedulesByCourtIdHandler(IApplicationDbContext _context)
             throw new KeyNotFoundException("Court not found");
         }
 
-        var courtSlots = court.CourtSlots.Select(slot => new CourtScheduleDTO(
+        var courtSchedules = court.CourtSchedules.Select(slot => new CourtScheduleDTO(
             CourtId: slot.CourtId.Value,
             DayOfWeek: slot.DayOfWeek.Days.ToArray(),
             StartTime: slot.StartTime,
@@ -29,6 +29,6 @@ public class GetCourtSchedulesByCourtIdHandler(IApplicationDbContext _context)
             Status: (int)slot.Status
         )).ToList();
 
-        return new GetCourtSchedulesByCourtIdResult(courtSlots);
+        return new GetCourtSchedulesByCourtIdResult(courtSchedules);
     }
 }
