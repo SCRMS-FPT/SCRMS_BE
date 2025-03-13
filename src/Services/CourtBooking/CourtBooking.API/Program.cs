@@ -12,8 +12,15 @@ builder.Services
     .AddApiServices(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy => policy.WithOrigins("http://localhost:5173")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
+});
 var app = builder.Build();
-
+app.UseCors("AllowReactApp");
 // Configure the HTTP request pipeline.
 app.UseApiServices();
 

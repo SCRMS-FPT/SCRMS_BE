@@ -37,46 +37,51 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
 
         // Map dữ liệu sang DTO
         var sportCenterDtos = sportCenters.Select(sportCenter =>
-            new SportCenterDTO(
+            new SportCenterListDTO(
                 Id: sportCenter.Id.Value,
                 Name: sportCenter.Name,
                 PhoneNumber: sportCenter.PhoneNumber,
+                SportNames: sportCenter.Courts
+                    .Select(c => sportNames.GetValueOrDefault(c.SportId, "Unknown Sport"))
+                    .Distinct()
+                    .ToList(),
                 Address: sportCenter.Address.ToString(),
                 Description: sportCenter.Description,
-                Courts: sportCenter.Courts.Select(court =>
-                {
-                    List<FacilityDTO>? facilities = null;
-                    if (!string.IsNullOrEmpty(court.Facilities))
-                    {
-                        try
-                        {
-                            facilities = JsonSerializer.Deserialize<List<FacilityDTO>>(court.Facilities);
-                        }
-                        catch (JsonException)
-                        {
-                            facilities = new List<FacilityDTO>();
-                        }
-                    }
+                ImageUrl: sportCenter.Images.Avatar.ToString()
+            //Courts: sportCenter.Courts.Select(court =>
+            //{
+            //    List<FacilityDTO>? facilities = null;
+            //    if (!string.IsNullOrEmpty(court.Facilities))
+            //    {
+            //        try
+            //        {
+            //            facilities = JsonSerializer.Deserialize<List<FacilityDTO>>(court.Facilities);
+            //        }
+            //        catch (JsonException)
+            //        {
+            //            facilities = new List<FacilityDTO>();
+            //        }
+            //    }
 
-                    return new CourtDTO(
-                        Id: court.Id.Value,
-                        CourtName: court.CourtName.Value,
-                        SportId: court.SportId.Value,
-                        SportCenterId: court.SportCenterId.Value,
-                        Description: court.Description,
-                        Facilities: facilities,
-                        SlotDuration: court.SlotDuration,
-                        Status: court.Status,
-                        CourtType: court.CourtType,
-                        SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
-                        SportCenterName: sportCenter.Name,
-                        CreatedAt: court.CreatedAt,
-                        LastModified: court.LastModified
-                    );
-                }).ToList()
+            //    return new CourtDTO(
+            //        Id: court.Id.Value,
+            //        CourtName: court.CourtName.Value,
+            //        SportId: court.SportId.Value,
+            //        SportCenterId: court.SportCenterId.Value,
+            //        Description: court.Description,
+            //        Facilities: facilities,
+            //        SlotDuration: court.SlotDuration,
+            //        Status: court.Status,
+            //        CourtType: court.CourtType,
+            //        SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
+            //        SportCenterName: sportCenter.Name,
+            //        CreatedAt: court.CreatedAt,
+            //        LastModified: court.LastModified
+            //    );
+            //}).ToList()
             )
         ).ToList();
 
-        return new GetSportCentersResult(new PaginatedResult<SportCenterDTO>(pageIndex, pageSize, totalCount, sportCenterDtos));
+        return new GetSportCentersResult(new PaginatedResult<SportCenterListDTO>(pageIndex, pageSize, totalCount, sportCenterDtos));
     }
 }

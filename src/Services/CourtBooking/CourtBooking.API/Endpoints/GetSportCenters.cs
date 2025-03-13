@@ -4,7 +4,7 @@ using CourtBooking.Application.DTOs;
 
 namespace CourtBooking.API.Endpoints
 {
-    public record GetSportCentersResponse(PaginatedResult<SportCenterDTO> SportCenters);
+    public record GetSportCentersResponse(PaginatedResult<SportCenterListDTO> SportCenters);
 
     public class GetSportCenters : ICarterModule
     {
