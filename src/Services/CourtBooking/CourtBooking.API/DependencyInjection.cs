@@ -1,4 +1,5 @@
 ﻿using BuildingBlocks.Exceptions.Handler;
+using CourtBooking.API.Extensions;
 using CourtBooking.Application.Data.Repositories;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -16,9 +17,16 @@ public static class DependencyInjection
         services.AddScoped<ISportRepository, SportRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
 
+        // Thêm xác thực và phân quyền
+        services.AddJwtAuthentication(configuration);
+        services.AddAuthorizationPolicies();
+
         services.AddExceptionHandler<CustomExceptionHandler>();
         services.AddHealthChecks()
             .AddNpgSql(configuration.GetConnectionString("Database")!);
+
+        // Thêm HttpContextAccessor để truy cập thông tin người dùng trong các handler
+        services.AddHttpContextAccessor();
 
         return services;
     }
@@ -33,6 +41,10 @@ public static class DependencyInjection
             {
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
             });
+
+        // Đảm bảo middleware xác thực được áp dụng
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         return app;
     }

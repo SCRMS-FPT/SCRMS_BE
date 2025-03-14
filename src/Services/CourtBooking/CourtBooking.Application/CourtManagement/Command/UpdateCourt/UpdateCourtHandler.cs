@@ -20,7 +20,7 @@ public class UpdateCourtHandler : IRequestHandler<UpdateCourtCommand, UpdateCour
 
     public async Task<UpdateCourtResult> Handle(UpdateCourtCommand request, CancellationToken cancellationToken)
     {
-        var courtId = CourtId.Of(request.Court.Id);
+        var courtId = CourtId.Of(request.Id);
         var court = await _courtRepository.GetCourtByIdAsync(courtId, cancellationToken);
         if (court == null)
         {

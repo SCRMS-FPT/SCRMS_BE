@@ -16,4 +16,8 @@
     <ProjectReference Include="..\CourtBooking.Domain\CourtBooking.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="BookingManagement\Query\" />
+  </ItemGroup>
+
 </Project>

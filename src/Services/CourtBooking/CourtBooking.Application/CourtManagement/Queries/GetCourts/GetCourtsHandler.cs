@@ -26,21 +26,32 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
 
     public async Task<GetCourtsResult> Handle(GetCourtsQuery query, CancellationToken cancellationToken)
     {
-        var pageIndex = query.PaginationRequest.PageIndex;
-        var pageSize = query.PaginationRequest.PageSize;
+        int pageIndex = query.PaginationRequest.PageIndex;
+        int pageSize = query.PaginationRequest.PageSize;
 
-        // Lấy danh sách Court
-        var totalCount = await _courtRepository.GetTotalCourtCountAsync(cancellationToken);
+        // Lấy danh sách các Court (giả định không có filter trực tiếp trong repository)
         var courts = await _courtRepository.GetPaginatedCourtsAsync(pageIndex, pageSize, cancellationToken);
 
-        // Lấy danh sách SportId từ các Court
-        var sportIds = courts.Select(c => c.SportId).Distinct().ToList();
+        // Áp dụng các filter nếu có
+        if (query.sportCenterId.HasValue)
+        {
+            courts = courts.Where(c => c.SportCenterId.Value == query.sportCenterId.Value).ToList();
+        }
+        if (query.sportId.HasValue)
+        {
+            courts = courts.Where(c => c.SportId.Value == query.sportId.Value).ToList();
+        }
+        if (!string.IsNullOrWhiteSpace(query.courtType))
+        {
+            courts = courts.Where(c => c.CourtType.ToString().Equals(query.courtType, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
 
-        // Lấy thông tin Sport
+        long totalCount = courts.Count;
+
+        var sportIds = courts.Select(c => c.SportId).Distinct().ToList();
         var sports = await _sportRepository.GetSportsByIdsAsync(sportIds, cancellationToken);
         var sportNames = sports.ToDictionary(s => s.Id, s => s.Name);
 
-        // Ánh xạ dữ liệu sang CourtDTO, bao gồm SportName
         var courtDtos = courts.Select(court => new CourtDTO(
             Id: court.Id.Value,
             CourtName: court.CourtName.Value,
@@ -52,7 +63,7 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
             Status: court.Status,
             CourtType: court.CourtType,
             SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
-            SportCenterName: null, // Có thể thêm logic nếu cần
+            SportCenterName: null, // Có thể bổ sung logic nếu cần
             CreatedAt: court.CreatedAt,
             LastModified: court.LastModified
         )).ToList();

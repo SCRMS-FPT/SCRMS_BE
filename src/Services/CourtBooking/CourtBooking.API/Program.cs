@@ -2,6 +2,7 @@
 using CourtBooking.Application;
 using CourtBooking.Infrastructure;
 using CourtBooking.Infrastructure.Data.Extensions;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,12 +11,60 @@ builder.Services
     .AddApplicationServices(builder.Configuration)
     .AddInfrastructureServices(builder.Configuration)
     .AddApiServices(builder.Configuration);
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "CourtBooking API", Version = "v1" });
+
+    // Cấu hình Bearer Token cho Swagger UI
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Vui lòng nhập token theo định dạng: Bearer {your_token_here}"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
+
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+builder.Services.AddHttpClient("NotificationAPI", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7069");
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.UseApiServices();
+// Sử dụng middleware
+app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
@@ -24,4 +73,10 @@ if (app.Environment.IsDevelopment())
     await app.InitialiseDatabaseAsync();
 }
 
+// Sử dụng các dịch vụ API (bao gồm xác thực và phân quyền)
+app.UseApiServices();
+
 app.Run();
+
+public partial class Program
+{ }
