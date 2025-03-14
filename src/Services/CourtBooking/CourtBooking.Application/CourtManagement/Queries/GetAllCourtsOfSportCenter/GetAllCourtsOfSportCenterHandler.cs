@@ -1,4 +1,5 @@
-﻿using CourtBooking.Application.DTOs;
+﻿using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Application.DTOs;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.Models;
 using System;
@@ -8,21 +9,27 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-public class GetAllCourtsOfSportCenterHandler(IApplicationDbContext _context) : IQueryHandler<GetAllCourtsOfSportCenterQuery, GetAllCourtsOfSportCenterResult>
+public class GetAllCourtsOfSportCenterHandler : IQueryHandler<GetAllCourtsOfSportCenterQuery, GetAllCourtsOfSportCenterResult>
 {
+    private readonly ICourtRepository _courtRepository;
+    private readonly ISportRepository _sportRepository;
+
+    public GetAllCourtsOfSportCenterHandler(
+        ICourtRepository courtRepository,
+        ISportRepository sportRepository)
+    {
+        _courtRepository = courtRepository;
+        _sportRepository = sportRepository;
+    }
+
     public async Task<GetAllCourtsOfSportCenterResult> Handle(GetAllCourtsOfSportCenterQuery query, CancellationToken cancellationToken)
     {
         var sportCenterId = SportCenterId.Of(query.SportCenterId);
+        var courts = await _courtRepository.GetAllCourtsOfSportCenterAsync(sportCenterId, cancellationToken);
 
-        var courts = await _context.Courts
-            .Where(c => c.SportCenterId == sportCenterId)
-            .ToListAsync(cancellationToken);
-
-        // Lấy tất cả SportId cần thiết trước khi tạo DTO
         var sportIds = courts.Select(c => c.SportId).Distinct().ToList();
-        var sportNames = await _context.Sports
-            .Where(s => sportIds.Contains(s.Id))
-            .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
+        var sports = await _sportRepository.GetAllSportsAsync(cancellationToken);
+        var sportNames = sports.Where(s => sportIds.Contains(s.Id)).ToDictionary(s => s.Id, s => s.Name);
 
         var courtDtos = courts.Select(court =>
         {
@@ -42,7 +49,7 @@ public class GetAllCourtsOfSportCenterHandler(IApplicationDbContext _context) : 
                 SlotDuration: court.SlotDuration,
                 Status: court.Status,
                 CourtType: court.CourtType,
-                SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"), // Truy xuất nhanh
+                SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
                 SportCenterName: null,
                 CreatedAt: court.CreatedAt,
                 LastModified: court.LastModified

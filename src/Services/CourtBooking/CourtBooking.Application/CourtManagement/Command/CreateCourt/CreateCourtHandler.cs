@@ -1,4 +1,5 @@
-﻿using CourtBooking.Application.DTOs;
+﻿using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Application.DTOs;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
@@ -7,14 +8,19 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace CourtBooking.Application.CourtManagement.Command.CreateCourt;
 
-public class CreateCourtHandler(IApplicationDbContext context)
-    : ICommandHandler<CreateCourtCommand, CreateCourtResult>
+public class CreateCourtHandler : ICommandHandler<CreateCourtCommand, CreateCourtResult>
 {
+    private readonly ICourtRepository _courtRepository;
+
+    public CreateCourtHandler(ICourtRepository courtRepository)
+    {
+        _courtRepository = courtRepository;
+    }
+
     public async Task<CreateCourtResult> Handle(CreateCourtCommand command, CancellationToken cancellationToken)
     {
         var court = CreateNewCourt(command.Court);
-        context.Courts.Add(court);
-        await context.SaveChangesAsync(cancellationToken);
+        await _courtRepository.AddCourtAsync(court, cancellationToken);
         return new CreateCourtResult(court.Id.Value);
     }
 

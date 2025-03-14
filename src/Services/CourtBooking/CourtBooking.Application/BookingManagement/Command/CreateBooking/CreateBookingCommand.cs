@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using CourtBooking.Application.DTOs;
 
-namespace CourtBooking.Application.BookingManagement.Commands.CreateBooking
+namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
 {
     public record CreateBookingCommand(BookingCreateDTO Booking) : IRequest<CreateBookingResult>;
 

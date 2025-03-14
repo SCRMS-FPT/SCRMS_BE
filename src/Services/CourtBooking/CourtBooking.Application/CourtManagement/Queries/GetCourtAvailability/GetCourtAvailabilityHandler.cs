@@ -1,18 +1,22 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CourtBooking.Domain.ValueObjects;
+using CourtBooking.Application.Data.Repositories;
 
 namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
 {
-    public class GetCourtAvailabilityHandler(IApplicationDbContext _context) 
-        : IQueryHandler<GetCourtAvailabilityQuery, GetCourtAvailabilityResult>
+    public class GetCourtAvailabilityHandler : IQueryHandler<GetCourtAvailabilityQuery, GetCourtAvailabilityResult>
     {
+        private readonly ICourtRepository _courtRepository;
+
+        public GetCourtAvailabilityHandler(ICourtRepository courtRepository)
+        {
+            _courtRepository = courtRepository;
+        }
+
         public async Task<GetCourtAvailabilityResult> Handle(GetCourtAvailabilityQuery query, CancellationToken cancellationToken)
         {
             var courtId = CourtId.Of(query.CourtId);
-            var court = await _context.Courts
-                //.Include(c => c.OperatingHours)
-                .FirstOrDefaultAsync(c => c.Id == courtId, cancellationToken);
-
+            var court = await _courtRepository.GetCourtByIdAsync(courtId, cancellationToken);
             if (court == null)
             {
                 throw new KeyNotFoundException("Court not found");
@@ -23,9 +27,10 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
 
             while (currentTime <= query.EndTime)
             {
-                //var isAvailable = court.IsAvailable(currentTime);
-                //timeSlots.Add(new CourtTimeSlot(currentTime, isAvailable));
-                //currentTime = currentTime.AddHours(1); // Add 1-hour intervals
+                // Giả sử có phương thức kiểm tra tính khả dụng trong domain model Court
+                // var isAvailable = court.IsAvailable(currentTime);
+                // timeSlots.Add(new CourtTimeSlot(currentTime, isAvailable));
+                // currentTime = currentTime.AddHours(1); // Tăng 1 giờ
             }
 
             return new GetCourtAvailabilityResult(timeSlots);

@@ -27,9 +27,9 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                 .IsRequired();
 
             builder.Property(cs => cs.DayOfWeek)
-                .HasColumnType("integer[]") 
+                .HasColumnType("integer[]")
                 .HasConversion(
-                    days => days.Days.ToArray(), 
+                    days => days.Days.ToArray(),
                     value => new DayOfWeekValue(value))
                 .IsRequired();
 
@@ -50,6 +50,7 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                     status => (int)status,
                     value => (CourtScheduleStatus)value)
                 .IsRequired();
+            builder.HasIndex(x => new { x.CourtId, x.DayOfWeek });
         }
     }
 }

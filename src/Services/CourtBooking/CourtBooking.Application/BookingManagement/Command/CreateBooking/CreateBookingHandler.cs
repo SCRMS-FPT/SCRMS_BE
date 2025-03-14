@@ -9,55 +9,44 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CourtBooking.Domain.Exceptions;
+using CourtBooking.Application.Data.Repositories;
 
-namespace CourtBooking.Application.BookingManagement.Commands.CreateBooking
+namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
 {
-    public class CreateBookingHandler(IApplicationDbContext _context) : IRequestHandler<CreateBookingCommand, CreateBookingResult>
+    public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, CreateBookingResult>
     {
+        private readonly IBookingRepository _bookingRepository;
+        private readonly ICourtScheduleRepository _courtScheduleRepository;
+
+        public CreateBookingHandler(
+            IBookingRepository bookingRepository,
+            ICourtScheduleRepository courtScheduleRepository)
+        {
+            _bookingRepository = bookingRepository;
+            _courtScheduleRepository = courtScheduleRepository;
+        }
+
         public async Task<CreateBookingResult> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
             var userId = UserId.Of(request.Booking.UserId);
-
-            var booking = Booking.Create(
-                userId,
-                request.Booking.BookingDate,
-                request.Booking.Note
-            );
+            var booking = Booking.Create(userId, request.Booking.BookingDate, request.Booking.Note);
 
             foreach (var detail in request.Booking.BookingDetails)
             {
                 var courtId = CourtId.Of(detail.CourtId);
-
-                // Getting the day of the week as an integer (1-7)
                 var bookingDayOfWeekInt = (int)request.Booking.BookingDate.DayOfWeek + 1;
-
-                // First, get all schedules for the court
-                var allCourtSchedules = await _context.CourtSchedules
-                    .AsNoTracking()
-                    .Where(s => s.CourtId == courtId)
-                    .ToListAsync(cancellationToken);
-
-                // Then filter in-memory for the correct day of week
+                var allCourtSchedules = await _courtScheduleRepository.GetSchedulesByCourtIdAsync(courtId, cancellationToken);
                 var schedules = allCourtSchedules
                     .Where(s => s.DayOfWeek.Days.Contains(bookingDayOfWeekInt))
                     .ToList();
-
                 if (!schedules.Any())
                 {
                     throw new ApplicationException($"No schedules found for court {courtId.Value} on day {bookingDayOfWeekInt}");
                 }
-
-                booking.AddBookingDetail(
-                    courtId,
-                    detail.StartTime,
-                    detail.EndTime,
-                    schedules
-                );
+                booking.AddBookingDetail(courtId, detail.StartTime, detail.EndTime, schedules);
             }
 
-            _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync(cancellationToken);
-
+            await _bookingRepository.AddBookingAsync(booking, cancellationToken);
             return new CreateBookingResult(booking.Id.Value);
         }
     }

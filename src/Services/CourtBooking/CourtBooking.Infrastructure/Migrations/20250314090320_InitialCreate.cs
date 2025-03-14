@@ -6,11 +6,30 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CourtBooking.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ChangeModel : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "bookings",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BookingDate = table.Column<DateTime>(type: "DATE", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    TotalTime = table.Column<decimal>(type: "DECIMAL", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "DECIMAL", nullable: false),
+                    Note = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_bookings", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "sport_centers",
                 columns: table => new
@@ -63,6 +82,7 @@ namespace CourtBooking.Infrastructure.Migrations
                     Description = table.Column<string>(type: "TEXT", nullable: true),
                     Facilities = table.Column<string>(type: "JSONB", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false, defaultValue: "Open"),
+                    CourtType = table.Column<string>(type: "text", nullable: false, defaultValue: "Indoor"),
                     CourtName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -74,6 +94,67 @@ namespace CourtBooking.Infrastructure.Migrations
                         name: "FK_courts_sport_centers_SportCenterId",
                         column: x => x.SportCenterId,
                         principalTable: "sport_centers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_courts_sports_SportId",
+                        column: x => x.SportId,
+                        principalTable: "sports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "booking_details",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BookingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourtId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "TIME", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "TIME", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "DECIMAL", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_booking_details", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_booking_details_bookings_BookingId",
+                        column: x => x.BookingId,
+                        principalTable: "bookings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_booking_details_courts_CourtId",
+                        column: x => x.CourtId,
+                        principalTable: "courts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "court_promotions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourtId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: true),
+                    DiscountType = table.Column<string>(type: "VARCHAR(50)", nullable: false),
+                    DiscountValue = table.Column<decimal>(type: "DECIMAL", nullable: false),
+                    ValidFrom = table.Column<DateTime>(type: "DATE", nullable: false),
+                    ValidTo = table.Column<DateTime>(type: "DATE", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_court_promotions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_court_promotions_courts_CourtId",
+                        column: x => x.CourtId,
+                        principalTable: "courts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -104,6 +185,21 @@ namespace CourtBooking.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_booking_details_BookingId",
+                table: "booking_details",
+                column: "BookingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_booking_details_CourtId",
+                table: "booking_details",
+                column: "CourtId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_court_promotions_CourtId",
+                table: "court_promotions",
+                column: "CourtId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_court_schedules_CourtId",
                 table: "court_schedules",
                 column: "CourtId");
@@ -112,22 +208,36 @@ namespace CourtBooking.Infrastructure.Migrations
                 name: "IX_courts_SportCenterId",
                 table: "courts",
                 column: "SportCenterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_courts_SportId",
+                table: "courts",
+                column: "SportId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "booking_details");
+
+            migrationBuilder.DropTable(
+                name: "court_promotions");
+
+            migrationBuilder.DropTable(
                 name: "court_schedules");
 
             migrationBuilder.DropTable(
-                name: "sports");
+                name: "bookings");
 
             migrationBuilder.DropTable(
                 name: "courts");
 
             migrationBuilder.DropTable(
                 name: "sport_centers");
+
+            migrationBuilder.DropTable(
+                name: "sports");
         }
     }
 }
