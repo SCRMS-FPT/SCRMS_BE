@@ -1,14 +1,14 @@
-﻿using Coach.API.Bookings.GetBookingById;
-using Coach.API.Bookings.UpdateBooking;
-using Coach.API.Data;
+﻿using Coach.API.Data;
 using Coach.API.Data.Repositories;
-using Coach.API.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BuildingBlocks.Exceptions;
 using System.Threading.Tasks;
+using Coach.API.Features.Bookings.GetBookingById;
+using Coach.API.Data.Models;
+using Coach.API.Features.Bookings.UpdateBookingStatus;
 
 namespace Coach.API.Tests.Bookings
 {

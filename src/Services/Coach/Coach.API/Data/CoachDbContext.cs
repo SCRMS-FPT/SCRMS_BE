@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Reflection.Emit;
+using Coach.API.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Data

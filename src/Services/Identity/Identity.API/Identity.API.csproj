@@ -10,7 +10,6 @@
     <DockerComposeProjectPath>..\..\..\..\docker-compose.dcproj</DockerComposeProjectPath>
 	  <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="AspNetCore.HealthChecks.Npgsql" Version="8.0.2" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />

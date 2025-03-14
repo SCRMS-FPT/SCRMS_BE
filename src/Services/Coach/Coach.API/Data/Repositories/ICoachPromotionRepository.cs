@@ -1,4 +1,6 @@
-﻿namespace Coach.API.Data.Repositories
+﻿using Coach.API.Data.Models;
+
+namespace Coach.API.Data.Repositories
 {
     public interface ICoachPromotionRepository
     {

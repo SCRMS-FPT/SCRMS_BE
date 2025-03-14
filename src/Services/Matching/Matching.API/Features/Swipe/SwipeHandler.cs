@@ -6,6 +6,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Matching.API.Data.Repositories;
+using MassTransit;
+using BuildingBlocks.Messaging.Events;
 
 namespace Matching.API.Features.Swipe
 {
@@ -18,15 +20,17 @@ namespace Matching.API.Features.Swipe
         private readonly ISwipeActionRepository _swipeActionRepository;
         private readonly IMatchRepository _matchRepository;
         private readonly MatchingDbContext _context;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public SwipeHandler(
             ISwipeActionRepository swipeActionRepository,
             IMatchRepository matchRepository,
-            MatchingDbContext context)
+            MatchingDbContext context, IPublishEndpoint publishEndpoint)
         {
             _swipeActionRepository = swipeActionRepository;
             _matchRepository = matchRepository;
             _context = context;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<SwipeResult> Handle(SwipeCommand request, CancellationToken cancellationToken)
@@ -60,6 +64,11 @@ namespace Matching.API.Features.Swipe
                     CreatedAt = DateTime.UtcNow
                 };
                 await _matchRepository.AddMatchAsync(match, cancellationToken);
+                await _publishEndpoint.Publish(new MatchCreatedEvent(
+                                match.InitiatorId,
+                                match.MatchedUserId,
+                                match.MatchTime
+                            ), cancellationToken);
                 isMatch = true;
             }
 

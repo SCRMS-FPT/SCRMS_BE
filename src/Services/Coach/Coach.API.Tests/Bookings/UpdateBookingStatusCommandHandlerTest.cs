@@ -1,7 +1,6 @@
-﻿using Coach.API.Bookings.UpdateBooking;
+﻿using Coach.API.Features.Bookings.UpdateBookingStatus;
 using Coach.API.Data.Repositories;
 using Coach.API.Data;
-using Coach.API.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BuildingBlocks.Exceptions;
 using FluentValidation;
+using Coach.API.Data.Models;
 
 namespace Coach.API.Tests.Bookings
 {

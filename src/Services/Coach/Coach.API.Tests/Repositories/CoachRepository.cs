@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Coach.API.Models;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -29,7 +28,7 @@ namespace Coach.API.Tests.Repositories
         public async Task AddCoachAsync_ValidCoach_AddsCoach()
         {
             // Arrange
-            var coach = new Models.Coach
+            var coach = new Data.Models.Coach
             {
                 UserId = Guid.NewGuid(),
                 Bio = "Test Bio",
@@ -49,7 +48,7 @@ namespace Coach.API.Tests.Repositories
         public async Task AddCoachAsync_InvalidCoach_ThrowsException()
         {
             // Arrange
-            var coach = new Models.Coach { UserId = Guid.NewGuid() }; // Thiếu Bio
+            var coach = new Data.Models.Coach { UserId = Guid.NewGuid() }; // Thiếu Bio
 
             // Act & Assert
             await Assert.ThrowsAsync<DbUpdateException>(() => _repository.AddCoachAsync(coach, CancellationToken.None));
@@ -60,7 +59,7 @@ namespace Coach.API.Tests.Repositories
         {
             // Arrange
             var coachId = Guid.NewGuid();
-            var coach = new Models.Coach { UserId = coachId, Bio = "Test Bio" };
+            var coach = new Data.Models.Coach { UserId = coachId, Bio = "Test Bio" };
             await _context.Coaches.AddAsync(coach);
             await _context.SaveChangesAsync();
 
@@ -89,7 +88,7 @@ namespace Coach.API.Tests.Repositories
         public async Task UpdateCoachAsync_ExistingCoach_UpdatesCoach()
         {
             // Arrange
-            var coach = new Models.Coach
+            var coach = new Data.Models.Coach
             {
                 UserId = Guid.NewGuid(),
                 Bio = "Updated Bio",
@@ -117,7 +116,7 @@ namespace Coach.API.Tests.Repositories
         {
             // Arrange
             var coachId = Guid.NewGuid();
-            var coach = new Models.Coach { UserId = coachId, Bio = "Test Bio" };
+            var coach = new Data.Models.Coach { UserId = coachId, Bio = "Test Bio" };
             await _context.Coaches.AddAsync(coach);
             await _context.SaveChangesAsync();
 
@@ -145,10 +144,10 @@ namespace Coach.API.Tests.Repositories
         public async Task GetAllCoachesAsync_CoachesExist_ReturnsCoaches()
         {
             // Arrange
-            var coaches = new List<Models.Coach>
+            var coaches = new List<Data.Models.Coach>
             {
-                new Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 1" },
-                new Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 2" }
+                new Data.Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 1" },
+                new Data.Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 2" }
             };
             await _context.Coaches.AddRangeAsync(coaches);
             await _context.SaveChangesAsync();

@@ -1,5 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Payment.API.Data.Repositories;
+using BuildingBlocks.Messaging.Events;
+using EFDatabase = Microsoft.EntityFrameworkCore.Storage.IDatabase;
 
 namespace Payment.API.Features.ProcessBookingPayment
 {
@@ -9,15 +12,18 @@ namespace Payment.API.Features.ProcessBookingPayment
     {
         private readonly IUserWalletRepository _userWalletRepository;
         private readonly IWalletTransactionRepository _walletTransactionRepository;
+        private readonly IPublishEndpoint _publishEndpoint;
         private readonly PaymentDbContext _context;
 
         public ProcessBookingPaymentHandler(
             IUserWalletRepository userWalletRepository,
             IWalletTransactionRepository walletTransactionRepository,
+            IPublishEndpoint publishEndpoint,
             PaymentDbContext context)
         {
             _userWalletRepository = userWalletRepository;
             _walletTransactionRepository = walletTransactionRepository;
+            _publishEndpoint = publishEndpoint;
             _context = context;
         }
 
@@ -46,6 +52,16 @@ namespace Payment.API.Features.ProcessBookingPayment
             await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
             await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _publishEndpoint.Publish(new PaymentSucceededEvent(
+                transactionRecord.Id,
+                request.UserId,
+                null,
+                request.Amount,
+                DateTime.UtcNow,
+                request.Description,
+                "CoachBooking"
+            ), cancellationToken);
 
             return transactionRecord.Id;
         }

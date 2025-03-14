@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Coach.API.Coaches.GetCoaches;
-using Coach.API.Models;
 using Coach.API.Data.Repositories;
 using Moq;
 using Xunit;
+using Coach.API.Data.Models;
+using Coach.API.Features.Coaches.GetCoaches;
 
 namespace Coach.API.Tests.Coaches
 {
@@ -17,9 +17,9 @@ namespace Coach.API.Tests.Coaches
         public async Task Handle_ExistingCoaches_ReturnsCoachList()
         {
             // Arrange
-            var coach1 = new Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 1", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
-            var coach2 = new Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 2", RatePerHour = 60m, CreatedAt = DateTime.UtcNow };
-            var coaches = new List<Models.Coach> { coach1, coach2 };
+            var coach1 = new Data.Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 1", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
+            var coach2 = new Data.Models.Coach { UserId = Guid.NewGuid(), Bio = "Coach 2", RatePerHour = 60m, CreatedAt = DateTime.UtcNow };
+            var coaches = new List<Data.Models.Coach> { coach1, coach2 };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetAllCoachesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(coaches);
@@ -37,7 +37,7 @@ namespace Coach.API.Tests.Coaches
 
             // Assert
             var responses = result.ToList();
-            Assert.Equal(2, responses.Count);
+            Assert.Equal(2, responses.Count());
             Assert.Equal(coach1.UserId, responses[0].UserId);
             Assert.Equal(coach2.UserId, responses[1].UserId);
             Assert.Equal(1, responses[0].SportIds.Count);
@@ -50,7 +50,7 @@ namespace Coach.API.Tests.Coaches
         {
             // Arrange
             var mockCoachRepo = new Mock<ICoachRepository>();
-            mockCoachRepo.Setup(r => r.GetAllCoachesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<Models.Coach>());
+            mockCoachRepo.Setup(r => r.GetAllCoachesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<Data.Models.Coach>());
 
             var handler = new GetCoachesQueryHandler(mockCoachRepo.Object, null, null);
 
@@ -66,8 +66,8 @@ namespace Coach.API.Tests.Coaches
         public async Task Handle_CoachWithNoSportsOrPackages_ReturnsEmptyLists()
         {
             // Arrange
-            var coach = new Models.Coach { UserId = Guid.NewGuid(), Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
-            var coaches = new List<Models.Coach> { coach };
+            var coach = new Data.Models.Coach { UserId = Guid.NewGuid(), Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
+            var coaches = new List<Data.Models.Coach> { coach };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetAllCoachesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(coaches);

@@ -5,6 +5,7 @@ using Matching.API.Features.RespondToSwipe;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Match = Matching.API.Data.Models.Match;
+using MassTransit;
 
 namespace Matching.Test.Features
 {
@@ -13,6 +14,7 @@ namespace Matching.Test.Features
         private readonly Mock<ISwipeActionRepository> _swipeRepoMock;
         private readonly Mock<IMatchRepository> _matchRepoMock;
         private readonly Mock<MatchingDbContext> _contextMock;
+        private readonly Mock<IPublishEndpoint> _publishEndpointMock;
         private readonly RespondToSwipeHandler _handler;
 
         public RespondToSwipeHandlerTests()
@@ -28,7 +30,9 @@ namespace Matching.Test.Features
             // Create mock with constructor argument
             _contextMock = new Mock<MatchingDbContext>(options);
 
-            _handler = new RespondToSwipeHandler(_swipeRepoMock.Object, _matchRepoMock.Object, _contextMock.Object);
+            _publishEndpointMock = new Mock<IPublishEndpoint>();
+
+            _handler = new RespondToSwipeHandler(_swipeRepoMock.Object, _matchRepoMock.Object, _contextMock.Object, _publishEndpointMock.Object);
         }
 
         [Fact]

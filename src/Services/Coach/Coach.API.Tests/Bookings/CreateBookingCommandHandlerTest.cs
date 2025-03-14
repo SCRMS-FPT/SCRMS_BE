@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Coach.API.Bookings.CreateBooking;
 using Coach.API.Data.Repositories;
 using Coach.API.Data;
-using Coach.API.Models;
 using Moq;
 using Xunit;
 using System.Runtime.CompilerServices;
+using Coach.API.Data.Models;
+using Coach.API.Features.Bookings.CreateBooking;
 
 [assembly: InternalsVisibleTo("Coach.API.Tests")]
 
@@ -22,8 +22,8 @@ namespace Coach.API.Tests.Bookings
         {
             // Arrange
             var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
-            var coach = new Models.Coach { UserId = command.CoachId, RatePerHour = 50 };
-            var schedule = new Models.CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var coach = new Data.Models.Coach { UserId = command.CoachId, RatePerHour = 50 };
+            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -59,7 +59,7 @@ namespace Coach.API.Tests.Bookings
             var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
-            mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync((Models.Coach)null);
+            mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync((Data.Models.Coach)null);
 
             var handler = new CreateBookingCommandHandler(mockCoachRepo.Object, null, null, null, null, null);
 
@@ -90,8 +90,8 @@ namespace Coach.API.Tests.Bookings
         {
             // Arrange
             var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(18)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(19)), null);
-            var coach = new Models.Coach { UserId = command.CoachId };
-            var schedule = new Models.CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var coach = new Data.Models.Coach { UserId = command.CoachId };
+            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -112,8 +112,8 @@ namespace Coach.API.Tests.Bookings
         {
             // Arrange
             var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
-            var coach = new Models.Coach { UserId = command.CoachId };
-            var schedule = new Models.CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var coach = new Data.Models.Coach { UserId = command.CoachId };
+            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -138,8 +138,8 @@ namespace Coach.API.Tests.Bookings
             // Arrange
             var packageId = Guid.NewGuid();
             var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), packageId);
-            var coach = new Models.Coach { UserId = command.CoachId };
-            var schedule = new Models.CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var coach = new Data.Models.Coach { UserId = command.CoachId };
+            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -166,8 +166,8 @@ namespace Coach.API.Tests.Bookings
         {
             // Arrange
             var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), null);
-            var coach = new Models.Coach { UserId = command.CoachId, RatePerHour = 50 };
-            var schedule = new Models.CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var coach = new Data.Models.Coach { UserId = command.CoachId, RatePerHour = 50 };
+            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
