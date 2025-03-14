@@ -1,3 +1,5 @@
+using BuildingBlocks.Messaging.Extensions;
+using BuildingBlocks.Messaging.MassTransit;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -21,6 +23,7 @@ builder.Services.AddMediatR(config =>
 builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddScoped<IUserWalletRepository, UserWalletRepository>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddCarter();
 
 builder.Services.AddDbContext<PaymentDbContext>(options =>
@@ -46,6 +49,7 @@ builder.Services.AddAuthentication(options =>
         RoleClaimType = ClaimTypes.Role
     };
 });
+builder.Services.AddMessageBroker(builder.Configuration, assembly);
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy =>
@@ -58,7 +62,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 
-    // C?u hình Bearer Token cho Swagger UI
+    // C?u hï¿½nh Bearer Token cho Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -83,6 +87,10 @@ builder.Services.AddSwaggerGen(c =>
                         }
                     });
 });
+
+// ThÃªm Outbox pattern
+builder.Services.AddOutbox<PaymentDbContext>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

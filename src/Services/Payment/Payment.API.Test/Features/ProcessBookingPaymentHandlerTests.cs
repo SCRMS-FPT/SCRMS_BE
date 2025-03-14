@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using MassTransit;
 using Moq;
 using Payment.API.Data;
 using Payment.API.Data.Models;
@@ -15,6 +16,7 @@ namespace Payment.API.Tests.Features
     {
         private readonly Mock<IUserWalletRepository> _userWalletRepoMock;
         private readonly Mock<IWalletTransactionRepository> _walletTransactionRepoMock;
+        private readonly Mock<IPublishEndpoint> _publishEndpointMock;
         private readonly PaymentDbContext _context;
         private readonly ProcessBookingPaymentHandler _handler;
 
@@ -22,6 +24,7 @@ namespace Payment.API.Tests.Features
         {
             _userWalletRepoMock = new Mock<IUserWalletRepository>();
             _walletTransactionRepoMock = new Mock<IWalletTransactionRepository>();
+            _publishEndpointMock = new Mock<IPublishEndpoint>();
 
             // Tạo DbContext với In-Memory Database, sử dụng tên database duy nhất cho mỗi test run.
             var options = new DbContextOptionsBuilder<PaymentDbContext>()
@@ -29,7 +32,12 @@ namespace Payment.API.Tests.Features
                 .Options;
             _context = new PaymentDbContext(options);
 
-            _handler = new ProcessBookingPaymentHandler(_userWalletRepoMock.Object, _walletTransactionRepoMock.Object, _context);
+            _handler = new ProcessBookingPaymentHandler(
+                _userWalletRepoMock.Object,
+                _walletTransactionRepoMock.Object,
+                _publishEndpointMock.Object,
+                _context
+            );
         }
 
         [Fact]
@@ -52,6 +60,9 @@ namespace Payment.API.Tests.Features
                 Times.Once);
             _walletTransactionRepoMock.Verify(r =>
                 r.AddWalletTransactionAsync(It.Is<WalletTransaction>(t => t.Amount == -50m), It.IsAny<CancellationToken>()),
+                Times.Once);
+            _publishEndpointMock.Verify(p =>
+                p.Publish(It.IsAny<BuildingBlocks.Messaging.Events.PaymentSucceededEvent>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Coach.API.Coaches.GetCoachById;
 using Coach.API.Exceptions;
-using Coach.API.Models;
 using Coach.API.Data.Repositories;
 using Moq;
 using Xunit;
+using Coach.API.Data.Models;
+using Coach.API.Features.Coaches.GetCoachById;
 
 namespace Coach.API.Tests.Coaches
 {
@@ -20,7 +20,7 @@ namespace Coach.API.Tests.Coaches
             // Arrange
             var coachId = Guid.NewGuid();
             var query = new GetCoachByIdQuery(coachId);
-            var coach = new Models.Coach { UserId = coachId, Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
+            var coach = new Data.Models.Coach { UserId = coachId, Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
             var sport = new CoachSport { CoachId = coachId, SportId = Guid.NewGuid() };
             var package = new CoachPackage { Id = Guid.NewGuid(), Name = "Package", Description = "Test", Price = 100m, SessionCount = 5 };
 
@@ -54,7 +54,7 @@ namespace Coach.API.Tests.Coaches
             var coachId = Guid.NewGuid();
             var query = new GetCoachByIdQuery(coachId);
             var mockCoachRepo = new Mock<ICoachRepository>();
-            mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync((Models.Coach)null);
+            mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync((Data.Models.Coach)null);
 
             var handler = new GetCoachByIdQueryHandler(mockCoachRepo.Object, null, null);
 
@@ -86,7 +86,7 @@ namespace Coach.API.Tests.Coaches
             // Arrange
             var coachId = Guid.NewGuid();
             var query = new GetCoachByIdQuery(coachId);
-            var coach = new Models.Coach { UserId = coachId, Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
+            var coach = new Data.Models.Coach { UserId = coachId, Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Coach.API.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Data.Repositories
 {

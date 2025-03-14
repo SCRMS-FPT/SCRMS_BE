@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BuildingBlocks.Exceptions;
-using Coach.API.Coaches.CreateCoach;
 using Coach.API.Data;
+using Coach.API.Data.Models;
 using Coach.API.Data.Repositories;
-using Coach.API.Models;
+using Coach.API.Features.Coaches.CreateCoach;
 using FluentValidation;
 using Moq;
 using Xunit;
@@ -23,7 +23,7 @@ namespace Coach.API.Tests.Coaches
             var command = new CreateCoachCommand(Guid.NewGuid(), "Experienced coach", 50m, new List<Guid> { Guid.NewGuid() });
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.CoachExistsAsync(command.UserId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-            mockCoachRepo.Setup(r => r.AddCoachAsync(It.IsAny<Models.Coach>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            mockCoachRepo.Setup(r => r.AddCoachAsync(It.IsAny<Data.Models.Coach>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
             var mockSportRepo = new Mock<ICoachSportRepository>();
             mockSportRepo.Setup(r => r.AddCoachSportAsync(It.IsAny<CoachSport>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -37,7 +37,7 @@ namespace Coach.API.Tests.Coaches
             var result = await handler.Handle(command, CancellationToken.None);
 
             // Assert
-            mockCoachRepo.Verify(r => r.AddCoachAsync(It.IsAny<Models.Coach>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockCoachRepo.Verify(r => r.AddCoachAsync(It.IsAny<Data.Models.Coach>(), It.IsAny<CancellationToken>()), Times.Once);
             mockSportRepo.Verify(r => r.AddCoachSportAsync(It.IsAny<CoachSport>(), It.IsAny<CancellationToken>()), Times.Once);
             mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
             Assert.Equal(command.UserId, result.Id);
@@ -118,7 +118,7 @@ namespace Coach.API.Tests.Coaches
             var command = new CreateCoachCommand(Guid.NewGuid(), "Test", 50m, sportIds);
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.CoachExistsAsync(command.UserId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-            mockCoachRepo.Setup(r => r.AddCoachAsync(It.IsAny<Models.Coach>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            mockCoachRepo.Setup(r => r.AddCoachAsync(It.IsAny<Data.Models.Coach>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
             var mockSportRepo = new Mock<ICoachSportRepository>();
             mockSportRepo.Setup(r => r.AddCoachSportAsync(It.IsAny<CoachSport>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);

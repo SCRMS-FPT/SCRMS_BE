@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Coach.API.Data;
 using Coach.API.Data.Repositories;
-using Coach.API.Models;
-using Coach.API.Packages.CreatePackage;
 using Moq;
 using Xunit;
 using FluentValidation;
+using Coach.API.Data.Models;
+using Coach.API.Features.Packages.CreatePackage;
 
 namespace Coach.API.Tests.Packages
 {

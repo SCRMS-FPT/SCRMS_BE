@@ -1,3 +1,4 @@
+using BuildingBlocks.Messaging.MassTransit;
 using Chat.API.Data.Repositories;
 using Chat.API.Hubs;
 using HealthChecks.UI.Client;
@@ -21,6 +22,7 @@ builder.Services.AddMediatR(config =>
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddCarter();
+builder.Services.AddMessageBroker(builder.Configuration, assembly);
 
 builder.Services.AddDbContext<ChatDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));

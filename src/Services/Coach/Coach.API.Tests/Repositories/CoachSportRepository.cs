@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Coach.API.Models;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using Coach.API.Data.Models;
 
 namespace Coach.API.Tests.Repositories
 {

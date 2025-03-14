@@ -1,5 +1,6 @@
 using BuildingBlocks.Behaviors;
 using BuildingBlocks.Exceptions.Handler;
+using BuildingBlocks.Messaging.MassTransit;
 using Carter;
 using FluentValidation;
 using HealthChecks.UI.Client;
@@ -27,12 +28,12 @@ builder.Services.AddMediatR(config =>
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddCarter();
-
 builder.Services.AddDbContext<NotificationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddMessageBroker(builder.Configuration, assembly);
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

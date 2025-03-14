@@ -2,6 +2,8 @@
 using Matching.API.Data.Repositories;
 using Matching.API.Features.Swipe;
 using Microsoft.EntityFrameworkCore;
+using BuildingBlocks.Messaging.Events;
+using MassTransit;
 
 namespace Matching.API.Features.RespondToSwipe
 {
@@ -12,15 +14,17 @@ namespace Matching.API.Features.RespondToSwipe
         private readonly ISwipeActionRepository _swipeActionRepository;
         private readonly IMatchRepository _matchRepository;
         private readonly MatchingDbContext _context;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public RespondToSwipeHandler(
             ISwipeActionRepository swipeActionRepository,
             IMatchRepository matchRepository,
-            MatchingDbContext context)
+            MatchingDbContext context, IPublishEndpoint publishEndpoint)
         {
             _swipeActionRepository = swipeActionRepository;
             _matchRepository = matchRepository;
             _context = context;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<SwipeResult> Handle(RespondToSwipeCommand request, CancellationToken cancellationToken)
@@ -50,6 +54,13 @@ namespace Matching.API.Features.RespondToSwipe
                     };
                     await _matchRepository.AddMatchAsync(match, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
+
+                    await _publishEndpoint.Publish(new MatchCreatedEvent(
+                                    match.InitiatorId,
+                                    match.MatchedUserId,
+                                    match.MatchTime
+                                ), cancellationToken);
+
                     return new SwipeResult(true);
                 }
             }

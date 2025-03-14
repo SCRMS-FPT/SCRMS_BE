@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Coach.API.Packages.CreatePackage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -9,6 +8,7 @@ using Moq;
 using Xunit;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Coach.API.Features.Packages.CreatePackage;
 
 namespace Coach.API.Tests.Packages
 {
