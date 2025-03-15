@@ -96,20 +96,6 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Xóa sân")
             .WithDescription("Xóa một sân cụ thể theo ID (yêu cầu quyền sở hữu)");
-
-            // Get All Courts of Sport Center
-            app.MapGet("/api/sportcenter/{id:guid}/courts", [Authorize] async (Guid id, ISender sender) =>
-            {
-                var result = await sender.Send(new GetAllCourtsOfSportCenterQuery(id));
-                var response = new GetAllCourtsOfSportCenterResponse(result.Courts);
-                return Results.Ok(response);
-            })
-            .WithName("GetAllCourtsOfSportCenter")
-            .Produces<GetAllCourtsOfSportCenterResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .WithSummary("Lấy tất cả sân của một trung tâm")
-            .WithDescription("Lấy tất cả sân của một trung tâm thể thao cụ thể theo ID");
         }
     }
 }

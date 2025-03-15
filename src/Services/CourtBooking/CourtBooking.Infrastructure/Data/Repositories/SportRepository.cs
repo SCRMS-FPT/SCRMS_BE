@@ -53,11 +53,17 @@ namespace CourtBooking.Application.Data.Repositories
             return await _context.Courts.AnyAsync(c => c.SportId == sportId, cancellationToken);
         }
 
+        public async Task<Sport> GetByIdAsync(SportId sportId, CancellationToken cancellationToken)
+        {
+            return await _context.Sports
+                .FirstOrDefaultAsync(s => s.Id == sportId, cancellationToken);
+        }
+
         public async Task<List<Sport>> GetSportsByIdsAsync(List<SportId> sportIds, CancellationToken cancellationToken)
         {
-            var ids = sportIds.Select(id => id.Value).ToList();
+            var guidIds = sportIds.Select(id => id).ToList(); // Trích xuất danh sách Guid từ SportId
             return await _context.Sports
-                .Where(s => ids.Contains(s.Id.Value))
+                .Where(s => guidIds.Contains(s.Id)) // So sánh với Guid
                 .ToListAsync(cancellationToken);
         }
     }

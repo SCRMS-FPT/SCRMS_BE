@@ -1,14 +1,12 @@
-﻿using CourtBooking.Application.Data.Repositories;
-using CourtBooking.Application.DTOs;
+﻿using BuildingBlocks.CQRS;
+using BuildingBlocks.Exceptions;
+using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
-using MediatR;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CourtBooking.Application.CourtManagement.Command.CreateCourtSchedule;
 
-public class CreateCourtScheduleHandler : IRequestHandler<CreateCourtScheduleCommand, CreateCourtScheduleResult>
+public class CreateCourtScheduleHandler : ICommandHandler<CreateCourtScheduleCommand, CreateCourtScheduleResult>
 {
     private readonly ICourtRepository _courtRepository;
     private readonly ICourtScheduleRepository _courtScheduleRepository;
@@ -23,25 +21,26 @@ public class CreateCourtScheduleHandler : IRequestHandler<CreateCourtScheduleCom
 
     public async Task<CreateCourtScheduleResult> Handle(CreateCourtScheduleCommand request, CancellationToken cancellationToken)
     {
-        var courtId = CourtId.Of(request.CourtSchedule.CourtId);
+        var courtId = CourtId.Of(request.CourtId);
         var court = await _courtRepository.GetCourtByIdAsync(courtId, cancellationToken);
         if (court == null)
         {
-            throw new KeyNotFoundException("Court not found");
+            throw new NotFoundException($"Court with ID {request.CourtId} not found.");
         }
 
+        var newScheduleId = CourtScheduleId.Of(Guid.NewGuid());
         var newSchedule = CourtSchedule.Create(
-            CourtScheduleId.Of(Guid.NewGuid()),
+            newScheduleId,
             courtId,
-            DayOfWeekValue.Of(request.CourtSchedule.DayOfWeek),
-            request.CourtSchedule.StartTime,
-            request.CourtSchedule.EndTime,
-            request.CourtSchedule.PriceSlot
+            DayOfWeekValue.Of(request.DayOfWeek),
+            request.StartTime,
+            request.EndTime,
+            request.PriceSlot
         );
+        newSchedule.SetCreatedAt(DateTime.UtcNow);
+        newSchedule.SetLastModified(DateTime.UtcNow);
 
-        court.AddCourtSlot(courtId, request.CourtSchedule.DayOfWeek, request.CourtSchedule.StartTime, request.CourtSchedule.EndTime, request.CourtSchedule.PriceSlot);
         await _courtScheduleRepository.AddCourtScheduleAsync(newSchedule, cancellationToken);
-
-        return new CreateCourtScheduleResult(newSchedule.Id.Value);
+        return new CreateCourtScheduleResult(newScheduleId.Value);
     }
 }

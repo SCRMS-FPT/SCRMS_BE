@@ -1,6 +1,7 @@
 ﻿using BuildingBlocks.Exceptions.Handler;
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Infrastructure.Data.Repositories;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<ISportCenterRepository, SportCenterRepository>();
         services.AddScoped<ISportRepository, SportRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<ICourtPromotionRepository, CourtPromotionRepository>();
 
         // Thêm xác thực và phân quyền
         services.AddJwtAuthentication(configuration);

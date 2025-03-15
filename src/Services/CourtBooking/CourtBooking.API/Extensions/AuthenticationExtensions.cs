@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace CourtBooking.API.Extensions
 {
@@ -38,6 +39,7 @@ namespace CourtBooking.API.Extensions
                         Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"] ??
                         "8f9c08c9e6bde3fc8697fbbf91d52a5dcd2f72f84b4b8a6c7d8f3f9d3db249a1")),
                     ClockSkew = TimeSpan.Zero,
+                    NameClaimType = JwtRegisteredClaimNames.Sub, // Map 'sub' claim to User.Identity.Name
                     RoleClaimType = ClaimTypes.Role
                 };
             });
@@ -103,15 +105,15 @@ namespace CourtBooking.API.Extensions
             {
                 return;
             }
-
+            var roleClaim = context.User.FindFirst(ClaimTypes.Role);
             // Nếu user có role Admin, luôn được cấp quyền
-            if (context.User.IsInRole("Admin"))
+            if (roleClaim.Value == "Admin")
             {
                 context.Succeed(requirement);
                 return;
             }
 
-            if (!context.User.IsInRole("CourtOwner"))
+            if (roleClaim.Value != "CourtOwner")
             {
                 return;
             }
@@ -144,7 +146,7 @@ namespace CourtBooking.API.Extensions
             }
 
             // Lấy ownerId từ JWT claims (sử dụng ClaimTypes.NameIdentifier)
-            var ownerIdValue = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var ownerIdValue = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(ownerIdValue) || !Guid.TryParse(ownerIdValue, out var parsedOwnerId))
             {
                 return;

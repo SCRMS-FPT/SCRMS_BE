@@ -1,7 +1,9 @@
 ﻿using BuildingBlocks.CQRS;
+using BuildingBlocks.Exceptions;
 using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Application.DTOs;
 using CourtBooking.Domain.Models;
-using Microsoft.EntityFrameworkCore;
+using CourtBooking.Domain.ValueObjects;
 
 namespace CourtBooking.Application.CourtManagement.Command.UpdateSportCenter;
 
@@ -20,17 +22,37 @@ public class UpdateSportCenterHandler : ICommandHandler<UpdateSportCenterCommand
         var sportCenter = await _sportCenterRepository.GetSportCenterByIdAsync(sportCenterId, cancellationToken);
         if (sportCenter == null)
         {
-            return new UpdateSportCenterResult(false);
+            throw new NotFoundException($"Sport center with ID {command.SportCenterId} not found.");
         }
 
         sportCenter.UpdateInfo(command.Name, command.PhoneNumber, command.Description);
-        var newLocation = new Location(command.Location.AddressLine, command.Location.City, command.Location.District, command.Location.Commune);
-        var newGeoLocation = new GeoLocation(command.LocationPoint.Latitude, command.LocationPoint.Longitude);
+        var newLocation = new Location(command.AddressLine, command.City, command.District, command.Commune);
+        var newGeoLocation = new GeoLocation(command.Latitude, command.Longitude);
         sportCenter.ChangeLocation(newLocation, newGeoLocation);
-        var newImages = SportCenterImages.Of(command.Images.Avatar, command.Images.ImageUrls);
+        var newImages = SportCenterImages.Of(command.Avatar, command.ImageUrls);
         sportCenter.ChangeImages(newImages);
+        sportCenter.SetLastModified(DateTime.UtcNow);
 
         await _sportCenterRepository.UpdateSportCenterAsync(sportCenter, cancellationToken);
-        return new UpdateSportCenterResult(true);
+
+        var updatedDto = new SportCenterListDTO(
+            Id: sportCenter.Id.Value,
+            OwnerId: sportCenter.OwnerId.Value,
+            Name: sportCenter.Name,
+            PhoneNumber: sportCenter.PhoneNumber,
+            AddressLine: sportCenter.Address.AddressLine,
+            City: sportCenter.Address.City,
+            District: sportCenter.Address.District,
+            Commune: sportCenter.Address.Commune,
+            Latitude: sportCenter.LocationPoint.Latitude,
+            Longitude: sportCenter.LocationPoint.Longitude,
+            Avatar: sportCenter.Images.Avatar,
+            ImageUrls: sportCenter.Images.ImageUrls,
+            Description: sportCenter.Description,
+            CreatedAt: sportCenter.CreatedAt,
+            LastModified: sportCenter.LastModified
+        );
+
+        return new UpdateSportCenterResult(updatedDto);
     }
 }

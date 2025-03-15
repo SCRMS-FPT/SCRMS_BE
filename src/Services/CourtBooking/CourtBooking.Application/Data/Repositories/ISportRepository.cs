@@ -21,5 +21,7 @@ namespace CourtBooking.Application.Data.Repositories
         Task<bool> IsSportInUseAsync(SportId sportId, CancellationToken cancellationToken);
 
         Task<List<Sport>> GetSportsByIdsAsync(List<SportId> sportIds, CancellationToken cancellationToken);
+
+        Task<Sport> GetByIdAsync(SportId sportId, CancellationToken cancellationToken);
     }
 }

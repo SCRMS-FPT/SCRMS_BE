@@ -10,10 +10,12 @@ namespace CourtBooking.Application.Data.Repositories
     public class CourtRepository : ICourtRepository
     {
         private readonly IApplicationDbContext _context;
+        private readonly ISportCenterRepository _sportCenterRepository;
 
-        public CourtRepository(IApplicationDbContext context)
+        public CourtRepository(IApplicationDbContext context, ISportCenterRepository sportCenterRepository)
         {
             _context = context;
+            _sportCenterRepository = sportCenterRepository;
         }
 
         public async Task AddCourtAsync(Court court, CancellationToken cancellationToken)
@@ -64,6 +66,25 @@ namespace CourtBooking.Application.Data.Repositories
         public async Task<long> GetTotalCourtCountAsync(CancellationToken cancellationToken)
         {
             return await _context.Courts.LongCountAsync(cancellationToken);
+        }
+
+        public async Task<Court?> GetCourtByIdAsync(Guid courtId, CancellationToken cancellationToken = default)
+        {
+            // Giả sử Court.Id là kiểu CourtId với property Value (Guid)
+            return await _context.Courts
+                .FirstOrDefaultAsync(c => c.Id == CourtId.Of(courtId), cancellationToken);
+        }
+
+        public async Task<bool> IsOwnedByUserAsync(Guid courtId, Guid userId, CancellationToken cancellationToken = default)
+        {
+            var court = await GetCourtByIdAsync(courtId, cancellationToken);
+            if (court == null)
+                return false;
+
+            // Lấy SportCenter chứa Court (giả sử Court có property SportCenterId với kiểu SportCenterId)
+            var sportCenter = await _context.SportCenters
+                .FirstOrDefaultAsync(sc => sc.Id == court.SportCenterId, cancellationToken);
+            return sportCenter != null && sportCenter.OwnerId == OwnerId.Of(userId);
         }
     }
 }

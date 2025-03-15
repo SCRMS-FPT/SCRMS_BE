@@ -21,5 +21,9 @@ namespace CourtBooking.Application.Data.Repositories
         Task<List<Court>> GetPaginatedCourtsAsync(int pageIndex, int pageSize, CancellationToken cancellationToken);
 
         Task<long> GetTotalCourtCountAsync(CancellationToken cancellationToken);
+
+        Task<Court?> GetCourtByIdAsync(Guid courtId, CancellationToken cancellationToken = default);
+
+        Task<bool> IsOwnedByUserAsync(Guid courtId, Guid userId, CancellationToken cancellationToken = default);
     }
 }

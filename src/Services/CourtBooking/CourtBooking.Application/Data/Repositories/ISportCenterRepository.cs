@@ -16,6 +16,21 @@ namespace CourtBooking.Application.Data.Repositories
 
         Task<List<SportCenter>> GetPaginatedSportCentersAsync(int pageIndex, int pageSize, CancellationToken cancellationToken);
 
+        Task<List<SportCenter>> GetSportCentersByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken);
+
         Task<long> GetTotalSportCenterCountAsync(CancellationToken cancellationToken);
+
+        Task<List<SportCenter>> GetFilteredPaginatedSportCentersAsync(
+               int pageIndex,
+               int pageSize,
+               string? city,
+               string? name,
+               CancellationToken cancellationToken);
+
+        Task<long> GetFilteredSportCenterCountAsync(string? city, string? name, CancellationToken cancellationToken);
+
+        Task<SportCenter?> GetSportCenterByIdAsync(Guid sportCenterId, CancellationToken cancellationToken = default);
+
+        Task<bool> IsOwnedByUserAsync(Guid sportCenterId, Guid userId, CancellationToken cancellationToken = default);
     }
 }
