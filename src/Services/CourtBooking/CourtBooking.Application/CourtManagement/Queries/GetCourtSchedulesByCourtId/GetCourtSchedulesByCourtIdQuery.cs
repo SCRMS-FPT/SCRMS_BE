@@ -1,13 +1,10 @@
 ﻿using CourtBooking.Application.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace CourtBooking.Application.CourtManagement.Queries.GetCourtSchedulesByCourtId
-{
-        public record GetCourtSchedulesByCourtIdQuery(Guid CourtId) : IRequest<GetCourtSchedulesByCourtIdResult>;
+namespace CourtBooking.Application.CourtManagement.Queries.GetCourtSchedulesByCourtId;
 
-        public record GetCourtSchedulesByCourtIdResult(List<CourtScheduleDTO> CourtSchedules);
-}
+public record GetCourtSchedulesByCourtIdQuery(
+    Guid CourtId,
+    int? Day = null
+) : IQuery<GetCourtSchedulesByCourtIdResult>;
+
+public record GetCourtSchedulesByCourtIdResult(List<CourtScheduleDTO> CourtSchedules);

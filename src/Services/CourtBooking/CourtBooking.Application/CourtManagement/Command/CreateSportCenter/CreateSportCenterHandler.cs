@@ -1,57 +1,51 @@
-﻿using CourtBooking.Application.DTOs;
-using CourtBooking.Application.SportCenterManagement.Commands.CreateSportCenter;
+﻿using BuildingBlocks.CQRS;
+using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
-namespace CourtBooking.Application.CourtManagement.Command.CreateSportCenter
+namespace CourtBooking.Application.SportCenterManagement.Commands.CreateSportCenter;
+
+public class CreateSportCenterHandler : ICommandHandler<CreateSportCenterCommand, CreateSportCenterResult>
 {
-public class CreateSportCenterHandler(IApplicationDbContext _context) 
-        : ICommandHandler<CreateSportCenterCommand, CreateSportCenterResult>
-{
+    private readonly ISportCenterRepository _sportCenterRepository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CreateSportCenterHandler(ISportCenterRepository sportCenterRepository, IHttpContextAccessor httpContextAccessor)
+    {
+        _sportCenterRepository = sportCenterRepository;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     public async Task<CreateSportCenterResult> Handle(CreateSportCenterCommand command, CancellationToken cancellationToken)
     {
-            //SportCenterId id, Guid ownerId, string name, string phoneNumber,
-            //Location address, GeoLocation location, SportCenterImages images, 
-            //    string description
-            var newId = SportCenterId.Of(Guid.NewGuid());
-            var sportCenter = SportCenter.Create
-        (
+        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var ownerId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+
+        var newId = SportCenterId.Of(Guid.NewGuid());
+        var location = new Location(command.AddressLine, command.City, command.District, command.Commune);
+        var geoLocation = new GeoLocation(command.Latitude, command.Longitude);
+        var images = new SportCenterImages(command.Avatar, command.ImageUrls);
+
+        var sportCenter = SportCenter.Create(
             id: newId,
-            ownerId: OwnerId.Of(command.OwnerId),
+            ownerId: OwnerId.Of(ownerId),
             name: command.Name,
             phoneNumber: command.PhoneNumber,
-            address: Location.Of(command.Location.AddressLine,command.Location.Commune,command.Location.District,
-            command.Location.City),
-            location: command.LocationPoint,
-            images: command.Images,
+            address: location,
+            location: geoLocation,
+            images: images,
             description: command.Description
         );
-            foreach (var court in command.Courts)
-            {
-                var facilitiesJson = JsonSerializer.Serialize(court.Facilities, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                var newCourtId = CourtId.Of(Guid.NewGuid());
-                sportCenter.AddCourt(Court.Create(newCourtId,CourtName.Of(court.CourtName), newId,
-                    SportId.Of(court.SportId), court.SlotDuration,
-                    court.Description, facilitiesJson, court.CourtType));
-            }
 
+        sportCenter.SetCreatedAt(DateTime.UtcNow);
+        sportCenter.SetLastModified(DateTime.UtcNow);
 
-            _context.SportCenters.Add(sportCenter);
-        await _context.SaveChangesAsync(cancellationToken);
-
+        await _sportCenterRepository.AddSportCenterAsync(sportCenter, cancellationToken);
         return new CreateSportCenterResult(sportCenter.Id.Value);
     }
-}
-    
 }
