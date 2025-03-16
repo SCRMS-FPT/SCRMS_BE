@@ -119,5 +119,19 @@ namespace CourtBooking.Infrastructure.Data.Repositories
                 .Where(d => d.BookingId == bookingId)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<IEnumerable<Booking>> GetBookingsInDateRangeForCourtAsync(Guid courtId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+        {
+            var startDateOnly = DateOnly.FromDateTime(startDate);
+            var endDateOnly = DateOnly.FromDateTime(endDate);
+
+            return await _context.Bookings
+                .Include(b => b.BookingDetails)
+                .Where(b => b.BookingDate >= startDate.Date &&
+                           b.BookingDate <= endDate.Date &&
+                           b.Status != Domain.Enums.BookingStatus.Cancelled &&
+                           b.BookingDetails.Any(bd => bd.CourtId == CourtId.Of(courtId)))
+                .ToListAsync(cancellationToken);
+        }
     }
 }

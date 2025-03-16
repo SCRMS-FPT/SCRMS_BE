@@ -17,5 +17,10 @@ namespace CourtBooking.Application.Data.Repositories
         Task DeleteCourtScheduleAsync(CourtScheduleId courtScheduleId, CancellationToken cancellationToken);
 
         Task<List<CourtSchedule>> GetSchedulesByCourtIdAsync(CourtId courtId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Lấy tất cả lịch trình của một sân
+        /// </summary>
+        Task<IEnumerable<CourtSchedule>> GetSchedulesByCourt(CourtId courtId, CancellationToken cancellationToken);
     }
 }

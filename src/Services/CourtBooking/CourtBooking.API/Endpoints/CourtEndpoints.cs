@@ -6,6 +6,7 @@ using CourtBooking.Application.CourtManagement.Queries.GetCourts;
 using CourtBooking.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -96,6 +97,24 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Xóa sân")
             .WithDescription("Xóa một sân cụ thể theo ID (yêu cầu quyền sở hữu)");
+
+            // Get Court Availability
+            group.MapGet("/{id:guid}/availability", [Authorize] async (
+                Guid id,
+                [FromQuery] DateTime startDate,
+                [FromQuery] DateTime endDate,
+                ISender sender) =>
+            {
+                var query = new GetCourtAvailabilityQuery(id, startDate, endDate);
+                var result = await sender.Send(query);
+                return Results.Ok(result);
+            })
+            .WithName("GetCourtAvailability")
+            .Produces<GetCourtAvailabilityResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Lấy lịch khả dụng của sân")
+            .WithDescription("Lấy thông tin về thời gian khả dụng của sân trong khoảng thời gian từ startDate đến endDate, bao gồm trạng thái đặt sân");
         }
     }
 }
