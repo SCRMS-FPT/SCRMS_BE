@@ -15,16 +15,19 @@ namespace CourtBooking.Domain.Models
         public string? Facilities { get; private set; }
         public CourtStatus Status { get; private set; }
         public CourtType CourtType { get; private set; }
+        public decimal MinDepositPercentage { get; private set; } = 100;
 
         private List<CourtSchedule> _courtSchedules = new();
         public IReadOnlyCollection<CourtSchedule> CourtSchedules => _courtSchedules.AsReadOnly();
 
 
-        public static Court Create(CourtId courtId,CourtName courtName, SportCenterId sportCenterId,
-            SportId sportId, TimeSpan slotDuration, string? description,
-            string? facilities, CourtType courtType)
+        public static Court Create(CourtId courtId, CourtName courtName, SportCenterId sportCenterId, SportId sportId,
+            TimeSpan slotDuration, string? description, string? facilities, CourtType courtType, decimal minDepositPercentage = 100)
         {
-            var court = new Court
+            if (minDepositPercentage < 0 || minDepositPercentage > 100)
+                throw new DomainException("Tỷ lệ đặt cọc phải nằm trong khoảng từ 0 đến 100");
+
+            return new Court
             {
                 Id = courtId,
                 CourtName = courtName,
@@ -33,17 +36,19 @@ namespace CourtBooking.Domain.Models
                 SlotDuration = slotDuration,
                 Description = description,
                 Facilities = facilities,
-                CourtType = courtType,
                 Status = CourtStatus.Open,
-                CreatedAt = DateTime.UtcNow,
+                CourtType = courtType,
+                MinDepositPercentage = minDepositPercentage,
+                CreatedAt = DateTime.UtcNow
             };
-            return court;
         }
 
-        public void UpdateCourt(CourtName courtName,
-            SportId sportId, TimeSpan slotDuration, string? description, 
-            string? facilities, CourtStatus courtStatus, CourtType courtType)
+        public void UpdateCourt(CourtName courtName, SportId sportId, TimeSpan slotDuration, string? description,
+            string? facilities, CourtStatus courtStatus, CourtType courtType, decimal minDepositPercentage = 100)
         {
+            if (minDepositPercentage < 0 || minDepositPercentage > 100)
+                throw new DomainException("Tỷ lệ đặt cọc phải nằm trong khoảng từ 0 đến 100");
+
             CourtName = courtName;
             SportId = sportId;
             SlotDuration = slotDuration;
@@ -51,13 +56,14 @@ namespace CourtBooking.Domain.Models
             Facilities = facilities;
             Status = courtStatus;
             CourtType = courtType;
+            MinDepositPercentage = minDepositPercentage;
             SetLastModified(DateTime.UtcNow);
         }
 
-        public void AddCourtSlot(CourtId courtId,int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+        public void AddCourtSlot(CourtId courtId, int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
         {
             var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);
-            var courtSlot =  CourtSchedule.Create(CourtScheduleId.Of(Guid.NewGuid()), courtId,
+            var courtSlot = CourtSchedule.Create(CourtScheduleId.Of(Guid.NewGuid()), courtId,
                 dayOfWeekValue, startTime, endTime, priceSlot);
             courtSlot.CreatedAt = DateTime.UtcNow;
             _courtSchedules.Add(courtSlot);

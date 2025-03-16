@@ -17,9 +17,33 @@ namespace CourtBooking.Application.DTOs
     TimeSpan SlotDuration,
     CourtStatus Status,
     CourtType CourtType,
-    string? SportName,
+    decimal MinDepositPercentage,
+    string SportName,
     string? SportCenterName,
     DateTime CreatedAt,
     DateTime? LastModified
+    );
+
+    public record CourtCreateDTO(
+    string CourtName,
+    Guid SportId,
+    Guid SportCenterId,
+    string? Description,
+    List<FacilityDTO>? Facilities,
+    TimeSpan SlotDuration,
+    decimal MinDepositPercentage,
+    int CourtType,
+    List<CourtScheduleDTO> CourtSchedules
+    );
+
+    public record CourtUpdateDTO(
+    string CourtName,
+    Guid SportId,
+    string? Description,
+    List<FacilityDTO>? Facilities,
+    TimeSpan SlotDuration,
+    int Status,
+    int CourtType,
+    decimal MinDepositPercentage
     );
 }

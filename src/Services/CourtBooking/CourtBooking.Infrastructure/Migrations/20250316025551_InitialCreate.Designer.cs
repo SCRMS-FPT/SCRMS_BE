@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250314090320_InitialCreate")]
+    [Migration("20250316025551_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -37,14 +37,23 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("InitialDeposit")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Note")
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("RemainingBalance")
+                        .HasColumnType("numeric");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPaid")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("DECIMAL");
@@ -117,6 +126,9 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("MinDepositPercentage")
+                        .HasColumnType("numeric");
 
                     b.Property<double>("SlotDuration")
                         .HasColumnType("double precision");
@@ -222,7 +234,7 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CourtId");
+                    b.HasIndex("CourtId", "DayOfWeek");
 
                     b.ToTable("court_schedules", (string)null);
                 });

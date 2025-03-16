@@ -96,7 +96,7 @@ namespace CourtBooking.Application.Data.Repositories
         public async Task<List<SportCenter>> GetSportCentersByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken)
         {
             return await _context.SportCenters
-                .Where(sc => sc.OwnerId.Value == ownerId)
+                .Where(sc => sc.OwnerId == OwnerId.Of(ownerId))
                 .ToListAsync(cancellationToken);
         }
 

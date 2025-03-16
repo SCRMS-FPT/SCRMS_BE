@@ -40,7 +40,8 @@ public class CreateCourtHandler : ICommandHandler<CreateCourtCommand, CreateCour
             slotDuration: courtDTO.SlotDuration,
             description: courtDTO.Description,
             facilities: facilitiesJson,
-            courtType: (CourtType)courtDTO.CourtType
+            courtType: (CourtType)courtDTO.CourtType,
+            minDepositPercentage: courtDTO.MinDepositPercentage
          );
         foreach (var slot in courtDTO.CourtSchedules)
         {

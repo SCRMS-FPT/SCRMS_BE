@@ -34,7 +34,8 @@ public class UpdateCourtHandler : IRequestHandler<UpdateCourtCommand, UpdateCour
             request.Court.Description,
             JsonSerializer.Serialize(request.Court.Facilities),
             (CourtStatus)request.Court.Status,
-            (CourtType)request.Court.CourtType
+            (CourtType)request.Court.CourtType,
+            request.Court.MinDepositPercentage
         );
 
         await _courtRepository.UpdateCourtAsync(court, cancellationToken);

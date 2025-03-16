@@ -61,14 +61,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiGateway", "src\Gateway\A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Coach.API.Tests", "src\Services\Coach\Coach.API.Tests\Coach.API.Tests.csproj", "{16A1DC62-E561-4767-94EB-1BDD4289D3CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chat.API.Test", "src\Services\Chat\Chat.API.Test\Chat.API.Test.csproj", "{1D9AAAC7-6BBE-42E3-B049-759EC7A7BE8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chat.API.Test", "src\Services\Chat\Chat.API.Test\Chat.API.Test.csproj", "{1D9AAAC7-6BBE-42E3-B049-759EC7A7BE8F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Payment.API", "src\Services\Payment\Payment\Payment.API.csproj", "{8CD38990-14C1-4F3B-B97B-D544DCD1B5C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Payment.API.Test", "src\Services\Payment\Payment.API.Test\Payment.API.Test.csproj", "{EB44A26D-4E6D-4520-ABB4-059EBB7AA134}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Matching.Test", "src\Services\Matching\Matching.Test\Matching.Test.csproj", "{1DA368F6-5B46-4753-8DBE-246A05AEC3C1}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Test", "src\Services\Notification\Notification.Test\Notification.Test.csproj", "{C3998E9B-9A23-40C3-81B8-18ABD85F3079}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Payment.API.Test", "src\Services\Payment\Payment.API.Test\Payment.API.Test.csproj", "{EB44A26D-4E6D-4520-ABB4-059EBB7AA134}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Matching.Test", "src\Services\Matching\Matching.Test\Matching.Test.csproj", "{1DA368F6-5B46-4753-8DBE-246A05AEC3C1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Notification.Test", "src\Services\Notification\Notification.Test\Notification.Test.csproj", "{C3998E9B-9A23-40C3-81B8-18ABD85F3079}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reviews.Test", "src\Services\Review\Reviews.Test\Reviews.Test.csproj", "{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CourtBooking.Test", "src\Services\CourtBooking\CourtBooking.Test\CourtBooking.Test.csproj", "{B246D13F-F991-4CBA-8F16-B64B91577292}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -172,7 +177,10 @@ Global
 		{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F}.Release|Any CPU.Build.0 = Release|Any CPU
-
+		{B246D13F-F991-4CBA-8F16-B64B91577292}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B246D13F-F991-4CBA-8F16-B64B91577292}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B246D13F-F991-4CBA-8F16-B64B91577292}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B246D13F-F991-4CBA-8F16-B64B91577292}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -210,7 +218,7 @@ Global
 		{1DA368F6-5B46-4753-8DBE-246A05AEC3C1} = {6E32CE86-E67B-4120-A0FB-F67A6EEFAE62}
 		{C3998E9B-9A23-40C3-81B8-18ABD85F3079} = {7CB8F904-8EC8-4F8A-A88F-2E737F68FD8A}
 		{4258BDD5-0A88-4D43-8448-E0D2A4FCA71F} = {4D6BAC02-CA58-4194-A4C7-5E09DF6807A9}
-
+		{B246D13F-F991-4CBA-8F16-B64B91577292} = {C1712DE4-1855-44FA-819C-37CE953D2B97}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {363B2ED5-A7C1-4AD2-ADAC-10379327F2BA}

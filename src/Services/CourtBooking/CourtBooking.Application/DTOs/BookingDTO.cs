@@ -1,15 +1,18 @@
+using CourtBooking.Domain.Enums;
+
 public record BookingDto(
     Guid Id,
     Guid UserId,
-    DateTime BookingDate,
     decimal TotalTime,
     decimal TotalPrice,
+    decimal RemainingBalance, // Hiển thị số tiền còn lại
+    decimal InitialDeposit, // Hiển thị số tiền đặt cọc ban đầu
     string Status,
-    string? Note,
+    DateTime BookingDate,
+    string Note,
     DateTime CreatedAt,
     DateTime? LastModified,
-    List<BookingDetailDto> BookingDetails
-);
+    List<BookingDetailDto> BookingDetails);
 
 public record BookingDetailDto(
     Guid Id,
