@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
+using CourtBooking.Domain.Models;
 
 namespace CourtBooking.Application.Data.Repositories
 {
@@ -17,5 +19,10 @@ namespace CourtBooking.Application.Data.Repositories
         Task UpdateAsync(CourtPromotion promotion, CancellationToken cancellationToken);
 
         Task DeleteAsync(CourtPromotionId promotionId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Lấy tất cả khuyến mãi hiện hành cho một sân trong khoảng thời gian
+        /// </summary>
+        Task<IEnumerable<CourtPromotion>> GetValidPromotionsForCourtAsync(CourtId courtId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken);
     }
 }

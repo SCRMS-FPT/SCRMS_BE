@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CourtBooking.Application.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Data.Repositories
 {
@@ -44,6 +45,13 @@ namespace CourtBooking.Application.Data.Repositories
         }
 
         public async Task<List<CourtSchedule>> GetSchedulesByCourtIdAsync(CourtId courtId, CancellationToken cancellationToken)
+        {
+            return await _context.CourtSchedules
+                .Where(cs => cs.CourtId == courtId)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<CourtSchedule>> GetSchedulesByCourt(CourtId courtId, CancellationToken cancellationToken)
         {
             return await _context.CourtSchedules
                 .Where(cs => cs.CourtId == courtId)

@@ -41,5 +41,10 @@ namespace CourtBooking.Application.Data.Repositories
         Task DeleteBookingAsync(BookingId bookingId, CancellationToken cancellationToken);
 
         Task<List<BookingDetail>> GetBookingDetailsAsync(BookingId bookingId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Lấy danh sách booking trong khoảng thời gian cho một sân cụ thể
+        /// </summary>
+        Task<IEnumerable<Booking>> GetBookingsInDateRangeForCourtAsync(Guid courtId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken);
     }
 }

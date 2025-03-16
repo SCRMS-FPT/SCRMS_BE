@@ -1,8 +1,11 @@
 ﻿using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CourtBooking.Infrastructure.Data.Repositories
@@ -49,6 +52,15 @@ namespace CourtBooking.Infrastructure.Data.Repositories
                 _context.CourtPromotions.Remove(promotion);
                 await _context.SaveChangesAsync(cancellationToken);
             }
+        }
+
+        public async Task<IEnumerable<CourtPromotion>> GetValidPromotionsForCourtAsync(CourtId courtId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+        {
+            return await _context.CourtPromotions
+                .Where(cp => cp.CourtId == courtId &&
+                           cp.ValidFrom <= endDate &&
+                           cp.ValidTo >= startDate)
+                .ToListAsync(cancellationToken);
         }
     }
 }
