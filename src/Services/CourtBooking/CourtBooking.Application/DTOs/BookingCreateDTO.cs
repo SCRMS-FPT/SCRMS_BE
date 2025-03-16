@@ -6,6 +6,7 @@
         DateTime BookingDate,
         decimal TotalPrice,
         string? Note,
+        decimal DepositAmount,
         //list booking details
         List<BookingDetailCreateDTO> BookingDetails
     );

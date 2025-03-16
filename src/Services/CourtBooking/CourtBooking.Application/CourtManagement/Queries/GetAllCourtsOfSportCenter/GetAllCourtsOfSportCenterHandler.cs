@@ -52,7 +52,8 @@ public class GetAllCourtsOfSportCenterHandler : IQueryHandler<GetAllCourtsOfSpor
                 SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
                 SportCenterName: null,
                 CreatedAt: court.CreatedAt,
-                LastModified: court.LastModified
+                LastModified: court.LastModified,
+                MinDepositPercentage: court.MinDepositPercentage
             );
         }).ToList();
 

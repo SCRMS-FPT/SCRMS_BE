@@ -27,11 +27,11 @@ namespace CourtBooking.Application.BookingManagement.Queries.GetBookingById
             if (booking == null) return null;
 
             // Lấy danh sách CourtId từ BookingDetails
-            var courtIds = booking.BookingDetails.Select(d => d.CourtId.Value).ToList();
-            var courts = await _context.Courts.Where(c => courtIds.Contains(c.Id.Value)).ToListAsync(cancellationToken);
-            var sportCenterIds = courts.Select(c => c.SportCenterId.Value).Distinct().ToList();
+            var courtIds = booking.BookingDetails.Select(d => d.CourtId).ToList();
+            var courts = await _context.Courts.Where(c => courtIds.Contains(c.Id)).ToListAsync(cancellationToken);
+            var sportCenterIds = courts.Select(c => c.SportCenterId).Distinct().ToList();
             var sportCenters = await _context.SportCenters
-                .Where(sc => sportCenterIds.Contains(sc.Id.Value))
+                .Where(sc => sportCenterIds.Contains(sc.Id))
                 .ToDictionaryAsync(sc => sc.Id.Value, sc => sc.Name, cancellationToken);
 
             var courtDetails = courts.ToDictionary(
@@ -47,8 +47,8 @@ namespace CourtBooking.Application.BookingManagement.Queries.GetBookingById
             else if (query.Role == "CourtOwner")
             {
                 var ownedSportsCenters = await _sportCenterRepository.GetSportCentersByOwnerIdAsync(query.UserId, cancellationToken);
-                var ownedSportsCenterIds = ownedSportsCenters.Select(sc => sc.Id.Value).ToHashSet();
-                hasPermission = booking.BookingDetails.Any(d => ownedSportsCenterIds.Contains(courts.First(c => c.Id.Value == d.CourtId.Value).SportCenterId.Value));
+                var ownedSportsCenterIds = ownedSportsCenters.Select(sc => sc.Id).ToHashSet();
+                hasPermission = booking.BookingDetails.Any(d => ownedSportsCenterIds.Contains(courts.First(c => c.Id == d.CourtId).SportCenterId));
             }
             else // User
             {
@@ -60,10 +60,12 @@ namespace CourtBooking.Application.BookingManagement.Queries.GetBookingById
             var bookingDto = new BookingDto(
                 booking.Id.Value,
                 booking.UserId.Value,
-                booking.BookingDate,
                 booking.TotalTime,
                 booking.TotalPrice,
+                booking.RemainingBalance,
+                booking.InitialDeposit,
                 booking.Status.ToString(),
+                booking.BookingDate,
                 booking.Note,
                 booking.CreatedAt,
                 booking.LastModified,

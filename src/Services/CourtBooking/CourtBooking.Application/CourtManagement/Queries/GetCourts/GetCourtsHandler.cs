@@ -65,7 +65,8 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
             SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
             SportCenterName: null, // Có thể bổ sung logic nếu cần
             CreatedAt: court.CreatedAt,
-            LastModified: court.LastModified
+            LastModified: court.LastModified,
+                MinDepositPercentage: court.MinDepositPercentage
         )).ToList();
 
         return new GetCourtsResult(new PaginatedResult<CourtDTO>(pageIndex, pageSize, totalCount, courtDtos));

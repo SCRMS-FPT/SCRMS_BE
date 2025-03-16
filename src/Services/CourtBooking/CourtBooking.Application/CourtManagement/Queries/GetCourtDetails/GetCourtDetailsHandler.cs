@@ -49,7 +49,8 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
             SportName: sport?.Name,
             SportCenterName: sportCenter?.Name,
             CreatedAt: court.CreatedAt,
-            LastModified: court.LastModified
+            LastModified: court.LastModified,
+                MinDepositPercentage: court.MinDepositPercentage
         );
 
         return new GetCourtDetailsResult(courtDto);

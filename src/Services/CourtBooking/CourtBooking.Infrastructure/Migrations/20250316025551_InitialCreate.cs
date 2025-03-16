@@ -21,6 +21,9 @@ namespace CourtBooking.Infrastructure.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     TotalTime = table.Column<decimal>(type: "DECIMAL", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "DECIMAL", nullable: false),
+                    RemainingBalance = table.Column<decimal>(type: "numeric", nullable: false),
+                    InitialDeposit = table.Column<decimal>(type: "numeric", nullable: false),
+                    TotalPaid = table.Column<decimal>(type: "numeric", nullable: false),
                     Note = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -83,6 +86,7 @@ namespace CourtBooking.Infrastructure.Migrations
                     Facilities = table.Column<string>(type: "JSONB", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false, defaultValue: "Open"),
                     CourtType = table.Column<string>(type: "text", nullable: false, defaultValue: "Indoor"),
+                    MinDepositPercentage = table.Column<decimal>(type: "numeric", nullable: false),
                     CourtName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -200,9 +204,9 @@ namespace CourtBooking.Infrastructure.Migrations
                 column: "CourtId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_court_schedules_CourtId",
+                name: "IX_court_schedules_CourtId_DayOfWeek",
                 table: "court_schedules",
-                column: "CourtId");
+                columns: new[] { "CourtId", "DayOfWeek" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_courts_SportCenterId",
