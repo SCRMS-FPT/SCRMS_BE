@@ -12,6 +12,22 @@ namespace Payment.API.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserWallets",
                 columns: table => new
                 {
@@ -31,6 +47,7 @@ namespace Payment.API.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     TransactionType = table.Column<string>(type: "text", nullable: false),
+                    ReferenceId = table.Column<Guid>(type: "uuid", nullable: true),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -41,14 +58,23 @@ namespace Payment.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_WalletTransactions_UserId",
+                name: "IX_OutboxMessages_ProcessedAt",
+                table: "OutboxMessages",
+                column: "ProcessedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_User_CreatedAt",
                 table: "WalletTransactions",
-                column: "UserId");
+                columns: new[] { "UserId", "CreatedAt" })
+                .Annotation("Npgsql:IndexInclude", new[] { "Amount" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "OutboxMessages");
+
             migrationBuilder.DropTable(
                 name: "UserWallets");
 

@@ -12,7 +12,7 @@ using Payment.API.Data;
 namespace Payment.API.Migrations
 {
     [DbContext(typeof(PaymentDbContext))]
-    [Migration("20250225010653_InitialCreate")]
+    [Migration("20250317014039_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,36 @@ namespace Payment.API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("BuildingBlocks.Messaging.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAt");
+
+                    b.ToTable("OutboxMessages");
+                });
 
             modelBuilder.Entity("Payment.API.Data.Models.UserWallet", b =>
                 {
@@ -57,6 +87,9 @@ namespace Payment.API.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("TransactionType")
                         .IsRequired()
                         .HasColumnType("text");
@@ -66,8 +99,10 @@ namespace Payment.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_WalletTransactions_UserId");
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("IX_Transactions_User_CreatedAt");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "CreatedAt"), new[] { "Amount" });
 
                     b.ToTable("WalletTransactions");
                 });

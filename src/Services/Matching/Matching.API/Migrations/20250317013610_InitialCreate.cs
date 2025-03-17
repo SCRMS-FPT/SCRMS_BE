@@ -27,6 +27,22 @@ namespace Matching.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SwipeActions",
                 columns: table => new
                 {
@@ -55,6 +71,11 @@ namespace Matching.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_ProcessedAt",
+                table: "OutboxMessages",
+                column: "ProcessedAt");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SwipeActions_SwiperId_SwipedUserId",
                 table: "SwipeActions",
                 columns: new[] { "SwiperId", "SwipedUserId" });
@@ -65,6 +86,9 @@ namespace Matching.API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Matches");
+
+            migrationBuilder.DropTable(
+                name: "OutboxMessages");
 
             migrationBuilder.DropTable(
                 name: "SwipeActions");

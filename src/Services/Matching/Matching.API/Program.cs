@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using Matching.API.Data.Repositories;
 using BuildingBlocks.Messaging.MassTransit;
+using BuildingBlocks.Messaging.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,9 @@ builder.Services.AddDbContext<MatchingDbContext>(options =>
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
 builder.Services.AddScoped<ISwipeActionRepository, SwipeActionRepository>();
 builder.Services.AddScoped<IUserSkillRepository, UserSkillRepository>();
+
+builder.Services.AddOutbox<MatchingDbContext>();
+
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddAuthentication(options =>
 {
