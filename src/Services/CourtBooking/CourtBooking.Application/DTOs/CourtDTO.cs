@@ -33,7 +33,9 @@ namespace CourtBooking.Application.DTOs
     TimeSpan SlotDuration,
     decimal MinDepositPercentage,
     int CourtType,
-    List<CourtScheduleDTO> CourtSchedules
+    List<CourtScheduleDTO> CourtSchedules,
+    int CancellationWindowHours = 24,
+    decimal RefundPercentage = 0
     );
 
     public record CourtUpdateDTO(
@@ -44,6 +46,8 @@ namespace CourtBooking.Application.DTOs
     TimeSpan SlotDuration,
     int Status,
     int CourtType,
-    decimal MinDepositPercentage
+    decimal MinDepositPercentage,
+    int CancellationWindowHours,
+    decimal RefundPercentage
     );
 }

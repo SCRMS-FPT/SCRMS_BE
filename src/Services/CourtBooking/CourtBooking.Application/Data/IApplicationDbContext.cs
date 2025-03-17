@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,9 @@ namespace CourtBooking.Application.Data
         DbSet<Booking> Bookings { get; }
         DbSet<BookingDetail> BookingDetails { get; }
         DbSet<CourtPromotion> CourtPromotions { get; }
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+
+        Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     }
 }

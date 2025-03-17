@@ -23,3 +23,8 @@ public record BookingDetailDto(
     string EndTime,
     decimal TotalPrice
 );
+
+public record CancelBookingRequest(
+    string CancellationReason,
+    DateTime RequestedAt
+);

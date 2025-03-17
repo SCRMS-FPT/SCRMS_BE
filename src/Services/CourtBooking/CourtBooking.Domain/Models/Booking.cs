@@ -18,6 +18,8 @@ namespace CourtBooking.Domain.Models
         public decimal InitialDeposit { get; private set; }
         public decimal TotalPaid { get; private set; }
         public string? Note { get; private set; }
+        public string? CancellationReason { get; private set; }
+        public DateTime? CancellationTime { get; private set; }
 
         private List<BookingDetail> _bookingDetails = new();
         public IReadOnlyCollection<BookingDetail> BookingDetails => _bookingDetails.AsReadOnly();
@@ -122,6 +124,21 @@ namespace CourtBooking.Domain.Models
             TotalTime = _bookingDetails.Sum(d => (decimal)(d.EndTime - d.StartTime).TotalHours);
             TotalPrice = _bookingDetails.Sum(d => d.TotalPrice);
             RemainingBalance = TotalPrice - TotalPaid;
+        }
+
+        public void UpdateStatus(BookingStatus newStatus)
+        {
+            Status = newStatus;
+        }
+
+        public void SetCancellationReason(string reason)
+        {
+            CancellationReason = reason;
+        }
+
+        public void SetCancellationTime(DateTime cancelledAt)
+        {
+            CancellationTime = cancelledAt;
         }
     }
 }

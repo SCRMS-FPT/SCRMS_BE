@@ -25,12 +25,30 @@ namespace CourtBooking.Infrastructure.Migrations
                     InitialDeposit = table.Column<decimal>(type: "numeric", nullable: false),
                     TotalPaid = table.Column<decimal>(type: "numeric", nullable: false),
                     Note = table.Column<string>(type: "TEXT", nullable: true),
+                    CancellationReason = table.Column<string>(type: "text", nullable: true),
+                    CancellationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_bookings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,6 +105,8 @@ namespace CourtBooking.Infrastructure.Migrations
                     Status = table.Column<string>(type: "text", nullable: false, defaultValue: "Open"),
                     CourtType = table.Column<string>(type: "text", nullable: false, defaultValue: "Indoor"),
                     MinDepositPercentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    CancellationWindowHours = table.Column<int>(type: "integer", nullable: false, defaultValue: 24),
+                    RefundPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false, defaultValue: 0m),
                     CourtName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -217,6 +237,11 @@ namespace CourtBooking.Infrastructure.Migrations
                 name: "IX_courts_SportId",
                 table: "courts",
                 column: "SportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_ProcessedAt",
+                table: "OutboxMessages",
+                column: "ProcessedAt");
         }
 
         /// <inheritdoc />
@@ -230,6 +255,9 @@ namespace CourtBooking.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "court_schedules");
+
+            migrationBuilder.DropTable(
+                name: "OutboxMessages");
 
             migrationBuilder.DropTable(
                 name: "bookings");

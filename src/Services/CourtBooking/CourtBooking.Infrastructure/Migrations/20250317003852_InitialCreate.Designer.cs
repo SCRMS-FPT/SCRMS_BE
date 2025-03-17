@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250316025551_InitialCreate")]
+    [Migration("20250317003852_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -26,6 +26,36 @@ namespace CourtBooking.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BuildingBlocks.Messaging.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAt");
+
+                    b.ToTable("OutboxMessages");
+                });
+
             modelBuilder.Entity("CourtBooking.Domain.Models.Booking", b =>
                 {
                     b.Property<Guid>("Id")
@@ -33,6 +63,12 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("DATE");
+
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CancellationTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -109,6 +145,11 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("CancellationWindowHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(24);
+
                     b.Property<string>("CourtType")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -129,6 +170,11 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<decimal>("MinDepositPercentage")
                         .HasColumnType("numeric");
+
+                    b.Property<decimal>("RefundPercentage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<double>("SlotDuration")
                         .HasColumnType("double precision");

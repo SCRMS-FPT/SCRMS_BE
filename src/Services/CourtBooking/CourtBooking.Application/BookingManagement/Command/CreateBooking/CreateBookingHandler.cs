@@ -61,6 +61,28 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                     throw new ApplicationException($"No schedules found for court {courtId.Value} on day {bookingDayOfWeekInt}");
                 }
 
+                // Kiểm tra xem slot đã được đặt chưa (trừ booking đã cancel)
+                var existingBookings = await _bookingRepository.GetBookingsInDateRangeForCourtAsync(
+                    detail.CourtId,
+                    request.Booking.BookingDate,
+                    request.Booking.BookingDate,
+                    cancellationToken);
+
+                var conflictingBooking = existingBookings
+                    .Where(b => b.Status != Domain.Enums.BookingStatus.Cancelled)
+                    .SelectMany(b => b.BookingDetails)
+                    .Where(bd =>
+                        bd.CourtId.Value == detail.CourtId &&
+                        ((bd.StartTime <= detail.StartTime && bd.EndTime > detail.StartTime) ||
+                         (bd.StartTime < detail.EndTime && bd.EndTime >= detail.EndTime) ||
+                         (bd.StartTime >= detail.StartTime && bd.EndTime <= detail.EndTime)))
+                    .FirstOrDefault();
+
+                if (conflictingBooking != null)
+                {
+                    throw new ApplicationException($"Khung giờ từ {detail.StartTime} đến {detail.EndTime} đã được đặt");
+                }
+
                 // Truyền tham số MinDepositPercentage từ sân vào phương thức AddBookingDetail
                 booking.AddBookingDetail(courtId, detail.StartTime, detail.EndTime, schedules, court.MinDepositPercentage);
             }
