@@ -7,6 +7,7 @@ using BuildingBlocks.Pagination;
 using CourtBooking.Application.BookingManagement.Queries.GetBookings;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Application.BookingManagement.Queries.GetBookingById;
+using CourtBooking.Application.BookingManagement.Command.CancelBooking;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -118,6 +119,38 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get Booking By Id")
             .WithDescription("Get details of a specific booking if authorized");
+
+            group.MapPut("/{bookingId:guid}/cancel", async (
+                Guid bookingId,
+                [FromBody] CancelBookingRequest request,
+                ISender sender,
+                HttpContext context) =>
+            {
+                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                    return Results.Unauthorized();
+
+                var role = context.User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+                var command = new CancelBookingCommand(
+                    bookingId,
+                    request.CancellationReason,
+                    request.RequestedAt,
+                    Guid.Parse(userId),
+                    role
+                );
+
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            })
+            .RequireAuthorization()
+            .WithName("CancelBooking")
+            .Produces<CancelBookingResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Cancel a booking")
+            .WithDescription("Cancels a booking and processes refund if applicable based on the court's cancellation policy");
         }
     }
 }

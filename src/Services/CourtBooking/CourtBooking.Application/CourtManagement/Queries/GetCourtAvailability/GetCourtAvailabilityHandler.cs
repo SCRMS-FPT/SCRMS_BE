@@ -107,18 +107,22 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
                         // Tìm booking cho slot và ngày này
                         foreach (var booking in bookings)
                         {
-                            var matchingBookingDetail = booking.BookingDetails
-                                .Where(bd =>
-                                    bd.CourtId.Value == request.CourtId &&
-                                    DateOnly.FromDateTime(booking.BookingDate) == DateOnly.FromDateTime(date) &&
-                                    bd.StartTime <= time && bd.EndTime >= slotEndTime)
-                                .FirstOrDefault();
-
-                            if (matchingBookingDetail != null)
+                            // Chỉ xem xét các booking không ở trạng thái cancel
+                            if (booking.Status != Domain.Enums.BookingStatus.Cancelled)
                             {
-                                status = "BOOKED";
-                                bookedBy = booking.UserId.Value.ToString();
-                                break;
+                                var matchingBookingDetail = booking.BookingDetails
+                                    .Where(bd =>
+                                        bd.CourtId.Value == request.CourtId &&
+                                        DateOnly.FromDateTime(booking.BookingDate) == DateOnly.FromDateTime(date) &&
+                                        bd.StartTime <= time && bd.EndTime >= slotEndTime)
+                                    .FirstOrDefault();
+
+                                if (matchingBookingDetail != null)
+                                {
+                                    status = "BOOKED";
+                                    bookedBy = booking.UserId.Value.ToString();
+                                    break;
+                                }
                             }
                         }
 

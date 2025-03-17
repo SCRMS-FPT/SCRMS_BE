@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BuildingBlocks.Messaging.Outbox;
+using Microsoft.EntityFrameworkCore;
 
 namespace Matching.API.Data
 {
@@ -7,6 +8,8 @@ namespace Matching.API.Data
         DbSet<SwipeAction> SwipeActions { get; }
         DbSet<Match> Matches { get; }
         DbSet<UserSkill> UserSkills { get; }
+
+        DbSet<OutboxMessage> OutboxMessages { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
