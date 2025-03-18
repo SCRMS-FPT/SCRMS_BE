@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Reflection.Emit;
+using Coach.API.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Data
 {
     public class CoachDbContext : DbContext
     {
+        public CoachDbContext()
+        { }
+
         public CoachDbContext(DbContextOptions<CoachDbContext> options) : base(options)
         {
         }

@@ -3,50 +3,62 @@ using System.Collections.Generic;
 using System.Linq;
 using CourtBooking.Domain.ValueObjects;
 using CourtBooking.Domain.Exceptions;
+using CourtBooking.Domain.Events;
 
 namespace CourtBooking.Domain.Models
 {
     public class Booking : Aggregate<BookingId>
     {
         public UserId UserId { get; private set; }
-        public CourtId CourtId { get; private set; }
         public DateTime BookingDate { get; private set; }
-        public TimeSpan StartTime { get; private set; }
-        public TimeSpan EndTime { get; private set; }
         public BookingStatus Status { get; private set; }
+        public decimal TotalTime { get; private set; }
         public decimal TotalPrice { get; private set; }
-        public PromotionId? PromotionId { get; private set; }
-        private List<BookingPrice> _bookingPrices = new();
-        public IReadOnlyCollection<BookingPrice> BookingPrices => _bookingPrices.AsReadOnly();
+        public decimal RemainingBalance { get; private set; }
+        public decimal InitialDeposit { get; private set; }
+        public decimal TotalPaid { get; private set; }
+        public string? Note { get; private set; }
+        public string? CancellationReason { get; private set; }
+        public DateTime? CancellationTime { get; private set; }
 
-        private Booking() { } // For ORM
+        private List<BookingDetail> _bookingDetails = new();
+        public IReadOnlyCollection<BookingDetail> BookingDetails => _bookingDetails.AsReadOnly();
 
-        public static Booking Create(UserId userId, CourtId courtId, DateTime bookingDate, TimeSpan startTime, TimeSpan endTime, PromotionId? promotionId = null)
+        private Booking()
+        { } // For ORM
+
+        public static Booking Create(BookingId id, UserId userId, DateTime bookingDate, string note = null)
         {
-            if (endTime <= startTime)
-                throw new DomainException("End time must be after start time.");
-
             return new Booking
             {
-                Id = BookingId.Of(Guid.NewGuid()),
+                Id = id,
                 UserId = userId,
-                CourtId = courtId,
                 BookingDate = bookingDate,
-                StartTime = startTime,
-                EndTime = endTime,
                 Status = BookingStatus.Pending,
-                PromotionId = promotionId
+                Note = note,
+                TotalPrice = 0,
+                RemainingBalance = 0,
+                InitialDeposit = 0,
+                TotalPaid = 0,
+                CreatedAt = DateTime.UtcNow
             };
         }
 
-        public void AddPriceSegment(TimeSpan start, TimeSpan end, decimal price)
+        public void AddBookingDetail(CourtId courtId, TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules, decimal minDepositPercentage = 100)
         {
-            if (end <= start)
-                throw new DomainException("End time must be after start time.");
-            if (price < 0)
-                throw new DomainException("Price must be non-negative.");
+            var bookingDetail = BookingDetail.Create(Id, courtId, startTime, endTime, schedules);
+            _bookingDetails.Add(bookingDetail);
+            RecalculateTotals();
+        }
 
-            _bookingPrices.Add(BookingPrice.Create(Id, start, end, price));
+        public void RemoveBookingDetail(BookingDetailId detailId)
+        {
+            var detail = _bookingDetails.FirstOrDefault(d => d.Id == detailId);
+            if (detail != null)
+            {
+                _bookingDetails.Remove(detail);
+                RecalculateTotals();
+            }
         }
 
         public void Confirm()
@@ -63,19 +75,70 @@ namespace CourtBooking.Domain.Models
             Status = BookingStatus.Cancelled;
         }
 
-        public void CalculateTotalPrice(IEnumerable<CourtSchedule> courtSchedules)
+        public void MakeDeposit(decimal depositAmount)
         {
-            TotalPrice = 0;
-            foreach (var schedule in courtSchedules)
+            if (depositAmount <= 0)
+                throw new DomainException("Số tiền đặt cọc phải lớn hơn 0");
+
+            if (depositAmount > RemainingBalance)
+                throw new DomainException("Số tiền đặt cọc không thể lớn hơn số dư còn lại");
+
+            TotalPaid += depositAmount;
+            RemainingBalance = TotalPrice - TotalPaid;
+
+            if (Status == BookingStatus.Pending)
             {
-                if (StartTime < schedule.EndTime && EndTime > schedule.StartTime)
-                {
-                    var overlapStart = StartTime > schedule.StartTime ? StartTime : schedule.StartTime;
-                    var overlapEnd = EndTime < schedule.EndTime ? EndTime : schedule.EndTime;
-                    var overlapDuration = overlapEnd - overlapStart;
-                    TotalPrice += (decimal)overlapDuration.TotalHours * schedule.PriceSlot;
-                }
+                InitialDeposit = depositAmount;
+                Status = BookingStatus.Confirmed;
             }
+
+            if (RemainingBalance == 0)
+            {
+                Status = BookingStatus.Deposited;
+            }
+
+            AddDomainEvent(new BookingDepositMadeEvent(Id.Value, depositAmount, RemainingBalance));
+        }
+
+        public void MakePayment(decimal paymentAmount)
+        {
+            if (paymentAmount <= 0)
+                throw new DomainException("Số tiền thanh toán phải lớn hơn 0");
+
+            if (paymentAmount > RemainingBalance)
+                throw new DomainException("Số tiền thanh toán không thể lớn hơn số dư còn lại");
+
+            TotalPaid += paymentAmount;
+            RemainingBalance = TotalPrice - TotalPaid;
+
+            if (RemainingBalance == 0)
+            {
+                Status = BookingStatus.Deposited;
+            }
+
+            AddDomainEvent(new BookingPaymentMadeEvent(Id.Value, paymentAmount, RemainingBalance));
+        }
+
+        private void RecalculateTotals()
+        {
+            TotalTime = _bookingDetails.Sum(d => (decimal)(d.EndTime - d.StartTime).TotalHours);
+            TotalPrice = _bookingDetails.Sum(d => d.TotalPrice);
+            RemainingBalance = TotalPrice - TotalPaid;
+        }
+
+        public void UpdateStatus(BookingStatus newStatus)
+        {
+            Status = newStatus;
+        }
+
+        public void SetCancellationReason(string reason)
+        {
+            CancellationReason = reason;
+        }
+
+        public void SetCancellationTime(DateTime cancelledAt)
+        {
+            CancellationTime = cancelledAt;
         }
     }
 }

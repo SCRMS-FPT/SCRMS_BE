@@ -1,34 +1,50 @@
-﻿using MediatR;
+﻿using BuildingBlocks.CQRS;
+using BuildingBlocks.Exceptions;
+using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Application.DTOs;
-using Microsoft.EntityFrameworkCore;
-using CourtBooking.Domain.Models;
-using CourtBooking.Application.CourtManagement.Queries.GetCourtSchedulesByCourtId;
+using CourtBooking.Domain.ValueObjects;
 
-namespace CourtBooking.Application.CourtManagement.Queries.GetCourtSlotsByCourtName;
+namespace CourtBooking.Application.CourtManagement.Queries.GetCourtSchedulesByCourtId;
 
-public class GetCourtSchedulesByCourtIdHandler(IApplicationDbContext _context)
-    : IRequestHandler<GetCourtSchedulesByCourtIdQuery, GetCourtSchedulesByCourtIdResult>
+public class GetCourtSchedulesByCourtIdHandler : IQueryHandler<GetCourtSchedulesByCourtIdQuery, GetCourtSchedulesByCourtIdResult>
 {
+    private readonly ICourtRepository _courtRepository;
+    private readonly ICourtScheduleRepository _courtScheduleRepository;
+
+    public GetCourtSchedulesByCourtIdHandler(
+        ICourtRepository courtRepository,
+        ICourtScheduleRepository courtScheduleRepository)
+    {
+        _courtRepository = courtRepository;
+        _courtScheduleRepository = courtScheduleRepository;
+    }
+
     public async Task<GetCourtSchedulesByCourtIdResult> Handle(GetCourtSchedulesByCourtIdQuery query, CancellationToken cancellationToken)
     {
-        var court = await _context.Courts
-            .Include(c => c.CourtSlots)
-            .FirstOrDefaultAsync(c => c.Id == CourtId.Of(query.CourtId), cancellationToken);
-
+        var courtId = CourtId.Of(query.CourtId);
+        var court = await _courtRepository.GetCourtByIdAsync(courtId, cancellationToken);
         if (court == null)
         {
-            throw new KeyNotFoundException("Court not found");
+            throw new NotFoundException($"Court with ID {query.CourtId} not found.");
         }
 
-        var courtSlots = court.CourtSlots.Select(slot => new CourtScheduleDTO(
-            CourtId: slot.CourtId.Value,
-            DayOfWeek: slot.DayOfWeek.Days.ToArray(),
-            StartTime: slot.StartTime,
-            EndTime: slot.EndTime,
-            PriceSlot: slot.PriceSlot,
-            Status: (int)slot.Status
+        var courtSchedules = await _courtScheduleRepository.GetSchedulesByCourtIdAsync(courtId, cancellationToken);
+        var filteredSchedules = query.Day.HasValue
+            ? courtSchedules.Where(cs => cs.DayOfWeek.Days.Contains(query.Day.Value)).ToList()
+            : courtSchedules;
+
+        var courtScheduleDtos = filteredSchedules.Select(cs => new CourtScheduleDTO(
+            Id: cs.Id.Value,
+            CourtId: cs.CourtId.Value,
+            DayOfWeek: cs.DayOfWeek.Days.ToArray(),
+            StartTime: cs.StartTime,
+            EndTime: cs.EndTime,
+            PriceSlot: cs.PriceSlot,
+            Status: (int)cs.Status,
+            CreatedAt: cs.CreatedAt,
+            LastModified: cs.LastModified
         )).ToList();
 
-        return new GetCourtSchedulesByCourtIdResult(courtSlots);
+        return new GetCourtSchedulesByCourtIdResult(courtScheduleDtos);
     }
 }

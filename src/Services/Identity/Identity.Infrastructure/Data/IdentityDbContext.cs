@@ -15,7 +15,6 @@ namespace Identity.Infrastructure.Data
 
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
         {
-
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

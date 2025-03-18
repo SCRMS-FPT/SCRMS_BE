@@ -2,7 +2,7 @@
 global using Mapster;
 global using MediatR;
 global using BuildingBlocks.CQRS;
-global using Coach.API.Models;
+global using Coach.API.Data.Models;
 global using Coach.API.Exceptions;
 global using FluentValidation;
 global using BuildingBlocks.Behaviors;
