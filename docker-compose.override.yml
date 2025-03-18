@@ -12,7 +12,19 @@ services:
       - "5433:5432"
     volumes:
       - postgres_courtbooking:/var/lib/postgresql/data
-
+  api:
+    image: courtbooking-api
+    build:
+      context: .
+      dockerfile: src/Gateway/ApiGateway/Dockerfile
+    ports:
+      - "6003:5235"
+      - "6063:7201"
+    depends_on:
+      - courtbookingdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
   courtbooking.api:
     image: courtbooking-api
     build:
