@@ -75,6 +75,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reviews.Test", "src\Service
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CourtBooking.Test", "src\Services\CourtBooking\CourtBooking.Test\CourtBooking.Test.csproj", "{B246D13F-F991-4CBA-8F16-B64B91577292}"
 EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{807EA371-74DF-4CEA-94CD-306B30FDD67E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,6 +151,10 @@ Global
 		{064858EB-A8E2-4E26-9947-DD071654E0E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{064858EB-A8E2-4E26-9947-DD071654E0E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{064858EB-A8E2-4E26-9947-DD071654E0E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{807EA371-74DF-4CEA-94CD-306B30FDD67E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{16A1DC62-E561-4767-94EB-1BDD4289D3CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{16A1DC62-E561-4767-94EB-1BDD4289D3CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16A1DC62-E561-4767-94EB-1BDD4289D3CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
