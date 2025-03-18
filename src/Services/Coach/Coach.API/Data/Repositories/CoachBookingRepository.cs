@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Coach.API.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Data.Repositories
 {
@@ -13,6 +14,10 @@ namespace Coach.API.Data.Repositories
 
         public async Task AddCoachBookingAsync(CoachBooking booking, CancellationToken cancellationToken)
         {
+            if (booking.CoachId == Guid.Empty)
+            {
+                throw new ArgumentException("CoachId is required", nameof(booking.CoachId));
+            }
             await _context.CoachBookings.AddAsync(booking, cancellationToken);
         }
 
@@ -23,8 +28,18 @@ namespace Coach.API.Data.Repositories
 
         public async Task UpdateCoachBookingAsync(CoachBooking booking, CancellationToken cancellationToken)
         {
+            // Check if the booking exists in the database
+            var existingBooking = await _context.CoachBookings
+                .FirstOrDefaultAsync(b => b.Id == booking.Id, cancellationToken);
+
+            if (existingBooking == null)
+            {
+                throw new DbUpdateConcurrencyException("The booking does not exist in the database.");
+            }
+
+            // Update the booking if it exists
             _context.CoachBookings.Update(booking);
-            await Task.CompletedTask;
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<List<CoachBooking>> GetCoachBookingsByCoachIdAsync(Guid coachId, CancellationToken cancellationToken)

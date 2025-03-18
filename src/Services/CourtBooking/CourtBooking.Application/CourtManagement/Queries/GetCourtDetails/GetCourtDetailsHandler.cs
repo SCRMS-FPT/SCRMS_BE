@@ -1,4 +1,4 @@
-// language: csharp
+﻿// language: csharp
 using MediatR;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.DTOs;
@@ -14,7 +14,7 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
         var courtId = CourtId.Of(query.CourtId);
 
         var court = await _context.Courts
-            .Include(c => c.CourtSlots)
+            .Include(c => c.CourtSchedules)
             .FirstOrDefaultAsync(c => c.Id == courtId, cancellationToken);
 
         if (court == null)
@@ -45,10 +45,12 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
             Facilities: facilities,
             SlotDuration: court.SlotDuration,
             Status: court.Status,
+            CourtType: court.CourtType,
             SportName: sport?.Name,
             SportCenterName: sportCenter?.Name,
             CreatedAt: court.CreatedAt,
-            LastModified: court.LastModified
+            LastModified: court.LastModified,
+                MinDepositPercentage: court.MinDepositPercentage
         );
 
         return new GetCourtDetailsResult(courtDto);

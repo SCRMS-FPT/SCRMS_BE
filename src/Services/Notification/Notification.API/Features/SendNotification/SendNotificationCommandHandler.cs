@@ -16,8 +16,7 @@ namespace Notification.API.Features.SendNotification
         string Type,
         Boolean SendMail,
         string UserEmail
-        ) : ICommand<SendNotificationResponse>;
-    public record SendNotificationResponse(Boolean IsSuccess);
+        ) : ICommand<Unit>;
 
     public class SendNotificationCommandValidator : AbstractValidator<SendNotificationCommand>
     {
@@ -33,7 +32,7 @@ namespace Notification.API.Features.SendNotification
                 .NotEmpty().WithMessage("Notifications's type is required.");
         }
     }
-    internal class SendNotificationCommandHandler : ICommandHandler<SendNotificationCommand, SendNotificationResponse>
+    public class SendNotificationCommandHandler : ICommandHandler<SendNotificationCommand, Unit>
     {
         private readonly NotificationDbContext context;
         private readonly IMediator mediator;
@@ -47,7 +46,7 @@ namespace Notification.API.Features.SendNotification
             this.hubContext = hubContext;
         }
 
-        public async Task<SendNotificationResponse> Handle(SendNotificationCommand command, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(SendNotificationCommand command, CancellationToken cancellationToken)
         {
             // Save to db
             MessageNotification notification = new MessageNotification()
@@ -75,7 +74,7 @@ namespace Notification.API.Features.SendNotification
 
             }
 
-            return new SendNotificationResponse(true);
+            return Unit.Value;
 
         }
     }

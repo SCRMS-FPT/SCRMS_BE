@@ -1,81 +1,51 @@
 ﻿using BuildingBlocks.CQRS;
-using Microsoft.EntityFrameworkCore;
-using CourtBooking.Application.DTOs;
-using System.Text.Json;
 using BuildingBlocks.Pagination;
-using CourtBooking.Application.CourtManagement.Queries.GetSportCenters;
+using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Application.DTOs;
+using Microsoft.EntityFrameworkCore;
 
-public class GetSportCentersHandler(IApplicationDbContext _context)
-    : IQueryHandler<GetSportCentersQuery, GetSportCentersResult>
+namespace CourtBooking.Application.CourtManagement.Queries.GetSportCenters
 {
-    public async Task<GetSportCentersResult> Handle(GetSportCentersQuery query, CancellationToken cancellationToken)
+    public class GetSportCentersHandler : IQueryHandler<GetSportCentersQuery, GetSportCentersResult>
     {
-        var pageIndex = query.PaginationRequest.PageIndex;
-        var pageSize = query.PaginationRequest.PageSize;
+        private readonly ISportCenterRepository _sportCenterRepository;
 
-        // Tổng số sport centers
-        var totalCount = await _context.SportCenters.LongCountAsync(cancellationToken);
+        public GetSportCentersHandler(ISportCenterRepository sportCenterRepository)
+        {
+            _sportCenterRepository = sportCenterRepository;
+        }
 
-        // Lấy danh sách sport centers theo trang
-        var sportCenters = await _context.SportCenters
-            .OrderBy(sc => sc.Name)
-            .Skip(pageSize * pageIndex)
-            .Take(pageSize)
-            .Include(sc => sc.Courts)
-            .ToListAsync(cancellationToken);
+        public async Task<GetSportCentersResult> Handle(GetSportCentersQuery query, CancellationToken cancellationToken)
+        {
+            var pageIndex = query.PaginationRequest.PageIndex; // 0-based
+            var pageSize = query.PaginationRequest.PageSize;
+            var city = query.City;
+            var name = query.Name;
 
-        // Lấy danh sách SportId duy nhất từ toàn bộ SportCenters đang phân trang
-        var sportIds = sportCenters.SelectMany(sc => sc.Courts)
-            .Select(c => c.SportId)
-            .Distinct()
-            .ToList();
+            var totalCount = await _sportCenterRepository.GetFilteredSportCenterCountAsync(city, name, cancellationToken);
+            var sportCenters = await _sportCenterRepository.GetFilteredPaginatedSportCentersAsync(
+                pageIndex, pageSize, city, name, cancellationToken);
 
-        // Truy vấn SportName tương ứng với SportId
-        var sportNames = await _context.Sports
-            .Where(s => sportIds.Contains(s.Id))
-            .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
+            var sportCenterDtos = sportCenters.Select(sc => new SportCenterListDTO(
+                Id: sc.Id.Value,
+                OwnerId: sc.OwnerId.Value,
+                Name: sc.Name,
+                PhoneNumber: sc.PhoneNumber,
+                AddressLine: sc.Address.AddressLine,
+                City: sc.Address.City,
+                District: sc.Address.District,
+                Commune: sc.Address.Commune,
+                Latitude: sc.LocationPoint.Latitude,
+                Longitude: sc.LocationPoint.Longitude,
+                Avatar: sc.Images.Avatar,
+                ImageUrls: sc.Images.ImageUrls,
+                Description: sc.Description,
+                CreatedAt: sc.CreatedAt,
+                LastModified: sc.LastModified
+            )).ToList();
 
-        // Map dữ liệu sang DTO
-        var sportCenterDtos = sportCenters.Select(sportCenter =>
-            new SportCenterDTO(
-                Id: sportCenter.Id.Value,
-                Name: sportCenter.Name,
-                PhoneNumber: sportCenter.PhoneNumber,
-                Address: sportCenter.Address.ToString(),
-                Description: sportCenter.Description,
-                Courts: sportCenter.Courts.Select(court =>
-                {
-                    List<FacilityDTO>? facilities = null;
-                    if (!string.IsNullOrEmpty(court.Facilities))
-                    {
-                        try
-                        {
-                            facilities = JsonSerializer.Deserialize<List<FacilityDTO>>(court.Facilities);
-                        }
-                        catch (JsonException)
-                        {
-                            facilities = new List<FacilityDTO>();
-                        }
-                    }
-
-                    return new CourtDTO(
-                        Id: court.Id.Value,
-                        CourtName: court.CourtName.Value,
-                        SportId: court.SportId.Value,
-                        SportCenterId: court.SportCenterId.Value,
-                        Description: court.Description,
-                        Facilities: facilities,
-                        SlotDuration: court.SlotDuration,
-                        Status: court.Status,
-                        SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
-                        SportCenterName: sportCenter.Name,
-                        CreatedAt: court.CreatedAt,
-                        LastModified: court.LastModified
-                    );
-                }).ToList()
-            )
-        ).ToList();
-
-        return new GetSportCentersResult(new PaginatedResult<SportCenterDTO>(pageIndex, pageSize, totalCount, sportCenterDtos));
+            return new GetSportCentersResult(new PaginatedResult<SportCenterListDTO>(
+                pageIndex, pageSize, totalCount, sportCenterDtos));
+        }
     }
 }

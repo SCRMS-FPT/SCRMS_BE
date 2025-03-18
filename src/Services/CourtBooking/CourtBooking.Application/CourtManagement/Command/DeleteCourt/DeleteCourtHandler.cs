@@ -1,4 +1,5 @@
-﻿using CourtBooking.Application.Exceptions;
+﻿using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Application.Exceptions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System;
 using System.Collections.Generic;
@@ -8,22 +9,25 @@ using System.Threading.Tasks;
 
 namespace CourtBooking.Application.CourtManagement.Command.DeleteCourt
 {
-    public class DeleteCourtHandler(IApplicationDbContext context)
-        : ICommandHandler<DeleteCourtCommand, DeleteCourtResult>
+    public class DeleteCourtHandler : ICommandHandler<DeleteCourtCommand, DeleteCourtResult>
     {
+        private readonly ICourtRepository _courtRepository;
+
+        public DeleteCourtHandler(ICourtRepository courtRepository)
+        {
+            _courtRepository = courtRepository;
+        }
+
         public async Task<DeleteCourtResult> Handle(DeleteCourtCommand command, CancellationToken cancellationToken)
         {
-           var courtId = CourtId.Of(command.CourtId);
-            var court = await context.Courts
-               .FirstOrDefaultAsync(o => o.Id == courtId, cancellationToken);
-
+            var courtId = CourtId.Of(command.CourtId);
+            var court = await _courtRepository.GetCourtByIdAsync(courtId, cancellationToken);
             if (court == null)
             {
                 throw new CourtNotFoundException(command.CourtId);
             }
-            context.Courts.Remove(court);
-            await context.SaveChangesAsync(cancellationToken);
 
+            await _courtRepository.DeleteCourtAsync(courtId, cancellationToken);
             return new DeleteCourtResult(true);
         }
     }

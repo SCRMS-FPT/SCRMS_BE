@@ -19,7 +19,7 @@ namespace Notification.API.Features.GetNotifications
             RuleFor(x => x.Limit).GreaterThan(0).WithMessage("Limit must be positive.");
         }
     }
-    internal class GetNotificationsQueryHandler : IQueryHandler<GetNotificationsQuery, List<NotificationResponse>>
+    public class GetNotificationsQueryHandler : IQueryHandler<GetNotificationsQuery, List<NotificationResponse>>
     {
         private readonly NotificationDbContext context;
         private readonly IMediator mediator;

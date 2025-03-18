@@ -10,7 +10,7 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
         builder.ToTable("courts");
 
         builder.HasKey(c => c.Id);
-        
+
         builder.Property(c => c.Id)
             .HasConversion(
                 id => id.Value,
@@ -39,7 +39,7 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
 
         builder.Property(c => c.SlotDuration)
             .HasConversion(
-                duration => duration.TotalMinutes, 
+                duration => duration.TotalMinutes,
                 minutes => TimeSpan.FromMinutes(minutes))
             .IsRequired();
 
@@ -48,15 +48,31 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
 
         builder.Property(c => c.Facilities)
             .HasColumnType("JSONB");
-        
+
         builder.Property(c => c.Status)
             .HasDefaultValue(CourtStatus.Open)
-            .HasConversion(builder => builder.ToString(), 
+            .HasConversion(builder => builder.ToString(),
             value => (CourtStatus)Enum.Parse(typeof(CourtStatus), value));
 
-        builder.HasMany(c => c.CourtSlots)
+        builder.HasMany(c => c.CourtSchedules)
             .WithOne()
             .HasForeignKey(c => c.CourtId)
             .IsRequired();
+
+        builder.Property(c => c.CourtType)
+            .HasDefaultValue(CourtType.Indoor)
+            .HasConversion(builder => builder.ToString(),
+            value => (CourtType)Enum.Parse(typeof(CourtType), value));
+
+        builder.HasOne<Sport>()
+            .WithMany()
+            .HasForeignKey(c => c.SportId)
+            .IsRequired();
+        builder.Property(c => c.CancellationWindowHours)
+                   .HasDefaultValue(24);
+
+        builder.Property(c => c.RefundPercentage)
+            .HasColumnType("decimal(5,2)")
+            .HasDefaultValue(0);
     }
 }

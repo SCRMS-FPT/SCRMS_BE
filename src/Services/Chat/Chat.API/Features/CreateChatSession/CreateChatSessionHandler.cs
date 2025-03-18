@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Chat.API.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chat.API.Features.CreateChatSession
 {
@@ -6,26 +7,33 @@ namespace Chat.API.Features.CreateChatSession
 
     public record CreateChatSessionResult(Guid ChatSessionId);
 
+    public class CreateChatSessionCommandValidator : AbstractValidator<CreateChatSessionCommand>
+    {
+        public CreateChatSessionCommandValidator()
+        {
+            RuleFor(x => x.User2Id)
+                .NotEmpty().WithMessage("User2Id cannot be empty");
+        }
+    }
+
     public class CreateChatSessionHandler : IRequestHandler<CreateChatSessionCommand, CreateChatSessionResult>
     {
-        private readonly ChatDbContext _context;
+        private readonly IChatSessionRepository _chatSessionRepository;
 
-        public CreateChatSessionHandler(ChatDbContext context)
+        public CreateChatSessionHandler(IChatSessionRepository chatSessionRepository)
         {
-            _context = context;
+            _chatSessionRepository = chatSessionRepository;
         }
 
         public async Task<CreateChatSessionResult> Handle(CreateChatSessionCommand request, CancellationToken cancellationToken)
         {
-            // Kiểm tra phiên chat đã tồn tại chưa
-            var existingSession = await _context.ChatSessions
-                .FirstOrDefaultAsync(cs => (cs.User1Id == request.User1Id && cs.User2Id == request.User2Id) ||
-                                           (cs.User1Id == request.User2Id && cs.User2Id == request.User1Id), cancellationToken);
+            if (request.User1Id == request.User2Id)
+                throw new Exception("User1Id and User2Id cannot be the same");
 
+            var existingSession = await _chatSessionRepository.GetChatSessionByUsersAsync(request.User1Id, request.User2Id);
             if (existingSession != null)
                 return new CreateChatSessionResult(existingSession.Id);
 
-            // Tạo phiên chat mới
             var chatSession = new ChatSession
             {
                 Id = Guid.NewGuid(),
@@ -35,9 +43,7 @@ namespace Chat.API.Features.CreateChatSession
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.ChatSessions.Add(chatSession);
-            await _context.SaveChangesAsync(cancellationToken);
-
+            await _chatSessionRepository.AddChatSessionAsync(chatSession);
             return new CreateChatSessionResult(chatSession.Id);
         }
     }

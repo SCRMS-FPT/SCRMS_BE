@@ -25,22 +25,12 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                     value => UserId.Of(value))
                 .IsRequired();
 
-            builder.Property(b => b.CourtId)
-                .HasConversion(
-                    id => id.Value,
-                    value => CourtId.Of(value))
-                .IsRequired();
-
             builder.Property(b => b.BookingDate)
                 .HasColumnType("DATE")
                 .IsRequired();
 
-            builder.Property(b => b.StartTime)
-                .HasColumnType("TIME")
-                .IsRequired();
-
-            builder.Property(b => b.EndTime)
-                .HasColumnType("TIME")
+            builder.Property(b => b.TotalTime)
+                .HasColumnType("DECIMAL")
                 .IsRequired();
 
             builder.Property(b => b.TotalPrice)
@@ -53,13 +43,11 @@ namespace CourtBooking.Infrastructure.Data.Configuration
                     value => (BookingStatus)value)
                 .IsRequired();
 
-            builder.Property(b => b.PromotionId)
-                .HasConversion(
-                    id => id.Value,
-                    value => PromotionId.Of(value))
+            builder.Property(b => b.Note)
+                .HasColumnType("TEXT")
                 .IsRequired(false);
 
-            builder.HasMany(b => b.BookingPrices)
+            builder.HasMany(b => b.BookingDetails)
                 .WithOne()
                 .HasForeignKey(bp => bp.BookingId)
                 .IsRequired();
