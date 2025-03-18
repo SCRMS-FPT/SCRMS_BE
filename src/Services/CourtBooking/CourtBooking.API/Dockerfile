@@ -12,19 +12,24 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Services/Court.API/Court.API.csproj", "src/Services/Court.API/"]
-RUN dotnet restore "./src/Services/Court.API/Court.API.csproj"
+COPY ["Services/CourtBooking.API/CourtBooking.API.csproj", "Services/CourtBooking.API/"]
+COPY ["Services/CourtBooking.Infrastructure/CourtBooking.Infrastructure.csproj", "Services/CourtBooking.Infrastructure/"]
+COPY ["BuildingBlocks/BuildingBlocks.Messaging/BuildingBlocks.Messaging.csproj", "BuildingBlocks/BuildingBlocks.Messaging/"]
+COPY ["BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj", "BuildingBlocks/BuildingBlocks/"]
+COPY ["Services/CourtBooking.Domain/CourtBooking.Domain.csproj", "Services/CourtBooking.Domain/"]
+COPY ["Services/CourtBooking.Application/CourtBooking.Application.csproj", "Services/CourtBooking.Application/"]
+RUN dotnet restore "./Services/CourtBooking.API/CourtBooking.API.csproj"
 COPY . .
-WORKDIR "/src/src/Services/Court.API"
-RUN dotnet build "./Court.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/Services/CourtBooking.API"
+RUN dotnet build "./CourtBooking.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Court.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./CourtBooking.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Court.API.dll"]
+ENTRYPOINT ["dotnet", "CourtBooking.API.dll"]
