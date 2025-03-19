@@ -1,13 +1,12 @@
 {
   "Routes": [
-    // Identity Service APIs
     {
       "DownstreamPathTemplate": "/api/identity/register",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/identity/register",
@@ -15,7 +14,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/identity/login",
-      "DownstreamScheme": "http",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -30,8 +29,8 @@
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/identity/change-password",
@@ -47,14 +46,14 @@
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/users",
       "UpstreamHttpMethod": [ "GET" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "IdentityAuthKey",
+        "AuthenticationProviderKey": "IdentityAuthKey"
       },
       "RouteClaimsRequirement": {
         "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin"
@@ -65,8 +64,8 @@
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/users/{id}",
@@ -85,8 +84,8 @@
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/service-packages/subscribe/renew",
@@ -101,8 +100,8 @@
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/service-packages/api/manage-packages/delete/{id}",
@@ -113,6 +112,119 @@
       },
       "RouteClaimsRequirement": {
         "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin"
+      }
+    },
+    // court booking service
+    {
+      "DownstreamPathTemplate": "/api/bookings",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/bookings",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/bookings/{bookingId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/bookings/{bookingId}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/courts",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/courts",
+      "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/courts/{courtId}/promotions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/courts/{courtId}/promotions",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/courtschedules",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/courtschedules",
+      "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/sportcenters",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/sportcenters",
+      "UpstreamHttpMethod": [ "POST", "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/sports",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/sports",
+      "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
       }
     }
   ],
