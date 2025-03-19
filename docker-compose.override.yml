@@ -1,14 +1,304 @@
-version: '3.4'
+version: '3.8'
 
 services:
+  courtbookingdb:
+    image: postgres:latest
+    container_name: courtbookingdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=CourtBookingDB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_courtbooking:/var/lib/postgresql/data
+
   identitydb:
+    image: postgres:latest
     container_name: identitydb
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=IdentityDb
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=IdentityDB
+    ports:
+      - "5430:5432"
+    volumes:
+      - postgres_identity:/var/lib/postgresql/data
+ 
+  chatdb:
+    image: postgres:latest
+    container_name: chatdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=ChatDB
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_chat:/var/lib/postgresql/data
+  coachdb:
+    image: postgres:latest
+    container_name: coachdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=CoachDB
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_coach:/var/lib/postgresql/data
+
+  matchingdb:
+    image: postgres:latest
+    container_name: matchingdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=MatchingDB
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_matching:/var/lib/postgresql/data
+  
+  notificationdb:
+    image: postgres:latest
+    container_name: notificationdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=NotificationDB
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_notification:/var/lib/postgresql/data
+
+  paymentdb:
+    image: postgres:latest
+    container_name: paymentdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=PaymentDB
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_payment:/var/lib/postgresql/data
+
+  reviewdb:
+    image: postgres:latest
+    container_name: reviewdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2405
+      - POSTGRES_DB=ReviewDB
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres_review:/var/lib/postgresql/data
+
+  messagebroker:
+    image: rabbitmq:management
+    container_name: messagebroker
+    hostname: rabitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     restart: always
     ports:
-        - "5432:5432"
+      - "5672:5672"
+      - "15672:15672"
+  gatewayapi:
+    image: ocelot-gateway
+    build:
+      context: .
+      dockerfile: src/Gateway/ApiGateway/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    ports:
+      - "5002:8080"
+      - "5003:8081"
+    depends_on:
+      - courtbooking.api
+      - identity.api
+      - coach.api 
     volumes:
-      - postgres_identity:/var/lib/postgresql/data/     
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  consul:
+    image: consul:1.15.4
+    container_name: consul
+    ports:
+      - "8500:8500"
+    command: "consul agent -dev -client=0.0.0.0"
+
+  chat.api:
+    image: chat-api
+    build:
+      context: .
+      dockerfile: src/Services/Chat/Chat.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - ConnectionStrings__Database=Host=chatdb;Port=5432;Database=ChatDB;Username=postgres;Password=2405
+    ports:
+      - "6002:8080"
+      - "6062:8081"
+    depends_on:
+      - chatdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  coach.api:
+    image: coach-api
+    build:
+      context: .
+      dockerfile: src/Services/Coach/Coach.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Database=Host=coachdb;Port=5432;Database=CoachDB;Username=postgres;Password=2405
+    ports:
+      - "6004:8080"
+      - "6064:8081"
+    depends_on:
+      - coachdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  matching.api:
+    image: matching-api
+    build:
+      context: .
+      dockerfile: src/Services/Matching/Matching.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - ConnectionStrings__Database=Host=matchingdb;Port=5432;Database=MatchingDB;Username=postgres;Password=2405
+    ports:
+      - "6005:8080"
+      - "6065:8081"
+    depends_on:
+      - matchingdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  notification.api:
+    image: notification-api
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Notification.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - ConnectionStrings__Database=Host=notificationdb;Port=5432;Database=NotificationDB;Username=postgres;Password=2405
+    ports:
+      - "6006:8080"
+      - "6066:8081"
+    depends_on:
+      - notificationdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+  
+  payment.api:
+    image: payment-api
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Payment/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - ConnectionStrings__Database=Host=paymentdb;Port=5432;Database=PaymentDB;Username=postgres;Password=2405
+    ports:
+      - "6007:8080"
+      - "6067:8081"
+    depends_on:
+      - paymentdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  review.api:
+    image: review-api
+    build:
+      context: .
+      dockerfile: src/Services/Review/Review.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - CoachService__BaseUrl=https://coach.api:8081
+      - CourtService__BaseUrl=https://courtbooking.api:8081
+      - ConnectionStrings__Database=Host=reviewdb;Port=5432;Database=ReviewDB;Username=postgres;Password=2405
+    ports:
+      - "6008:8080"
+      - "6068:8081"
+    depends_on:
+      - reviewdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  identity.api:
+    image: identity-api
+    build:
+      context: .
+      dockerfile: src/Services/Identity/Identity.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - ConnectionStrings__Database=Host=identitydb;Port=5432;Database=IdentityDB;Username=postgres;Password=2405
+    ports:
+      - "6001:8080"
+      - "6061:8081"
+    depends_on:
+      - identitydb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  courtbooking.api:
+    image: courtbooking-api
+    build:
+      context: .
+      dockerfile: src/Services/CourtBooking/CourtBooking.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - ConnectionStrings__Database=Host=courtbookingdb;Port=5432;Database=CourtBookingDB;Username=postgres;Password=2405
+    ports:
+      - "6003:8080"
+      - "6063:8081"
+    depends_on:
+      - courtbookingdb
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+volumes:
+  postgres_courtbooking:
+  postgres_identity:
+  postgres_coach:
+  postgres_chat:
+  postgres_matching:
+  postgres_notification:
+  postgres_payment:
+  postgres_review:

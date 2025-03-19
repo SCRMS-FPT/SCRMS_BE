@@ -9,10 +9,12 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Services/Payment/Payment.csproj", "src/Services/Payment/"]
+COPY ["Services/Payment/Payment.csproj", "Services/Payment/"]
+COPY ["BuildingBlocks/BuildingBlocks.Messaging/BuildingBlocks.Messaging.csproj", "BuildingBlocks/BuildingBlocks.Messaging/"]
+COPY ["BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj", "BuildingBlocks/BuildingBlocks/"]
 RUN dotnet restore "./src/Services/Payment/Payment.csproj"
 COPY . .
-WORKDIR "/src/src/Services/Payment"
+WORKDIR "/src/Services/Payment"
 RUN dotnet build "./Payment.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
