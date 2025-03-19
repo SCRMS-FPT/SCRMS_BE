@@ -1,5 +1,6 @@
 ﻿using CourtBooking.Domain.Enums;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 namespace CourtBooking.Infrastructure.Data.Configuration;
 
@@ -47,6 +48,7 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
             .HasColumnType("TEXT");
 
         builder.Property(c => c.Facilities)
+            .HasColumnName("Facilities")
             .HasColumnType("JSONB");
 
         builder.Property(c => c.Status)

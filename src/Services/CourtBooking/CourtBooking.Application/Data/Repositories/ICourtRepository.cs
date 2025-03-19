@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
+using CourtBooking.Domain.ValueObjects;
 
 namespace CourtBooking.Application.Data.Repositories
 {
@@ -25,5 +27,7 @@ namespace CourtBooking.Application.Data.Repositories
         Task<Court?> GetCourtByIdAsync(Guid courtId, CancellationToken cancellationToken = default);
 
         Task<bool> IsOwnedByUserAsync(Guid courtId, Guid userId, CancellationToken cancellationToken = default);
+
+        Task<Guid> GetSportCenterIdAsync(CourtId courtId, CancellationToken cancellationToken = default);
     }
 }

@@ -81,6 +81,7 @@ namespace Payment.API.Features.DepositFunds
                     var servicePackageEvent = new ServicePackagePaymentEvent(
                         transactionRecord.Id,
                         request.UserId,
+                        transactionRecord.ReferenceId,
                         request.Amount,
                         DateTime.UtcNow,
                         request.Description ?? "Package payment",

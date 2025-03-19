@@ -43,6 +43,21 @@ namespace BuildingBlocks.Messaging.Outbox
             await dbContext.SaveChangesAsync();
         }
 
+        private async Task SaveMessageAsync<T>(T message, string type, CancellationToken cancellationToken = default) where T : class
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
+
+            var outboxMessage = new OutboxMessage
+            {
+                Type = type,
+                Content = JsonSerializer.Serialize(message)
+            };
+
+            await dbContext.Set<OutboxMessage>().AddAsync(outboxMessage, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         public async Task ProcessOutboxMessagesAsync(CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
@@ -84,6 +99,11 @@ namespace BuildingBlocks.Messaging.Outbox
                     await dbContext.SaveChangesAsync(cancellationToken);
                 }
             }
+        }
+
+        public Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default) where T : class
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Identity.Application.ServicePackages.Commands.CancelSubscription;
+﻿using Identity.Application.Identity.Commands.UserManagement;
+using Identity.Application.Identity.Queries.UserManagement;
+using Identity.Application.ServicePackages.Commands.CancelSubscription;
 using Identity.Application.ServicePackages.Commands.CreatePromotion;
 using Identity.Application.ServicePackages.Commands.DeletePromotion;
 using Identity.Application.ServicePackages.Commands.RenewSubscription;
@@ -14,25 +16,27 @@ using System.Security.Claims;
 
 namespace Identity.API.Endpoints
 {
-    public class ServicePackages : ICarterModule
+    public class ServicePackagesEndpoints : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("/api/service-packages");
+            // Group cho các endpoint Service Packages dành cho người dùng
+            var servicePackagesGroup = app.MapGroup("/api/service-packages")
+                                          .WithTags("Service Packages");
 
-            group.MapGet("/", async (ISender sender) =>
+            servicePackagesGroup.MapGet("/", async (ISender sender) =>
             {
                 var result = await sender.Send(new GetServicePackagesQuery());
                 return Results.Ok(result);
             });
 
-            group.MapGet("/{id}", async (Guid id, ISender sender) =>
+            servicePackagesGroup.MapGet("/{id}", async (Guid id, ISender sender) =>
             {
                 var result = await sender.Send(new GetServicePackageByIdQuery(id));
                 return result is not null ? Results.Ok(result) : Results.NotFound();
             });
 
-            group.MapPost("/subscribe", async (SubscribeRequest request, ISender sender, HttpContext httpContext) =>
+            servicePackagesGroup.MapPost("/subscribe", async (SubscribeRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -44,7 +48,7 @@ namespace Identity.API.Endpoints
                 return Results.Ok(result);
             });
 
-            group.MapPut("/subscribe/renew", async (RenewRequest request, ISender sender, HttpContext httpContext) =>
+            servicePackagesGroup.MapPut("/subscribe/renew", async (RenewRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -55,7 +59,8 @@ namespace Identity.API.Endpoints
                 await sender.Send(command);
                 return Results.Ok();
             });
-            group.MapPut("/subscribe/cancel", async (CancelRequest request, ISender sender, HttpContext httpContext) =>
+
+            servicePackagesGroup.MapPut("/subscribe/cancel", async (CancelRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -66,8 +71,13 @@ namespace Identity.API.Endpoints
                 await sender.Send(command);
                 return Results.Ok();
             });
-            var adminGroup2 = group.MapGroup("/api/service-packages").RequireAuthorization("Admin");
-            adminGroup2.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext) =>
+
+            // Group cho các endpoint Promotions dành cho Admin
+            var promotionsGroup = app.MapGroup("/api/service-packages")
+                                     .WithTags("Service Packages - Promotions")
+                                     .RequireAuthorization("Admin");
+
+            promotionsGroup.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -78,7 +88,8 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
-            adminGroup2.MapPost("/{packageId:guid}/promotions", async (Guid packageId, AddNewPromotionRequest request, ISender sender, HttpContext httpContext) =>
+
+            promotionsGroup.MapPost("/{packageId:guid}/promotions", async (Guid packageId, AddNewPromotionRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -89,7 +100,8 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(command);
                 return Results.Created($"/api/promotions/{result.Id}", result);
             });
-            adminGroup2.MapPut("/promotions/{promotionId:guid}", async (Guid promotionId, UpdatePromotionRequest request, ISender sender, HttpContext httpContext) =>
+
+            promotionsGroup.MapPut("/promotions/{promotionId:guid}", async (Guid promotionId, UpdatePromotionRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -100,7 +112,8 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
-            adminGroup2.MapDelete("/promotions/{promotionId:guid}", async (Guid promotionId, ISender sender, HttpContext httpContext) =>
+
+            promotionsGroup.MapDelete("/promotions/{promotionId:guid}", async (Guid promotionId, ISender sender, HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -111,22 +124,27 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
-            var adminGroup = group.MapGroup("/api/manage-packages").RequireAuthorization("Admin");
-            adminGroup.MapPost("/create", async ([FromBody] CreateServicePackageRequest request, ISender sender) =>
+
+            // Group cho các endpoint Quản lý Service Packages dành cho Admin
+            var managePackagesGroup = app.MapGroup("/api/manage-packages")
+                                         .WithTags("Service Packages - Management")
+                                         .RequireAuthorization("Admin");
+
+            managePackagesGroup.MapPost("/create", async ([FromBody] CreateServicePackageRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateServicePackageCommand>();
                 var result = await sender.Send(command);
                 return Results.Created($"/api/service-packages/{result.Id}", result);
             });
 
-            adminGroup.MapPut("/update/{id}", async (Guid id, [FromBody] UpdateServicePackageRequest request, ISender sender) =>
+            managePackagesGroup.MapPut("/update/{id}", async (Guid id, [FromBody] UpdateServicePackageRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateServicePackageCommand>() with { Id = id };
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             });
 
-            adminGroup.MapDelete("/delete/{id}", async (Guid id, ISender sender) =>
+            managePackagesGroup.MapDelete("/delete/{id}", async (Guid id, ISender sender) =>
             {
                 await sender.Send(new DeleteServicePackageCommand(id));
                 return Results.NoContent();
@@ -134,12 +152,11 @@ namespace Identity.API.Endpoints
         }
     }
 
-    public record CancelRequest(Guid SubscriptionId);
-    public record RenewRequest(Guid SubscriptionId, int AdditionalDurationDays);
     public record SubscribeRequest(Guid PackageId);
+    public record RenewRequest(Guid SubscriptionId, int AdditionalDurationDays);
+    public record CancelRequest(Guid SubscriptionId);
     public record AddNewPromotionRequest(Guid PackageId, string Description, string Type, decimal Value, DateTime ValidFrom, DateTime ValidTo);
     public record UpdatePromotionRequest(Guid PromotionId, Guid PackageId, string Description, string Type, decimal Value, DateTime ValidFrom, DateTime ValidTo);
-
     public record CreateServicePackageRequest(
         string Name,
         string Description,
@@ -148,7 +165,6 @@ namespace Identity.API.Endpoints
         string Status,
         int DurationDays
     );
-
     public record UpdateServicePackageRequest(
         string Name,
         string Description,

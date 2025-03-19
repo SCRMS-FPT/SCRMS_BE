@@ -7,6 +7,7 @@ using CourtBooking.Application.CourtManagement.Queries.GetSportCenters;
 using CourtBooking.Application.CourtManagement.Queries.GetSportCenterById;
 using CourtBooking.Application.CourtManagement.Command.UpdateSportCenter;
 using Microsoft.AspNetCore.Authorization;
+using CourtBooking.Application.CourtManagement.Queries.GetAllCourtsOfSportCenter;
 
 namespace CourtBooking.API.Endpoints
 {

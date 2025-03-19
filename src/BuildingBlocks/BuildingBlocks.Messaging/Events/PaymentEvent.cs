@@ -12,6 +12,7 @@
     public record ServicePackagePaymentEvent(
         Guid TransactionId,
         Guid UserId,
+        Guid? ServicePackageId,
         decimal Amount,
         DateTime Timestamp,
         string Description,

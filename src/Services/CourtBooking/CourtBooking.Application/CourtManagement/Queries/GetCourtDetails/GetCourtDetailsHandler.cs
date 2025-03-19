@@ -7,6 +7,8 @@ using CourtBooking.Domain.ValueObjects;
 using System.Text.Json;
 using CourtBooking.Domain.Models;
 
+namespace CourtBooking.Application.CourtManagement.Queries.GetCourtDetails;
+
 public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHandler<GetCourtDetailsQuery, GetCourtDetailsResult>
 {
     public async Task<GetCourtDetailsResult> Handle(GetCourtDetailsQuery query, CancellationToken cancellationToken)

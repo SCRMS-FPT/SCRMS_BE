@@ -7,6 +7,7 @@ using CourtBooking.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability;
+using CourtBooking.Application.CourtManagement.Queries.GetCourtDetails;
 
 namespace CourtBooking.API.Endpoints
 {

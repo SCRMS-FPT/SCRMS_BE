@@ -37,7 +37,7 @@ builder.Services.AddScoped<ICoachPackagePurchaseRepository, CoachPackagePurchase
 builder.Services.AddMessageBroker(builder.Configuration, assembly);
 
 builder.Services.AddCarter();
-
+builder.Services.AddCors();
 builder.Services.AddDbContext<CoachDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
@@ -108,7 +108,12 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapCarter();
-
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();
