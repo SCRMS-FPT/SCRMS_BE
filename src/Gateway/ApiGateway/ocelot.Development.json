@@ -2,7 +2,7 @@
   "Routes": [
     {
       "DownstreamPathTemplate": "/api/identity/register",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -14,7 +14,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/identity/login",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -26,7 +26,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/identity/change-password",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -43,7 +43,7 @@
     // User Management APIs
     {
       "DownstreamPathTemplate": "/api/users",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -61,7 +61,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/users/{id}",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -81,7 +81,7 @@
     // Service Package APIs
     {
       "DownstreamPathTemplate": "/api/service-packages/subscribe/renew",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -97,7 +97,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/service-packages/api/manage-packages/delete/{id}",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
@@ -127,7 +127,7 @@
       "UpstreamPathTemplate": "/api/bookings",
       "UpstreamHttpMethod": [ "POST", "GET" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
       }
     },
@@ -143,7 +143,7 @@
       "UpstreamPathTemplate": "/api/bookings/{bookingId}",
       "UpstreamHttpMethod": [ "GET", "PUT" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
       }
     },
@@ -159,7 +159,7 @@
       "UpstreamPathTemplate": "/api/courts",
       "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
       }
     },
@@ -175,7 +175,7 @@
       "UpstreamPathTemplate": "/api/courts/{courtId}/promotions",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
       }
     },
@@ -191,7 +191,7 @@
       "UpstreamPathTemplate": "/api/courtschedules",
       "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
       }
     },
@@ -207,7 +207,7 @@
       "UpstreamPathTemplate": "/api/sportcenters",
       "UpstreamHttpMethod": [ "POST", "GET", "PUT" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
       }
     },
@@ -223,8 +223,494 @@
       "UpstreamPathTemplate": "/api/sports",
       "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
+      }
+    },
+    //chat
+    {
+      "DownstreamPathTemplate": "/api/chats",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "chat.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/chats",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/chats/{chatSessionId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "chat.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/chats/{chatSessionId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/chats/{chatSessionId}/messages",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "chat.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/chats/{chatSessionId}/messages",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/chats/{chatSessionId}/messages/{messageId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "chat.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/chats/{chatSessionId}/messages/{messageId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/chats/{chatSessionId}/messages/{messageId}/read",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "chat.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/chats/{chatSessionId}/messages/{messageId}/read",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    // coach
+    {
+      "DownstreamPathTemplate": "/api/coaches",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "coach.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/coaches",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/coaches/{coachId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "coach.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/coaches/{coachId}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/bookings",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "coach.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/coachbookings",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/bookings/{bookingId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "coach.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/coachbookings/{bookingId}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/schedules",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "coach.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/schedules",
+      "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/promotions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "coach.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/promotions",
+      "UpstreamHttpMethod": [ "POST", "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    //matching 
+    {
+      "DownstreamPathTemplate": "/api/matches",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "matching.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/matches",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/matches/get-pending-swipe",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "matching.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/matches/get-pending-swipe",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/matches/respond",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "matching.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/matches/respond",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/matches/swipe",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "matching.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/matches/swipe",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/matches/suggestions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "matching.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/matches/suggestions",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/matches/skills",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "matching.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/matches/skills",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    //notification
+    {
+      "DownstreamPathTemplate": "/api/notifications",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/notifications",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/notifications/{notificationId}/read",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/notifications/{notificationId}/read",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/notifications/{notificationId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/notifications/{notificationId}",
+      "UpstreamHttpMethod": [ "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey",
+        "RequireAuthenticatedUser": true
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/notifications/send",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/notifications/send",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey",
+        "RequireAuthenticatedUser": true
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/sendmail",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/sendmail",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    //payment
+    {
+      "DownstreamPathTemplate": "/api/payments/wallet/deposit",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/payments/wallet/deposit",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payments/wallet",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/payments/wallet",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payments/wallet/transactions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/payments/wallet/transactions",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payments/wallet/booking",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/payments/wallet/booking",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    
+//review
+    {
+      "DownstreamPathTemplate": "/api/reviews",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "review.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reviews",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/reviews/{reviewId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "review.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reviews/{reviewId}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/reviews/{reviewId}/flag",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "review.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reviews/{reviewId}/flag",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/reviews/{reviewId}/reply",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "review.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reviews/{reviewId}/reply",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/reviews/{reviewId}/replies",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "review.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reviews/{reviewId}/replies",
+      "UpstreamHttpMethod": [ "GET" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/reviews-coach",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "review.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reviews-coach",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityAuthKey"
       }
     }
   ],
