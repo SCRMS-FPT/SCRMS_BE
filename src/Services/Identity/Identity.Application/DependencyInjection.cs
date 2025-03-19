@@ -62,7 +62,6 @@ namespace Identity.Application
             });
             services.AddFeatureManagement();
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-            //services.AddOutbox<IdentityDbContext>();
             return services;
         }
 

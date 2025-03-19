@@ -76,6 +76,9 @@ namespace Identity.Application.Consumers
         {
             // Xử lý nâng cấp tài khoản với thông tin chi tiết hơn
             // Trong transaction
+            Guid nonNullableServicePackageId = payment.ServicePackageId ?? Guid.Empty;
+            var servicepackage = await _packageRepository.GetServicePackageByIdAsync(nonNullableServicePackageId);
+            ProcessSubscription(payment.UserId, servicepackage);
         }
 
         private async Task<ServicePackageSubscription> ProcessSubscription(Guid userId, ServicePackage package)

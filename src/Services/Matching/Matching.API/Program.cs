@@ -25,7 +25,7 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddMessageBroker(builder.Configuration, assembly);
 
 builder.Services.AddCarter();
-
+builder.Services.AddCors();
 builder.Services.AddDbContext<MatchingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
@@ -95,7 +95,12 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapCarter();
-
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();

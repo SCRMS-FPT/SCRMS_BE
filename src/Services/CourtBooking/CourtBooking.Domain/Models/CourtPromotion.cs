@@ -12,9 +12,12 @@ namespace CourtBooking.Domain.Models
         public DateTime ValidFrom { get; private set; }
         public DateTime ValidTo { get; private set; }
 
-        protected CourtPromotion() { } // For EF Core
+        protected CourtPromotion()
+        { } // For EF Core
 
-        public static CourtPromotion Create(CourtId courtId, string description, string discountType, decimal discountValue, DateTime validFrom, DateTime validTo)
+        public static CourtPromotion Create(CourtId courtId, string description,
+            string discountType, decimal discountValue,
+            DateTime validFrom, DateTime validTo)
         {
             return new CourtPromotion
             {

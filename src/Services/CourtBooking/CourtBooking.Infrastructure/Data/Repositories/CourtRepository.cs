@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using CourtBooking.Application.Data.Repositories;
 using System.Threading.Tasks;
+using CourtBooking.Application.Exceptions;
+using BuildingBlocks.Exceptions;
 
 namespace CourtBooking.Application.Data.Repositories
 {
@@ -85,6 +87,15 @@ namespace CourtBooking.Application.Data.Repositories
             var sportCenter = await _context.SportCenters
                 .FirstOrDefaultAsync(sc => sc.Id == court.SportCenterId, cancellationToken);
             return sportCenter != null && sportCenter.OwnerId == OwnerId.Of(userId);
+        }
+
+        public async Task<Guid> GetSportCenterIdAsync(CourtId courtId, CancellationToken cancellationToken = default)
+        {
+            var court = await GetCourtByIdAsync(courtId, cancellationToken);
+            if (court == null)
+                throw new NotFoundException($"Không tìm thấy sân với ID {courtId.Value}");
+
+            return court.SportCenterId.Value;
         }
     }
 }

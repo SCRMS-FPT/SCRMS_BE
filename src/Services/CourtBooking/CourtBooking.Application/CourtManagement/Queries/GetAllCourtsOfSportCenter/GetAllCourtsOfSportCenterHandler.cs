@@ -9,6 +9,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+namespace CourtBooking.Application.CourtManagement.Queries.GetAllCourtsOfSportCenter;
+
 public class GetAllCourtsOfSportCenterHandler : IQueryHandler<GetAllCourtsOfSportCenterQuery, GetAllCourtsOfSportCenterResult>
 {
     private readonly ICourtRepository _courtRepository;

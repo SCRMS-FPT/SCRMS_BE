@@ -125,19 +125,19 @@ namespace CourtBooking.API.Endpoints
             .WithSummary("Xóa khuyến mãi")
             .WithDescription("Xóa khuyến mãi dựa trên promotionId.");
         }
-
-        public record CreateCourtPromotionRequest(
-               string Description,
-               string DiscountType,
-               decimal DiscountValue,
-               DateTime ValidFrom,
-               DateTime ValidTo);
-
-        public record UpdateCourtPromotionRequest(
-                string Description,
-                string DiscountType,
-                decimal DiscountValue,
-                DateTime ValidFrom,
-                DateTime ValidTo);
     }
+
+    public record CreateCourtPromotionRequest(
+           string Description,
+           string DiscountType,
+           decimal DiscountValue,
+           DateTime ValidFrom,
+           DateTime ValidTo);
+
+    public record UpdateCourtPromotionRequest(
+            string Description,
+            string DiscountType,
+            decimal DiscountValue,
+            DateTime ValidFrom,
+            DateTime ValidTo);
 }

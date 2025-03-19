@@ -71,5 +71,51 @@ namespace Reviews.API.Data.Repositories
         {
             await _context.ReviewReplies.AddAsync(reply, cancellationToken);
         }
+
+        public async Task<int> CountReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
+        {
+            var query = _context.Reviews.AsQueryable();
+            
+            if (startDate.HasValue)
+            {
+                query = query.Where(r => r.CreatedAt >= startDate.Value);
+            }
+            
+            if (endDate.HasValue)
+            {
+                // Lấy đến hết ngày kết thúc
+                var endDateWithTime = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(r => r.CreatedAt <= endDateWithTime);
+            }
+            
+            return await query.CountAsync(cancellationToken);
+        }
+
+        public async Task<int> CountFlaggedReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
+        {
+            var query = _context.ReviewFlags
+                .Select(rf => rf.ReviewId)
+                .Distinct()
+                .AsQueryable();
+            
+            if (startDate.HasValue)
+            {
+                query = query.Where(reviewId => 
+                    _context.ReviewFlags.Any(rf => 
+                        rf.ReviewId == reviewId && 
+                        rf.CreatedAt >= startDate.Value));
+            }
+            
+            if (endDate.HasValue)
+            {
+                var endDateWithTime = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(reviewId => 
+                    _context.ReviewFlags.Any(rf => 
+                        rf.ReviewId == reviewId && 
+                        rf.CreatedAt <= endDateWithTime));
+            }
+            
+            return await query.CountAsync(cancellationToken);
+        }
     }
 }

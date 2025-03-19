@@ -20,13 +20,14 @@ namespace CourtBooking.Domain.Models
         public int CancellationWindowHours { get; private set; } = 24;
         public decimal RefundPercentage { get; private set; } = 0;
 
-
         private List<CourtSchedule> _courtSchedules = new();
         public IReadOnlyCollection<CourtSchedule> CourtSchedules => _courtSchedules.AsReadOnly();
 
-
-        public static Court Create(CourtId courtId, CourtName courtName, SportCenterId sportCenterId, SportId sportId,
-            TimeSpan slotDuration, string? description, string? facilities, CourtType courtType, decimal minDepositPercentage = 100)
+        public static Court Create(CourtId courtId, CourtName courtName,
+            SportCenterId sportCenterId, SportId sportId,
+            TimeSpan slotDuration, string? description, string? facilities,
+            CourtType courtType, decimal minDepositPercentage = 100,
+            int CancellationWindowHours = 24, decimal RefundPercentage = 0)
         {
             if (minDepositPercentage < 0 || minDepositPercentage > 100)
                 throw new DomainException("Tỷ lệ đặt cọc phải nằm trong khoảng từ 0 đến 100");
@@ -65,11 +66,13 @@ namespace CourtBooking.Domain.Models
             CancellationWindowHours = cancellationWindowHours;
             RefundPercentage = refundPercentage;
         }
+
         public void UpdateCancellationPolicy(int cancellationWindowHours, decimal refundPercentage)
         {
             CancellationWindowHours = cancellationWindowHours;
             RefundPercentage = refundPercentage;
         }
+
         public void AddCourtSlot(CourtId courtId, int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
         {
             var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);
@@ -79,5 +82,4 @@ namespace CourtBooking.Domain.Models
             _courtSchedules.Add(courtSlot);
         }
     }
-
 }

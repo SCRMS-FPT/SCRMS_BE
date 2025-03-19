@@ -19,5 +19,8 @@
         Task AddReviewFlagAsync(ReviewFlag flag, CancellationToken cancellationToken);
 
         Task AddReviewReplyAsync(ReviewReply reply, CancellationToken cancellationToken);
+
+        Task<int> CountReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
+        Task<int> CountFlaggedReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
     }
 }
