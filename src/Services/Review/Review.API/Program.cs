@@ -29,7 +29,7 @@ builder.Services
     .AddMessageBroker(builder.Configuration, Assembly.GetExecutingAssembly())
     .AddApplicationServices(builder.Configuration);
 
-builder.Services.AddDbContext<ReviewDbContext>(options =>
+builder.Services.AddDbContext<IReviewDbContext, ReviewDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();

@@ -32,7 +32,7 @@ builder.Services.AddScoped<IMatchRepository, MatchRepository>();
 builder.Services.AddScoped<ISwipeActionRepository, SwipeActionRepository>();
 builder.Services.AddScoped<IUserSkillRepository, UserSkillRepository>();
 
-builder.Services.AddOutbox<MatchingDbContext>();
+//builder.Services.AddOutbox<MatchingDbContext>();
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddAuthentication(options =>

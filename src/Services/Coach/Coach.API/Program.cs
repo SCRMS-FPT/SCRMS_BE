@@ -102,7 +102,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Thêm Outbox pattern
-builder.Services.AddOutbox<CoachDbContext>();
+//builder.Services.AddOutbox<CoachDbContext>();
 
 var app = builder.Build();
 
