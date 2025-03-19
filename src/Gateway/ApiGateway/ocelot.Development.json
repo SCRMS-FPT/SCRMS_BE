@@ -15,11 +15,11 @@
     },
     {
       "DownstreamPathTemplate": "/api/identity/login",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 7105
+          "Host": "identity.api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/identity/login",

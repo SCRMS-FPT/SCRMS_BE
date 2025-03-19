@@ -9,10 +9,12 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Services/Coach/Coach.API/Coach.API.csproj", "src/Services/Coach/Coach.API/"]
+COPY ["Services/Coach/Coach.API/Coach.API.csproj", "Services/Coach/Coach.API/"]
+COPY ["BuildingBlocks/BuildingBlocks.Messaging/BuildingBlocks.Messaging.csproj", "BuildingBlocks/BuildingBlocks.Messaging/"]
+COPY ["BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj", "BuildingBlocks/BuildingBlocks/"]
 RUN dotnet restore "./src/Services/Coach/Coach.API/Coach.API.csproj"
 COPY . .
-WORKDIR "/src/src/Services/Coach/Coach.API"
+WORKDIR "src/Services/Coach/Coach.API"
 RUN dotnet build "./Coach.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

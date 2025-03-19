@@ -20,7 +20,7 @@ COPY ["Services/CourtBooking.Domain/CourtBooking.Domain.csproj", "Services/Court
 COPY ["Services/CourtBooking.Application/CourtBooking.Application.csproj", "Services/CourtBooking.Application/"]
 RUN dotnet restore "./Services/CourtBooking.API/CourtBooking.API.csproj"
 COPY . .
-WORKDIR "/src/Services/CourtBooking.API"
+WORKDIR "src/Services/CourtBooking.API"
 RUN dotnet build "./CourtBooking.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
