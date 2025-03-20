@@ -12,6 +12,8 @@ namespace Identity.Application.Data.Repositories
 
         Task<List<ServicePackage>> GetAllServicePackageAsync();
 
+        IQueryable<ServicePackage> GetServicePackagesQueryable();
+
         Task AddServicePackageAsync(ServicePackage package);
 
         Task UpdateServicePackageAsync(ServicePackage package);
