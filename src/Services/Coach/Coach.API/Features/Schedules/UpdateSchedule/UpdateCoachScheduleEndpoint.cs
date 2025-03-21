@@ -55,7 +55,7 @@ namespace Coach.API.Features.Schedules.UpdateSchedule
         .Produces(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .WithSummary("Update Coach Schedule")
-        .WithDescription("Update an existing coach schedule");
+        .WithDescription("Update an existing coach schedule").WithTags("Schedule");
         }
     }
 }

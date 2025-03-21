@@ -4,7 +4,6 @@ using System.Security.Claims;
 
 namespace Coach.API.Features.Packages.GetPurchaseDetail
 {
-
     public class GetPurchaseDetailEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -24,7 +23,7 @@ namespace Coach.API.Features.Packages.GetPurchaseDetail
             })
             .RequireAuthorization()
             .WithName("GetPurchaseDetail")
-            .Produces<PurchaseDetail>(StatusCodes.Status200OK);
+            .Produces<PurchaseDetail>(StatusCodes.Status200OK).WithTags("Package");
         }
     }
 }

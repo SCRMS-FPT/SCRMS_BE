@@ -38,7 +38,7 @@ namespace Coach.API.Features.Schedules.CreateSchedule
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .WithSummary("Create Coach Schedule")
-            .WithDescription("Create a new schedule for a coach");
+            .WithDescription("Create a new schedule for a coach").WithTags("Schedule");
         }
     }
 }

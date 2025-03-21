@@ -28,9 +28,9 @@ namespace Coach.API.Features.Promotion.GetAllPromotion
                 var result = await sender.Send(command);
                 return Results.Ok(result);
             })
-            .RequireAuthorization("Admin")
+            .RequireAuthorization("Coach")
             .WithName("GetAllPromotion")
-            .Produces<List<PromotionRecord>>(StatusCodes.Status200OK);
+            .Produces<List<PromotionRecord>>(StatusCodes.Status200OK).WithTags("Promotion");
         }
     }
 }

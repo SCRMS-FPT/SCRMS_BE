@@ -1,89 +1,101 @@
 ﻿using Coach.API.Data;
 using Coach.API.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Coach.API.Features.Dashboard.GetStats
 {
-    // Update to use nullable DateOnly?
     public record GetStatsCommand(
-        DateOnly? StartTime,  // Make StartTime nullable
-        DateOnly? EndTime     // Make EndTime nullable
-    ) : ICommand<GetStatsResult>;
+    Guid CoachId,
+    DateOnly? StartDate,
+    DateOnly? EndDate,
+    string GroupBy) : IRequest<GetStatsResponse>;
 
-    public record GetStatsResult(decimal Revenue, decimal TotalRate, int NumberOfLessons);
+    public record GetStatsResponse(
+        int TotalStudents,
+        int TotalSessions,
+        decimal TotalRevenue,
+        int TotalPackage,
+        List<StatPeriod> Stats);
 
-    public class GetStatsCommandValidator : AbstractValidator<GetStatsCommand>
+    public record StatPeriod(
+        string Period,
+        int Sessions,
+        decimal Revenue);
+
+    public class GetStatsCommandHandler : IRequestHandler<GetStatsCommand, GetStatsResponse>
     {
-        public GetStatsCommandValidator()
-        {
-            RuleFor(x => x.StartTime).LessThan(x => x.EndTime).WithMessage("End time must be in the future of start time");
-        }
-    }
-
-    public class GetStatsCommandHandler : ICommandHandler<GetStatsCommand, GetStatsResult>
-    {
-        private readonly CoachDbContext context;
+        private readonly CoachDbContext _context;
 
         public GetStatsCommandHandler(CoachDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
-        public async Task<GetStatsResult> Handle(GetStatsCommand command, CancellationToken cancellationToken)
+        public async Task<GetStatsResponse> Handle(GetStatsCommand command, CancellationToken cancellationToken)
         {
-            IQueryable<CoachBooking> bookingsQuery = context.CoachBookings;
+            // Truy vấn bookings của coach
+            var bookingsQuery = _context.CoachBookings
+                .Where(b => b.CoachId == command.CoachId);
 
-            // Apply date filters if they are provided
-            if (command.StartTime.HasValue && command.EndTime.HasValue)
+            // Lọc theo ngày nếu có
+            if (command.StartDate.HasValue)
+                bookingsQuery = bookingsQuery.Where(b => b.BookingDate >= command.StartDate.Value);
+            if (command.EndDate.HasValue)
+                bookingsQuery = bookingsQuery.Where(b => b.BookingDate <= command.EndDate.Value);
+
+            // Tính các số liệu tổng hợp
+            var totalStudents = await _context.CoachBookings
+                .Where(b => b.CoachId == command.CoachId)
+                .Select(b => b.UserId)
+                .Distinct()
+                .CountAsync(cancellationToken);
+
+            var totalSessions = await bookingsQuery
+                .CountAsync(b => b.Status == "Completed", cancellationToken);
+
+            var totalRevenue = await bookingsQuery
+                .SumAsync(b => b.TotalPrice, cancellationToken);
+
+            var totalPackages = await _context.CoachPackages
+                .Where(p => p.CoachId == command.CoachId)
+                .CountAsync(cancellationToken);
+
+            // Nhóm dữ liệu theo group_by
+            var stats = await GetGroupedStats(bookingsQuery, command.GroupBy, cancellationToken);
+
+            return new GetStatsResponse(totalStudents, totalSessions, totalRevenue, totalPackages, stats);
+        }
+
+        private async Task<List<StatPeriod>> GetGroupedStats(IQueryable<CoachBooking> bookingsQuery, string groupBy, CancellationToken cancellationToken)
+        {
+            var bookings = await bookingsQuery
+                .Where(b => b.Status == "Completed")
+                .Select(b => new { b.BookingDate, b.TotalPrice })
+                .ToListAsync(cancellationToken);
+
+            var groupedStats = bookings
+                .GroupBy(b => GetPeriodKey(b.BookingDate, groupBy))
+                .Select(g => new StatPeriod(
+                    Period: g.Key,
+                    Sessions: g.Count(),
+                    Revenue: g.Sum(b => b.TotalPrice)))
+                .OrderBy(s => s.Period)
+                .ToList();
+
+            return groupedStats;
+        }
+
+        private string GetPeriodKey(DateOnly date, string groupBy)
+        {
+            return groupBy.ToLower() switch
             {
-                bookingsQuery = bookingsQuery
-                    .Where(cb => cb.BookingDate.CompareTo(command.StartTime.Value) >= 0
-                                 && cb.BookingDate.CompareTo(command.EndTime.Value) <= 0);
-            }
-            else if (command.StartTime.HasValue)
-            {
-                bookingsQuery = bookingsQuery
-                    .Where(cb => cb.BookingDate.CompareTo(command.StartTime.Value) >= 0);
-            }
-            else if (command.EndTime.HasValue)
-            {
-                bookingsQuery = bookingsQuery
-                    .Where(cb => cb.BookingDate.CompareTo(command.EndTime.Value) <= 0);
-            }
-
-            List<CoachBooking> bookings = await bookingsQuery.ToListAsync(cancellationToken);
-
-            decimal totalRate = 0;
-            decimal totalRevenues = 0;
-            int numberOfLessons = 0;
-
-            foreach (var booking in bookings)
-            {
-                var package = await context.CoachPackages.FirstOrDefaultAsync(cb => cb.Id == booking.PackageId);
-                var coach = await context.Coaches.FirstOrDefaultAsync(c => c.UserId == booking.CoachId);
-
-                if (package != null)
-                {
-                    // TODO: Must check again
-                    totalRevenues += booking.TotalPrice;
-                    numberOfLessons += package.SessionCount;
-                }
-                else
-                {
-                    if (coach != null)
-                    {
-                        totalRevenues += coach.RatePerHour;
-                    }
-                }
-            }
-
-            if (bookings.Count == 0)
-            {
-                return new GetStatsResult(0, 0, 0);  // No bookings found, return zero values
-            }
-
-            // Return the result, ensuring no division by zero
-            return new GetStatsResult(totalRevenues, totalRate / bookings.Count(), numberOfLessons);
+                "day" => date.ToString("yyyy-MM-dd"),
+                "week" => $"{date.Year}-W{CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(date.ToDateTime(TimeOnly.MinValue), CalendarWeekRule.FirstDay, DayOfWeek.Monday):D2}",
+                "month" => date.ToString("yyyy-MM"),
+                "year" => date.ToString("yyyy"),
+                _ => throw new ArgumentException("Invalid group_by value")
+            };
         }
     }
 }

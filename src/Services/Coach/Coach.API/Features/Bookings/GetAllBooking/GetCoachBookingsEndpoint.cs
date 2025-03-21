@@ -44,7 +44,7 @@ namespace Coach.API.Features.Bookings.GetAllBooking
             .Produces<PaginatedResult<BookingHistoryResult>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Get Coach Booking History")
-            .WithDescription("Retrieve all past bookings associated with the authenticated coach.");
+            .WithDescription("Retrieve all past bookings associated with the authenticated coach.").WithTags("Booking");
         }
     }
 }

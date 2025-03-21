@@ -11,6 +11,7 @@ namespace Coach.API.Features.Promotion.UpdateCoachPromotion
         DateOnly ValidFrom,
         DateOnly ValidTo
     );
+
     public class UpdateCoachPromotionEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -30,9 +31,9 @@ namespace Coach.API.Features.Promotion.UpdateCoachPromotion
                 var result = await sender.Send(command);
                 return Results.Ok();
             })
-            .RequireAuthorization("Admin")
+            .RequireAuthorization("Coach")
             .WithName("UpdateCoachPromotion")
-            .Produces(StatusCodes.Status200OK);
+            .Produces(StatusCodes.Status200OK).WithTags("Promotion");
         }
     }
 }

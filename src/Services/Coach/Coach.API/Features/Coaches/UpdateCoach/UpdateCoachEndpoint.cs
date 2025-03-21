@@ -35,7 +35,7 @@ namespace Coach.API.Features.Coaches.UpdateCoach
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Update Coach")
-            .WithDescription("Update coach profile");
+            .WithDescription("Update coach profile").WithTags("Coach");
         }
     }
 }

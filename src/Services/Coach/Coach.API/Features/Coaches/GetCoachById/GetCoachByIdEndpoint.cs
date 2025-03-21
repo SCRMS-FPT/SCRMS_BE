@@ -16,7 +16,7 @@ namespace Coach.API.Features.Coaches.GetCoachById
                 .RequireAuthorization("Admin")
             .WithName("GetCoachById")
             .Produces<CoachResponse>()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound).WithTags("Coach");
         }
     }
 }

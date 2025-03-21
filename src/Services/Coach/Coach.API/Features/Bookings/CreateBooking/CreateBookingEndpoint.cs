@@ -64,7 +64,7 @@ namespace Coach.API.Features.Bookings.CreateBooking
                 .Produces<CreateBookingResult>(StatusCodes.Status201Created)
                 .ProducesProblem(StatusCodes.Status400BadRequest)
                 .WithSummary("Create Booking")
-                .WithDescription("Create a new booking with a coach");
+                .WithDescription("Create a new booking with a coach").WithTags("Booking");
         }
     }
 }
