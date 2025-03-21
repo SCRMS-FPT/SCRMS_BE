@@ -46,7 +46,7 @@ namespace Coach.API.Features.Dashboard.GetStats
             })
             // Thêm RequireAuthorization để yêu cầu người dùng có quyền "coach" hoặc "admin"
             .RequireAuthorization(policy => policy
-                .RequireRole("coach", "admin")) // Chỉ cho phép người có vai trò "coach" hoặc "admin" truy cập
+                .RequireRole("Coach", "Admin")) // Chỉ cho phép người có vai trò "coach" hoặc "admin" truy cập
             .WithName("GetCoachDashboardStats")
             .Produces<GetStatsResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

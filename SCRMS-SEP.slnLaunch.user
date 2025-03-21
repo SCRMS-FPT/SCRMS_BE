@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Coach\\Coach.API\\Coach.API.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
