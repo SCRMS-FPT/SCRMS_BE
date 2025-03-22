@@ -22,9 +22,9 @@ namespace Coach.API.Features.Promotion.DeleteCoachPromotion
                 var result = await sender.Send(command);
                 return Results.Ok();
             })
-            .RequireAuthorization("Admin")
+            .RequireAuthorization("Coach")
             .WithName("DeletePromotion")
-            .Produces(StatusCodes.Status200OK);
+            .Produces(StatusCodes.Status200OK).WithTags("Promotion");
         }
     }
 }

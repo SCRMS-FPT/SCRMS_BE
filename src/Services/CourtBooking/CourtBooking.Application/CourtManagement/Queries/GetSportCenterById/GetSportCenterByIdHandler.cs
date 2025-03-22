@@ -23,7 +23,7 @@ public class GetSportCenterByIdHandler : IQueryHandler<GetSportCenterByIdQuery, 
             throw new NotFoundException($"Sport center with ID {query.Id} not found.");
         }
 
-        var dto = new SportCenterListDTO(
+        var dto = new SportCenterDetailDTO(
             Id: sportCenter.Id.Value,
             OwnerId: sportCenter.OwnerId.Value,
             Name: sportCenter.Name,

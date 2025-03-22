@@ -34,7 +34,7 @@ namespace Coach.API.Features.Packages.CreatePackage
             })
             .RequireAuthorization("Coach")
             .WithName("CreatePackage")
-            .Produces(StatusCodes.Status201Created);
+            .Produces(StatusCodes.Status201Created).WithTags("Package");
         }
 
         public static async Task<IResult> HandleCreatePackage(

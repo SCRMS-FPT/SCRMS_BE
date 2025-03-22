@@ -35,7 +35,7 @@ public class UpdateSportCenterHandler : ICommandHandler<UpdateSportCenterCommand
 
         await _sportCenterRepository.UpdateSportCenterAsync(sportCenter, cancellationToken);
 
-        var updatedDto = new SportCenterListDTO(
+        var updatedDto = new SportCenterDetailDTO(
             Id: sportCenter.Id.Value,
             OwnerId: sportCenter.OwnerId.Value,
             Name: sportCenter.Name,

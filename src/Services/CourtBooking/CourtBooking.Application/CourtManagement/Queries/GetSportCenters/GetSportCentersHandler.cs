@@ -1,51 +1,57 @@
 ﻿using BuildingBlocks.CQRS;
-using BuildingBlocks.Pagination;
-using CourtBooking.Application.Data.Repositories;
-using CourtBooking.Application.DTOs;
 using Microsoft.EntityFrameworkCore;
+using CourtBooking.Application.DTOs;
+using System.Text.Json;
+using BuildingBlocks.Pagination;
+using CourtBooking.Application.CourtManagement.Queries.GetSportCenters;
 
-namespace CourtBooking.Application.CourtManagement.Queries.GetSportCenters
+public class GetSportCentersHandler(IApplicationDbContext _context)
+    : IQueryHandler<GetSportCentersQuery, GetSportCentersResult>
 {
-    public class GetSportCentersHandler : IQueryHandler<GetSportCentersQuery, GetSportCentersResult>
+    public async Task<GetSportCentersResult> Handle(GetSportCentersQuery query, CancellationToken cancellationToken)
     {
-        private readonly ISportCenterRepository _sportCenterRepository;
+        var pageIndex = query.PaginationRequest.PageIndex;
+        var pageSize = query.PaginationRequest.PageSize;
 
-        public GetSportCentersHandler(ISportCenterRepository sportCenterRepository)
-        {
-            _sportCenterRepository = sportCenterRepository;
-        }
+        // Tổng số sport centers
+        var totalCount = await _context.SportCenters.LongCountAsync(cancellationToken);
 
-        public async Task<GetSportCentersResult> Handle(GetSportCentersQuery query, CancellationToken cancellationToken)
-        {
-            var pageIndex = query.PaginationRequest.PageIndex; // 0-based
-            var pageSize = query.PaginationRequest.PageSize;
-            var city = query.City;
-            var name = query.Name;
+        // Lấy danh sách sport centers theo trang
+        var sportCenters = await _context.SportCenters
+            .OrderBy(sc => sc.Name)
+            .Skip(pageSize * pageIndex)
+            .Take(pageSize)
+            .Include(sc => sc.Courts)
+            .ToListAsync(cancellationToken);
 
-            var totalCount = await _sportCenterRepository.GetFilteredSportCenterCountAsync(city, name, cancellationToken);
-            var sportCenters = await _sportCenterRepository.GetFilteredPaginatedSportCentersAsync(
-                pageIndex, pageSize, city, name, cancellationToken);
+        // Lấy danh sách SportId duy nhất từ toàn bộ SportCenters đang phân trang
+        var sportIds = sportCenters.SelectMany(sc => sc.Courts)
+            .Select(c => c.SportId)
+            .Distinct()
+            .ToList();
 
-            var sportCenterDtos = sportCenters.Select(sc => new SportCenterListDTO(
-                Id: sc.Id.Value,
-                OwnerId: sc.OwnerId.Value,
-                Name: sc.Name,
-                PhoneNumber: sc.PhoneNumber,
-                AddressLine: sc.Address.AddressLine,
-                City: sc.Address.City,
-                District: sc.Address.District,
-                Commune: sc.Address.Commune,
-                Latitude: sc.LocationPoint.Latitude,
-                Longitude: sc.LocationPoint.Longitude,
-                Avatar: sc.Images.Avatar,
-                ImageUrls: sc.Images.ImageUrls,
-                Description: sc.Description,
-                CreatedAt: sc.CreatedAt,
-                LastModified: sc.LastModified
-            )).ToList();
+        // Truy vấn SportName tương ứng với SportId
+        var sportNames = await _context.Sports
+            .Where(s => sportIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
 
-            return new GetSportCentersResult(new PaginatedResult<SportCenterListDTO>(
-                pageIndex, pageSize, totalCount, sportCenterDtos));
-        }
+        // Map dữ liệu sang DTO
+        var sportCenterDtos = sportCenters.Select(sportCenter =>
+            new SportCenterListDTO(
+                Id: sportCenter.Id.Value,
+                Name: sportCenter.Name,
+                PhoneNumber: sportCenter.PhoneNumber,
+                SportNames: sportCenter.Courts
+                    .Select(c => sportNames.GetValueOrDefault(c.SportId, "Unknown Sport"))
+                    .Distinct()
+                    .ToList(),
+                Address: sportCenter.Address.ToString(),
+                Description: sportCenter.Description,
+                Avatar: sportCenter.Images.Avatar.ToString(),
+                ImageUrl: sportCenter.Images.ImageUrls.Select(i => i.ToString()).ToList()
+            )
+        ).ToList();
+
+        return new GetSportCentersResult(new PaginatedResult<SportCenterListDTO>(pageIndex, pageSize, totalCount, sportCenterDtos));
     }
 }

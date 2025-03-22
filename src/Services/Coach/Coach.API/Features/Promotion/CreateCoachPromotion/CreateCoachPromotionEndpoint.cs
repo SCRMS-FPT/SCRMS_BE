@@ -31,9 +31,9 @@ namespace Coach.API.Features.Promotion.CreateCoachPromotion
                 var result = await sender.Send(command);
                 return Results.Created($"/promotions/{result.Id}", result);
             })
-            .RequireAuthorization("Admin")
+            .RequireAuthorization("Coach")
             .WithName("CreateCoachPromotion")
-            .Produces(StatusCodes.Status201Created);
+            .Produces(StatusCodes.Status201Created).WithTags("Promotion");
         }
     }
 }

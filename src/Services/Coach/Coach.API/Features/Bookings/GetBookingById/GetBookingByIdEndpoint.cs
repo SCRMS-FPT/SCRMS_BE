@@ -28,7 +28,7 @@ namespace Coach.API.Features.Bookings.GetBookingById
             .Produces<BookingDetailResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Get Booking Details")
-            .WithDescription("Retrieve details of a specific booking by ID.");
+            .WithDescription("Retrieve details of a specific booking by ID.").WithTags("Booking");
         }
     }
 }

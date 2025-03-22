@@ -30,7 +30,7 @@ namespace Coach.API.Features.Packages.PurchasePackage
             })
             .RequireAuthorization()
             .WithName("PurchasePackage")
-            .Produces<PurchasePackageResult>(StatusCodes.Status200OK);
+            .Produces<PurchasePackageResult>(StatusCodes.Status200OK).WithTags("Package");
         }
     }
 }

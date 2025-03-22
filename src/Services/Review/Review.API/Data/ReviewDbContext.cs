@@ -2,7 +2,7 @@
 
 namespace Reviews.API.Data
 {
-    public class ReviewDbContext : DbContext, IReviewDbContext
+    public class ReviewDbContext : DbContext
     {
         public ReviewDbContext(DbContextOptions<ReviewDbContext> options) : base(options)
         {
@@ -16,6 +16,11 @@ namespace Reviews.API.Data
         {
             modelBuilder.Entity<Review>()
                 .HasIndex(r => new { r.SubjectType, r.SubjectId });
+
+            modelBuilder.Entity<Review>()
+                .HasMany(r => r.Replies)
+                .WithOne()
+                .HasForeignKey("ReviewId");
         }
     }
 }
