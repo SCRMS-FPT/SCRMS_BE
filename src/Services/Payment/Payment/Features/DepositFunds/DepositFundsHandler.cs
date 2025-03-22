@@ -3,41 +3,32 @@ using Payment.API.Data.Repositories;
 using BuildingBlocks.Messaging.Events;
 using BuildingBlocks.Messaging.Outbox;
 using Payment.API.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Payment.API.Features.DepositFunds
 {
     public record DepositFundsCommand(
         Guid UserId,
         decimal Amount,
-        Guid? TransactionReference,
-        string PaymentType,
-        string Description,
-        string PackageType = null,
-        Guid? CoachId = null,
-        Guid? BookingId = null,
-        Guid? PackageId = null) : IRequest<Guid>;
+        string Description) : IRequest<Guid>;
 
     public class DepositFundsHandler : IRequestHandler<DepositFundsCommand, Guid>
     {
         private readonly IUserWalletRepository _userWalletRepository;
         private readonly IWalletTransactionRepository _walletTransactionRepository;
-        private readonly IPublishEndpoint _publishEndpoint;
         private readonly PaymentDbContext _context;
         private readonly IOutboxService _outboxService;
-        private readonly IUnitOfWork _unitOfWork;
 
         public DepositFundsHandler(
             IUserWalletRepository userWalletRepository,
             IWalletTransactionRepository walletTransactionRepository,
             PaymentDbContext context,
-            IOutboxService outboxService,
-            IUnitOfWork unitOfWork)
+            IOutboxService outboxService)
         {
             _userWalletRepository = userWalletRepository;
             _walletTransactionRepository = walletTransactionRepository;
             _context = context;
             _outboxService = outboxService;
-            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(DepositFundsCommand request, CancellationToken cancellationToken)
@@ -48,84 +39,66 @@ namespace Payment.API.Features.DepositFunds
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Get or create wallet
                 var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
+                bool isNewWallet = false;
+
                 if (wallet == null)
                 {
-                    wallet = new UserWallet { UserId = request.UserId, Balance = 0, UpdatedAt = DateTime.UtcNow };
-                    await _userWalletRepository.AddUserWalletAsync(wallet, cancellationToken);
+                    isNewWallet = true;
+                    wallet = new UserWallet
+                    {
+                        UserId = request.UserId,
+                        Balance = 0,
+                        UpdatedAt = DateTime.UtcNow
+                    };
                 }
 
+                // Create transaction record
                 var transactionRecord = new WalletTransaction
                 {
                     Id = Guid.NewGuid(),
                     UserId = request.UserId,
                     TransactionType = "deposit",
-                    ReferenceId = request.TransactionReference,
+                    ReferenceId = null,
                     Amount = request.Amount,
-                    Description = $"Deposit via payment gateway, Ref: {request.TransactionReference}",
+                    Description = request.Description ?? "Deposit funds",
                     CreatedAt = DateTime.UtcNow
                 };
 
+                // Update wallet balance
                 wallet.Balance += request.Amount;
                 wallet.UpdatedAt = DateTime.UtcNow;
 
-                await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
-                await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
-                await _context.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-
-                // Sau khi xử lý thành công, xác định loại thanh toán
-                if (request.PaymentType == "ServicePackage" || request.PaymentType.StartsWith("Identity"))
+                // Save changes
+                if (isNewWallet)
                 {
-                    // Tạo event nâng cấp tài khoản
-                    var servicePackageEvent = new ServicePackagePaymentEvent(
-                        transactionRecord.Id,
-                        request.UserId,
-                        transactionRecord.ReferenceId,
-                        request.Amount,
-                        DateTime.UtcNow,
-                        request.Description ?? "Package payment",
-                        request.PackageType,
-                        DateTime.UtcNow.AddMonths(1) // thời hạn gói
-                    );
-
-                    // Lưu vào outbox
-                    await _outboxService.SaveMessageAsync(servicePackageEvent);
-                }
-                else if (request.PaymentType == "CoachBooking" || request.PaymentType.StartsWith("Coach"))
-                {
-                    // Tạo event thanh toán cho coach
-                    var coachEvent = new CoachPaymentEvent(
-                        transactionRecord.Id,
-                        request.UserId,
-                        request.CoachId.Value,
-                        request.Amount,
-                        DateTime.UtcNow,
-                        request.Description,
-                        request.BookingId,
-                        request.PackageId
-                    );
-
-                    // Lưu vào outbox
-                    await _outboxService.SaveMessageAsync(coachEvent);
+                    await _userWalletRepository.AddUserWalletAsync(wallet, cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken);
                 }
                 else
                 {
-                    // Legacy event cho khả năng tương thích ngược
-                    var paymentEvent = new PaymentSucceededEvent(
-                        transactionRecord.Id,
-                        request.UserId,
-                        request.TransactionReference,
-                        request.Amount,
-                        DateTime.UtcNow,
-                        request.Description,
-                        request.PaymentType
-                    );
-
-                    // Lưu vào outbox
-                    await _outboxService.SaveMessageAsync(paymentEvent);
+                    await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
                 }
 
+                await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                // Create simple deposit event
+                var paymentEvent = new PaymentSucceededEvent(
+                    transactionRecord.Id,
+                    request.UserId,
+                    null,
+                    request.Amount,
+                    DateTime.UtcNow,
+                    request.Description ?? "Wallet deposit",
+                    "Deposit"
+                );
+
+                // Save to outbox
+                await _outboxService.SaveMessageAsync(paymentEvent);
+
+                await transaction.CommitAsync(cancellationToken);
                 return transactionRecord.Id;
             }
             catch
@@ -133,6 +106,21 @@ namespace Payment.API.Features.DepositFunds
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
+        }
+    }
+
+    public class GetUserWalletQueryHandler : IRequestHandler<GetUserWalletQuery, UserWallet>
+    {
+        private readonly IUserWalletRepository _userWalletRepository;
+
+        public GetUserWalletQueryHandler(IUserWalletRepository userWalletRepository)
+        {
+            _userWalletRepository = userWalletRepository;
+        }
+
+        public async Task<UserWallet> Handle(GetUserWalletQuery request, CancellationToken cancellationToken)
+        {
+            return await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
         }
     }
 }

@@ -16,7 +16,12 @@ namespace Payment.API.Data.Repositories
         {
             await _context.WalletTransactions.AddAsync(transaction, cancellationToken);
         }
-
+        public async Task<long> GetTransactionCountByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            return await _context.WalletTransactions
+                .Where(t => t.UserId == userId)
+                .LongCountAsync(cancellationToken);
+        }
         public async Task<List<WalletTransaction>> GetTransactionsByUserIdAsync(Guid userId, int page, int limit, CancellationToken cancellationToken)
         {
             return await _context.WalletTransactions
