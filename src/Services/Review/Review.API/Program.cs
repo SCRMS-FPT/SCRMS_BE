@@ -30,9 +30,9 @@ builder.Services
     .AddMessageBroker(builder.Configuration, Assembly.GetExecutingAssembly())
     .AddApplicationServices(builder.Configuration);
 
-builder.Services.AddDbContext<IReviewDbContext, ReviewDbContext>(options =>
+builder.Services.AddDbContext<ReviewDbContext, ReviewDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
-builder.Services.AddScoped<IReviewDbContext, ReviewDbContext>();
+
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();

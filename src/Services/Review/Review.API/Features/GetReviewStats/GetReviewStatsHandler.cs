@@ -9,9 +9,9 @@ namespace Reviews.API.Features.GetReviewStats
 {
     public class GetReviewStatsHandler : IRequestHandler<GetReviewStatsQuery, GetReviewStatsResponse>
     {
-        private readonly IReviewDbContext _dbContext;
+        private readonly ReviewDbContext _dbContext;
 
-        public GetReviewStatsHandler(IReviewDbContext dbContext)
+        public GetReviewStatsHandler(ReviewDbContext dbContext)
         {
             _dbContext = dbContext;
         }
