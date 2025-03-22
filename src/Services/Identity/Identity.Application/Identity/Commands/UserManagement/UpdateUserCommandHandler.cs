@@ -1,5 +1,6 @@
 ﻿using Identity.Application.Data;
 using Identity.Application.Data.Repositories;
+using Identity.Application.Identity.Commands.Register;
 using Identity.Domain.Exceptions;
 using Mapster;
 
@@ -28,6 +29,8 @@ namespace Identity.Application.Identity.Commands.UserManagement
             user.LastName = request.LastName;
             user.BirthDate = request.BirthDate;
             user.Gender = Enum.Parse<Gender>(request.Gender);
+            user.SelfIntroduction = request.SelfIntroduction;
+            user.PhoneNumber = request.Phone;
 
             await _userRepository.UpdateUserAsync(user);
 
