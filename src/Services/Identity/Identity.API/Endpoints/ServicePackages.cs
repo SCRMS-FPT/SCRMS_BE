@@ -24,9 +24,17 @@ namespace Identity.API.Endpoints
             var servicePackagesGroup = app.MapGroup("/api/service-packages")
                                           .WithTags("Service Packages");
 
-            servicePackagesGroup.MapGet("/", async (ISender sender) =>
+            servicePackagesGroup.MapGet("/", async (ISender sender, [AsParameters] GetServicePackagesRequest request) =>
             {
-                var result = await sender.Send(new GetServicePackagesQuery());
+                var query = new GetServicePackagesQuery(
+                    request.PageIndex,
+                    request.PageSize,
+                    request.Search,
+                    request.AssociatedRole,
+                    request.Status,
+                    request.SortByPrice
+                );
+                var result = await sender.Send(query);
                 return Results.Ok(result);
             });
 
@@ -77,15 +85,24 @@ namespace Identity.API.Endpoints
                                      .WithTags("Service Packages - Promotions")
                                      .RequireAuthorization("Admin");
 
-            promotionsGroup.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext) =>
+            promotionsGroup.MapGet("/{packageId:guid}/promotions", async (Guid packageId, ISender sender, HttpContext httpContext, [AsParameters] GetPromotionsRequest request) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
 
-                var command = new GetPromotionsQuery(packageId);
-                var result = await sender.Send(command);
+                // Gán packageId từ route vào request
+                request = request with { PackageId = packageId };
+
+                var query = new GetPromotionsQuery(
+                    request.PackageId,
+                    request.PageIndex,
+                    request.PageSize,
+                    request.Search,
+                    request.DiscountType
+                );
+                var result = await sender.Send(query);
                 return Results.Ok(result);
             });
 
@@ -152,6 +169,21 @@ namespace Identity.API.Endpoints
         }
     }
 
+    public record GetServicePackagesRequest(
+        int PageIndex = 0,
+        int PageSize = 10,
+        string? Search = null,
+        string? AssociatedRole = null,
+        string? Status = null,
+        string? SortByPrice = null
+    );
+    public record GetPromotionsRequest(
+        Guid PackageId,
+        int PageIndex = 0,
+        int PageSize = 10,
+        string? Search = null,
+        string? DiscountType = null
+    );
     public record SubscribeRequest(Guid PackageId);
     public record RenewRequest(Guid SubscriptionId, int AdditionalDurationDays);
     public record CancelRequest(Guid SubscriptionId);

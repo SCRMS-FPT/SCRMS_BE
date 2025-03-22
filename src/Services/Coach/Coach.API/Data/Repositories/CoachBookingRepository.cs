@@ -26,6 +26,11 @@ namespace Coach.API.Data.Repositories
             return await _context.CoachBookings.FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
         }
 
+        public IQueryable<CoachBooking> GetCoachBookingsByCoachIdQueryable(Guid coachId)
+        {
+            return _context.CoachBookings.Where(b => b.CoachId == coachId).AsQueryable();
+        }
+
         public async Task UpdateCoachBookingAsync(CoachBooking booking, CancellationToken cancellationToken)
         {
             // Check if the booking exists in the database

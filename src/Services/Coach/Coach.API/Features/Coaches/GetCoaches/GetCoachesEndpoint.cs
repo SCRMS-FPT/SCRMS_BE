@@ -13,7 +13,7 @@ namespace Coach.API.Features.Coaches.GetCoaches
             })
                 .RequireAuthorization("Admin")
             .WithName("GetCoaches")
-            .Produces<IEnumerable<CoachResponse>>();
+            .Produces<IEnumerable<CoachResponse>>().WithTags("Coach");
         }
     }
 }

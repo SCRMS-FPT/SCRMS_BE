@@ -13,6 +13,10 @@ namespace Identity.Application.Data.Repositories
 
         Task<User> GetUserByEmailAsync(string email);
 
+        Task<UserDto> GetFullUserByIdAsync(Guid userId);
+
+        Task<UserDto> GetFullUserByEmailAsync(string email);
+
         Task<IdentityResult> CreateUserAsync(User user, string password);
 
         Task<IdentityResult> UpdateUserAsync(User user);
