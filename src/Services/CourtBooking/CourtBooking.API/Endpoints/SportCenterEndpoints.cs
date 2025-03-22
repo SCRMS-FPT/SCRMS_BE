@@ -13,7 +13,7 @@ namespace CourtBooking.API.Endpoints
 {
     public record CreateSportCenterRequest(CreateSportCenterCommand SportCenter);
     public record CreateSportCenterResponse(Guid Id);
-    public record GetSportCentersResponse(PaginatedResult<SportCenterDTO> SportCenters);
+    public record GetSportCentersResponse(PaginatedResult<SportCenterListDTO> SportCenters);
     public record UpdateSportCenterRequest(
         Guid SportCenterId,
         string Name,
@@ -47,13 +47,13 @@ namespace CourtBooking.API.Endpoints
 
             // Get Sport Centers
             group.MapGet("/", async (
-                [FromQuery] int page, // 1-based
-                [FromQuery] int limit,
+                [FromQuery] int? page, // 1-based
+                [FromQuery] int? limit,
                 [FromQuery] string? city,
                 [FromQuery] string? name,
                 ISender sender) =>
             {
-                var paginationRequest = new PaginationRequest(page - 1, limit); // Chuyển page 1-based sang 0-based
+                var paginationRequest = new PaginationRequest((page ?? 1) - 1, limit ?? 10);
                 var query = new GetSportCentersQuery(paginationRequest, city, name);
                 var result = await sender.Send(query);
                 var response = result.Adapt<GetSportCentersResponse>();
@@ -65,7 +65,7 @@ namespace CourtBooking.API.Endpoints
             .WithDescription("Get a paginated list of sport centers with optional filters");
 
             // Get All Courts of Sport Center
-            group.MapGet("/{id:guid}/courts", [Authorize] async (Guid id, ISender sender) =>
+            group.MapGet("/{id:guid}/courts", async (Guid id, ISender sender) =>
             {
                 var result = await sender.Send(new GetAllCourtsOfSportCenterQuery(id));
                 var response = new GetAllCourtsOfSportCenterResponse(result.Courts);
@@ -100,7 +100,7 @@ namespace CourtBooking.API.Endpoints
                 return Results.Ok(result.SportCenter);
             })
             .WithName("GetSportCenterById")
-            .RequireAuthorization() // Yêu cầu JWT, cho phép mọi user đã đăng nhập
+            //.RequireAuthorization() // Yêu cầu JWT, cho phép mọi user đã đăng nhập
             .Produces<SportCenterListDTO>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get Sport Center By ID")
