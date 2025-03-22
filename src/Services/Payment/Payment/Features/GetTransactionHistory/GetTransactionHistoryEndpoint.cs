@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using BuildingBlocks.Pagination;
 
 namespace Payment.API.Features.GetTransactionHistory
 {

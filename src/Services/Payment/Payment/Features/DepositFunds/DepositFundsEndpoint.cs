@@ -13,15 +13,21 @@ namespace Payment.API.Features.DepositFunds
                 var command = new DepositFundsCommand(
                     userId,
                     request.Amount,
-                    request.TransactionReference,
-                    request.PaymentType,
-                    request.Description ?? "Deposit funds",
-                    request.PackageType,
-                    request.CoachId,
-                    request.BookingId,
-                    request.PackageId);
+                    request.Description ?? "Deposit funds");
+
                 var transactionId = await sender.Send(command);
-                return Results.Created($"/api/payments/wallet/transactions/{transactionId}", new { Id = transactionId });
+
+                // Get updated balance
+                var wallet = await sender.Send(new GetUserWalletQuery(userId));
+
+                return Results.Created($"/api/payments/wallet/transactions/{transactionId}",
+                    new
+                    {
+                        Id = transactionId,
+                        Balance = wallet?.Balance ?? 0,
+                        Amount = request.Amount,
+                        Timestamp = DateTime.UtcNow
+                    });
             })
             .RequireAuthorization()
             .WithName("DepositFunds");
@@ -33,22 +39,9 @@ namespace Payment.API.Features.DepositFunds
         [Range(0.01, double.MaxValue)]
         decimal Amount,
 
-        [StringLength(100, MinimumLength = 5)]
-        Guid? TransactionReference,
-
-        [StringLength(100, MinimumLength = 5)]
-        string PaymentType,
-
-        [StringLength(100, MinimumLength = 5)]
-        string Description,
-
-        [StringLength(100, MinimumLength = 5)]
-        string PackageType,
-
-        Guid? CoachId,
-
-        Guid? BookingId,
-
-        Guid? PackageId
+        string Description
     );
+
+    // Define GetUserWalletQuery if not already defined elsewhere
+    public record GetUserWalletQuery(Guid UserId) : IRequest<UserWallet>;
 }
