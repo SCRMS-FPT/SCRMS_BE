@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddCors();
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy =>
@@ -73,9 +75,8 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Progr
 
 builder.Services.AddHttpClient("NotificationAPI", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7069"); 
+    client.BaseAddress = new Uri("https://localhost:7069");
 });
-
 
 var app = builder.Build();
 app.UseCors(builder =>

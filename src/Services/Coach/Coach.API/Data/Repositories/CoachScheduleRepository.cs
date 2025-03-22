@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Coach.API.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Data.Repositories
 {
@@ -13,7 +14,29 @@ namespace Coach.API.Data.Repositories
 
         public async Task AddCoachScheduleAsync(CoachSchedule schedule, CancellationToken cancellationToken)
         {
+            var errorMessages = new List<string>();
+
+            // Validate CoachId
+            if (schedule.CoachId == Guid.Empty)
+            {
+                errorMessages.Add("CoachId is required");
+            }
+
+            // Validate DayOfWeek
+            if (schedule.DayOfWeek < 1 || schedule.DayOfWeek > 7) // Assuming DayOfWeek is between 1 and 7
+            {
+                errorMessages.Add("DayOfWeek is required and must be between 1 and 7");
+            }
+
+            // If there are any validation errors, throw an exception
+            if (errorMessages.Any())
+            {
+                throw new ArgumentException(string.Join(", ", errorMessages));
+            }
+
+            // Proceed with the original logic if validation is successful
             await _context.CoachSchedules.AddAsync(schedule, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<CoachSchedule?> GetCoachScheduleByIdAsync(Guid scheduleId, CancellationToken cancellationToken)

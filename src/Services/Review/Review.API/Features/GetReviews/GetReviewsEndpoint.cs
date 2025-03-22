@@ -4,11 +4,16 @@
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/reviews", async (ISender sender, string subjectType, Guid subjectId, int page = 1, int limit = 10) =>
+            app.MapGet("/api/reviews", async (
+                ISender sender,
+                string subjectType,
+                Guid subjectId,
+                int page = 1,
+                int limit = 10) =>
             {
                 var query = new GetReviewsQuery(subjectType, subjectId, page, limit);
-                var reviews = await sender.Send(query);
-                return Results.Ok(reviews);
+                var result = await sender.Send(query);
+                return Results.Ok(result);
             })
             .WithName("GetReviews");
         }

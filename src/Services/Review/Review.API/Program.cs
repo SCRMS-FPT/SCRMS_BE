@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Reviews.API.Data.Repositories;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
@@ -22,15 +23,17 @@ builder.Services.AddMediatR(config =>
     config.AddOpenBehavior(typeof(LoggingBehavior<,>));
 });
 builder.Services.AddValidatorsFromAssembly(assembly);
-
+builder.Services.AddCors();
 builder.Services.AddCarter();
 
 builder.Services
     .AddMessageBroker(builder.Configuration, Assembly.GetExecutingAssembly())
     .AddApplicationServices(builder.Configuration);
 
-builder.Services.AddDbContext<ReviewDbContext>(options =>
+builder.Services.AddDbContext<IReviewDbContext, ReviewDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
+builder.Services.AddScoped<IReviewDbContext, ReviewDbContext>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddAuthentication(options =>
@@ -93,7 +96,12 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapCarter();
-
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();

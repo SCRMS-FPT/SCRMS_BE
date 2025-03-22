@@ -29,6 +29,11 @@ namespace Identity.Infrastructure.Data.Repositories
             return await _dbContext.ServicePackages.ToListAsync();
         }
 
+        public IQueryable<ServicePackage> GetServicePackagesQueryable()
+        {
+            return _dbContext.ServicePackages.AsQueryable();
+        }
+
         public async Task AddServicePackageAsync(ServicePackage package)
         {
             _dbContext.ServicePackages.Add(package);

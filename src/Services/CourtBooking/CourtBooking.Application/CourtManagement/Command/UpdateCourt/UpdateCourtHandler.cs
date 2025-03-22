@@ -1,53 +1,44 @@
-﻿using CourtBooking.Application.DTOs;
+﻿using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Application.DTOs;
 using CourtBooking.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CourtBooking.Domain.Models;
+using CourtBooking.Domain.ValueObjects;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace CourtBooking.Application.CourtManagement.Command.UpdateCourt;
 
-public class UpdateCourtHandler(IApplicationDbContext _context)
-    : IRequestHandler<UpdateCourtCommand, UpdateCourtResult>
+public class UpdateCourtHandler : IRequestHandler<UpdateCourtCommand, UpdateCourtResult>
 {
+    private readonly ICourtRepository _courtRepository;
+
+    public UpdateCourtHandler(ICourtRepository courtRepository)
+    {
+        _courtRepository = courtRepository;
+    }
+
     public async Task<UpdateCourtResult> Handle(UpdateCourtCommand request, CancellationToken cancellationToken)
     {
-        var updatingCourtId = CourtId.Of(request.Court.Id);
-        var court = await _context.Courts.FindAsync([updatingCourtId], cancellationToken);
+        var courtId = CourtId.Of(request.Id);
+        var court = await _courtRepository.GetCourtByIdAsync(courtId, cancellationToken);
         if (court == null)
         {
             throw new KeyNotFoundException("Court not found");
         }
-        var facilitiesJson = JsonSerializer.Serialize(court.Facilities, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
-        var location = Location.Of(request.Court.Address.Address, request.Court.Address.Commune, request.Court.Address.District, request.Court.Address.City);
+
         court.UpdateCourt(
-            new CourtName(request.Court.CourtName),
+            CourtName.Of(request.Court.CourtName),
             SportId.Of(request.Court.SportId),
-            location,
+            request.Court.SlotDuration,
             request.Court.Description,
-            facilitiesJson,
-            request.Court.PricePerHour,
-            CourtStatus.Open
+            JsonSerializer.Serialize(request.Court.Facilities),
+            (CourtStatus)request.Court.Status,
+            (CourtType)request.Court.CourtType,
+            request.Court.MinDepositPercentage
         );
 
-        //court.ClearOperatingHours();
-        //foreach (var hour in request.Court.OperatingHours)
-        //{
-        //    court.AddOperatingHour(CourtOperatingHour.Create(
-        //        CourtOperatingHourId.Of(Guid.NewGuid()),
-        //        court.Id,
-        //        hour.OpenTime, 
-        //        hour.CloseTime
-        //    ));
-        //}
-
-        await _context.SaveChangesAsync(cancellationToken);
-
+        await _courtRepository.UpdateCourtAsync(court, cancellationToken);
         return new UpdateCourtResult(true);
     }
 }

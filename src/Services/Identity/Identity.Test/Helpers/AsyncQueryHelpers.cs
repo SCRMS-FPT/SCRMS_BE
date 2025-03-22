@@ -1,7 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Reviews.Test.Helper
+namespace Identity.Test.Helpers
 {
     public class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
     {
@@ -32,57 +36,69 @@ namespace Reviews.Test.Helper
             return _inner.Execute<TResult>(expression);
         }
 
-        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
         {
-            // TResult is Task<T>, where T is the entity type (e.g., Task<Review>)
-            var resultType = typeof(TResult).GetGenericArguments()[0]; // Extract T from Task<T>
-            var result = _inner.Execute(expression); // Execute synchronously
+            Type resultType = typeof(TResult).GetGenericArguments()[0];
+            object result = _inner.Execute(expression);
 
-            // If result is null, return a completed Task with null
             if (result == null)
             {
-                return (TResult)Task.FromResult(default(object));
+                var defaultResult = Task.FromResult((object)null);
+                return (TResult)(object)defaultResult;
             }
 
-            // Wrap the result in a Task<T>
             var task = Task.FromResult(result);
-            return (TResult)(object)task; // Cast to TResult (e.g., Task<Review>)
+            return (TResult)(object)task;
         }
     }
 
     public class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
     {
-        public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
-        public TestAsyncEnumerable(Expression expression) : base(expression) { }
+        private readonly IQueryProvider _provider;
+
+        public TestAsyncEnumerable(IEnumerable<T> enumerable)
+            : base(enumerable)
+        {
+            _provider = new TestAsyncQueryProvider<T>(this.AsQueryable().Provider);
+        }
+
+        public TestAsyncEnumerable(Expression expression)
+            : base(expression)
+        {
+            _provider = new TestAsyncQueryProvider<T>(this.AsQueryable().Provider);
+        }
 
         public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
         }
 
-        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+        IQueryProvider IQueryable.Provider
+        {
+            get { return _provider; }
+        }
     }
 
     public class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
     {
-        private readonly IEnumerator<T> _inner;
+        private readonly IEnumerator<T> _enumerator;
 
-        public TestAsyncEnumerator(IEnumerator<T> inner)
+        public TestAsyncEnumerator(IEnumerator<T> enumerator)
         {
-            _inner = inner;
+            _enumerator = enumerator;
         }
 
-        public T Current => _inner.Current;
+        public T Current => _enumerator.Current;
 
         public ValueTask<bool> MoveNextAsync()
         {
-            return new ValueTask<bool>(_inner.MoveNext());
+            return new ValueTask<bool>(_enumerator.MoveNext());
         }
 
         public ValueTask DisposeAsync()
         {
-            _inner.Dispose();
-            return default;
+            _enumerator.Dispose();
+            return ValueTask.CompletedTask;
         }
     }
 }

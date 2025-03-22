@@ -14,10 +14,20 @@
 
         Task<List<ReviewReply>> GetReviewRepliesAsync(Guid reviewId, int page, int limit, CancellationToken cancellationToken);
 
+        Task<int> CountReviewsBySubjectAsync(string subjectType, Guid subjectId, CancellationToken cancellationToken);
+
         Task<List<Review>> GetReviewsByCoachIdAsync(Guid coachId, int page, int limit, CancellationToken cancellationToken);
+
+        Task<int> CountReviewRepliesAsync(Guid reviewId, CancellationToken cancellationToken);
+
+        Task<int> CountReviewsByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
 
         Task AddReviewFlagAsync(ReviewFlag flag, CancellationToken cancellationToken);
 
         Task AddReviewReplyAsync(ReviewReply reply, CancellationToken cancellationToken);
+
+        Task<int> CountReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
+
+        Task<int> CountFlaggedReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
     }
 }

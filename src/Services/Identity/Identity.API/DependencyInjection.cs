@@ -15,6 +15,7 @@ namespace Identity.API
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IServicePackageRepository, ServicePackageRepository>();
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<IStatsRepository, StatsRepository>();
 
             services.AddCarter();
             services.AddExceptionHandler<CustomExceptionHandler>();

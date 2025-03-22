@@ -1,38 +1,26 @@
 ﻿using Chat.API.Data;
+using Chat.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chat.API.Features.GetChatMessages
 {
-    public record GetChatMessagesQuery(Guid ChatSessionId, int Page, int Limit) : IRequest<List<ChatMessageResponse>>;
+    public record GetChatMessagesQuery(Guid ChatSessionId, int Page, int Limit) : IRequest<List<ChatMessage>>;
 
-    public record ChatMessageResponse(Guid Id, Guid SenderId, string MessageText, DateTime SentAt, DateTime? ReadAt);
-
-    public class GetChatMessagesHandler : IRequestHandler<GetChatMessagesQuery, List<ChatMessageResponse>>
+    public class GetChatMessagesHandler : IRequestHandler<GetChatMessagesQuery, List<ChatMessage>>
     {
-        private readonly ChatDbContext _context;
+        private readonly IChatMessageRepository _chatMessageRepository;
 
-        public GetChatMessagesHandler(ChatDbContext context)
+        public GetChatMessagesHandler(IChatMessageRepository chatMessageRepository)
         {
-            _context = context;
+            _chatMessageRepository = chatMessageRepository;
         }
 
-        public async Task<List<ChatMessageResponse>> Handle(GetChatMessagesQuery request, CancellationToken cancellationToken)
+        public async Task<List<ChatMessage>> Handle(GetChatMessagesQuery request, CancellationToken cancellationToken)
         {
-            var messages = await _context.ChatMessages
-                .Where(cm => cm.ChatSessionId == request.ChatSessionId)
-                .OrderBy(cm => cm.SentAt)
-                .Skip((request.Page - 1) * request.Limit)
-                .Take(request.Limit)
-                .Select(cm => new ChatMessageResponse(
-                    cm.Id,
-                    cm.SenderId,
-                    cm.MessageText,
-                    cm.SentAt,
-                    cm.ReadAt
-                ))
-                .ToListAsync(cancellationToken);
+            if (request.Page <= 0)
+                throw new Exception("Page must be greater than 0");
 
-            return messages;
+            return await _chatMessageRepository.GetChatMessageByChatSessionIdAsync(request.ChatSessionId, request.Page, request.Limit);
         }
     }
 }

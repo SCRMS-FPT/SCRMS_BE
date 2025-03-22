@@ -1,92 +1,85 @@
 ﻿using CourtBooking.Domain.ValueObjects;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Domain.Models
 {
-    public class Court : Aggregate<CourtId>
+    public class Court : Entity<CourtId>
     {
         public CourtName CourtName { get; private set; }
+        public SportCenterId SportCenterId { get; private set; }
         public SportId SportId { get; private set; }
-        public Sport Sport { get; }
-        public Location Location { get; private set; }
-        public string Description { get; private set; }
-        public string Facilities { get; private set; }
-        public decimal PricePerHour { get; private set; }
+        public TimeSpan SlotDuration { get; private set; }
+        public string? Description { get; private set; }
+        public string? Facilities { get; private set; }
         public CourtStatus Status { get; private set; }
-        public OwnerId OwnerId { get; private set; }
-        public DateTime CreatedAt { get; private set; }
+        public CourtType CourtType { get; private set; }
+        public decimal MinDepositPercentage { get; private set; } = 100;
 
-        private List<CourtOperatingHour> _operatingHours = new();
-        public IReadOnlyCollection<CourtOperatingHour> OperatingHours => _operatingHours.AsReadOnly();
+        public int CancellationWindowHours { get; private set; } = 24;
+        public decimal RefundPercentage { get; private set; } = 0;
 
-        private Court() { } // For EF Core
+        private List<CourtSchedule> _courtSchedules = new();
+        public IReadOnlyCollection<CourtSchedule> CourtSchedules => _courtSchedules.AsReadOnly();
 
-        public Court(CourtId courtId, CourtName courtName, SportId sportId, Location location, string description,
-                     string facilities, decimal pricePerHour, OwnerId ownerId)
+        public static Court Create(CourtId courtId, CourtName courtName,
+            SportCenterId sportCenterId, SportId sportId,
+            TimeSpan slotDuration, string? description, string? facilities,
+            CourtType courtType, decimal minDepositPercentage = 100,
+            int CancellationWindowHours = 24, decimal RefundPercentage = 0)
         {
-            Id = courtId;
-            CourtName = CourtName;
-            SportId = sportId;
-            Location = location;
-            Description = description;
-            Facilities = facilities;
-            PricePerHour = pricePerHour;
-            Status = CourtStatus.Open;
-            OwnerId = ownerId;
-            CreatedAt = DateTime.UtcNow;
-        }
+            if (minDepositPercentage < 0 || minDepositPercentage > 100)
+                throw new DomainException("Tỷ lệ đặt cọc phải nằm trong khoảng từ 0 đến 100");
 
-        public static Court Create(CourtId courtId, CourtName courtName, SportId sportId, Location location, string description,
-                                   string facilities, decimal pricePerHour, OwnerId ownerId)
-        {
-            var court = new Court
+            return new Court
             {
                 Id = courtId,
                 CourtName = courtName,
+                SportCenterId = sportCenterId,
                 SportId = sportId,
-                Location = location,
+                SlotDuration = slotDuration,
                 Description = description,
                 Facilities = facilities,
-                PricePerHour = pricePerHour,
                 Status = CourtStatus.Open,
-                OwnerId = ownerId,
+                CourtType = courtType,
+                MinDepositPercentage = minDepositPercentage,
                 CreatedAt = DateTime.UtcNow
             };
-            return court;
         }
 
-        public void UpdateStatus(CourtStatus newStatus)
+        public void UpdateCourt(CourtName courtName, SportId sportId, TimeSpan slotDuration, string? description,
+            string? facilities, CourtStatus courtStatus, CourtType courtType, decimal minDepositPercentage = 100, int cancellationWindowHours = 24, decimal refundPercentage = 0)
         {
-            Status = newStatus;
-        }
+            if (minDepositPercentage < 0 || minDepositPercentage > 100)
+                throw new DomainException("Tỷ lệ đặt cọc phải nằm trong khoảng từ 0 đến 100");
 
-        public void AddOperatingHour(CourtOperatingHour hour)
-        {
-            _operatingHours.Add(hour);
-        }
-        public bool IsAvailable(DateTime dateTime)
-        {
-            int dayOfWeek = (int)dateTime.DayOfWeek;
-            var operatingHour = _operatingHours.FirstOrDefault(oh => oh.DayOfWeek == dayOfWeek);
-            if (operatingHour == null)
-                return false;
-
-            TimeSpan timeOfDay = dateTime.TimeOfDay;
-            return timeOfDay >= operatingHour.OpenTime &&
-                   timeOfDay <= operatingHour.CloseTime &&
-                   Status == CourtStatus.Open;
-        }
-
-        public void UpdateCourt(CourtName courtName, SportId sportId, Location location, string description,
-                            string facilities, decimal pricePerHour, CourtStatus status)
-        {
             CourtName = courtName;
             SportId = sportId;
-            Location = location;
+            SlotDuration = slotDuration;
             Description = description;
             Facilities = facilities;
-            PricePerHour = pricePerHour;
-            Status = CourtStatus.Open;
+            Status = courtStatus;
+            CourtType = courtType;
+            MinDepositPercentage = minDepositPercentage;
+            SetLastModified(DateTime.UtcNow);
+            CancellationWindowHours = cancellationWindowHours;
+            RefundPercentage = refundPercentage;
+        }
+
+        public void UpdateCancellationPolicy(int cancellationWindowHours, decimal refundPercentage)
+        {
+            CancellationWindowHours = cancellationWindowHours;
+            RefundPercentage = refundPercentage;
+        }
+
+        public void AddCourtSlot(CourtId courtId, int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+        {
+            var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);
+            var courtSlot = CourtSchedule.Create(CourtScheduleId.Of(Guid.NewGuid()), courtId,
+                dayOfWeekValue, startTime, endTime, priceSlot);
+            courtSlot.CreatedAt = DateTime.UtcNow;
+            _courtSchedules.Add(courtSlot);
         }
     }
-
 }

@@ -1,4 +1,5 @@
 ﻿using Coach.API.Data;
+using Coach.API.Consumers;
 using Coach.API.Data.Repositories;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,6 +9,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using MassTransit;
+using BuildingBlocks.Messaging.MassTransit;
+using BuildingBlocks.Messaging.Events;
+using BuildingBlocks.Messaging.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,8 +32,12 @@ builder.Services.AddScoped<ICoachPackageRepository, CoachPackageRepository>();
 builder.Services.AddScoped<ICoachSportRepository, CoachSportRepository>();
 builder.Services.AddScoped<ICoachPromotionRepository, CoachPromotionRepository>();
 builder.Services.AddScoped<ICoachPackagePurchaseRepository, CoachPackagePurchaseRepository>();
-builder.Services.AddCarter();
 
+// Chỉ đăng ký MessageBroker đơn giản
+builder.Services.AddMessageBroker(builder.Configuration, assembly);
+
+builder.Services.AddCarter();
+builder.Services.AddCors();
 builder.Services.AddDbContext<CoachDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
@@ -91,11 +100,20 @@ builder.Services.AddSwaggerGen(c =>
                         }
                     });
 });
+
+// Thêm Outbox pattern
+//builder.Services.AddOutbox<CoachDbContext>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapCarter();
-
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,5 +1,6 @@
 using BuildingBlocks.Behaviors;
 using BuildingBlocks.Exceptions.Handler;
+using BuildingBlocks.Messaging.MassTransit;
 using Carter;
 using FluentValidation;
 using HealthChecks.UI.Client;
@@ -25,13 +26,14 @@ builder.Services.AddMediatR(config =>
     config.AddOpenBehavior(typeof(LoggingBehavior<,>));
 });
 builder.Services.AddValidatorsFromAssembly(assembly);
-
+builder.Services.AddCors();
 builder.Services.AddCarter();
-
 builder.Services.AddDbContext<NotificationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddMessageBroker(builder.Configuration, assembly);
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -93,7 +95,12 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapCarter();
-
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();

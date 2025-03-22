@@ -13,7 +13,13 @@ namespace Coach.API.Data.Repositories
 
         public async Task AddCoachAsync(Models.Coach coach, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(coach.Bio))
+            {
+                throw new DbUpdateException("Bio is required.");
+            }
+
             await _context.Coaches.AddAsync(coach, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<Models.Coach?> GetCoachByIdAsync(Guid coachId, CancellationToken cancellationToken)

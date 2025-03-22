@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Identity.Application.Data;
 using Microsoft.EntityFrameworkCore;
+using Identity.Application.Dtos;
 
 namespace Identity.Infrastructure.Data.Repositories
 {
@@ -28,6 +29,58 @@ namespace Identity.Infrastructure.Data.Repositories
         public async Task<User> GetUserByEmailAsync(string email)
         {
             return await _userManager.FindByEmailAsync(email);
+        }
+
+        public async Task<UserDto> GetFullUserByIdAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+            {
+                return null; // hoặc ném ngoại lệ tùy theo yêu cầu
+            }
+
+            // Lấy các vai trò của người dùng
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Trả về UserDto kèm theo các vai trò
+            return new UserDto(
+                Id: user.Id,
+                FirstName: user.FirstName,
+                LastName: user.LastName,
+                Email: user.Email,
+                Phone: user.PhoneNumber,
+                BirthDate: user.BirthDate,
+                Gender: user.Gender.ToString(), // Convert enum to string
+                SelfIntroduction: user.SelfIntroduction,
+                CreatedAt: user.CreatedAt,
+                Roles: roles.ToList() // Chuyển danh sách vai trò thành List<string>
+            );
+        }
+
+        public async Task<UserDto> GetFullUserByEmailAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return null; // hoặc ném ngoại lệ tùy theo yêu cầu
+            }
+
+            // Lấy các vai trò của người dùng
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Trả về UserDto kèm theo các vai trò
+            return new UserDto(
+                Id: user.Id,
+                FirstName: user.FirstName,
+                LastName: user.LastName,
+                Email: user.Email,
+                Phone: user.PhoneNumber,
+                BirthDate: user.BirthDate,
+                Gender: user.Gender.ToString(), // Convert enum to string
+                SelfIntroduction: user.SelfIntroduction,
+                CreatedAt: user.CreatedAt,
+                Roles: roles.ToList() // Chuyển danh sách vai trò thành List<string>
+            );
         }
 
         public async Task<IdentityResult> CreateUserAsync(User user, string password)
