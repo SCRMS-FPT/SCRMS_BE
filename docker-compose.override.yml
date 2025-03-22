@@ -106,10 +106,10 @@ services:
       - "5672:5672"
       - "15672:15672"
   gatewayapi:
-    image: ocelot-gateway
+    image: yarp-gateway
     build:
       context: .
-      dockerfile: src/Gateway/ApiGateway/Dockerfile
+      dockerfile: src/Gateway/YarpApiGateway/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
@@ -121,16 +121,21 @@ services:
       - courtbooking.api
       - identity.api
       - coach.api 
+      - chat.api
+      - matching.api
+      - notification.api
+      - payment.api
+      - review.api
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
 
-  consul:
-    image: consul:1.15.4
-    container_name: consul
-    ports:
-      - "8500:8500"
-    command: "consul agent -dev -client=0.0.0.0"
+  # consul:
+  #   image: consul:1.15.4
+  #   container_name: consul
+  #   ports:
+  #     - "8500:8500"
+  #   command: "consul agent -dev -client=0.0.0.0"
 
   chat.api:
     image: chat-api
