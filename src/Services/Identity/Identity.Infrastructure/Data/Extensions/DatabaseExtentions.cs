@@ -19,6 +19,7 @@ namespace Identity.Infrastructure.Data.Extensions
 
             await SeedRolesAsync(roleManager);
             await SeedAdminUserAsync(userManager);
+            await SeedAdditionalUsersAsync(userManager);
         }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
@@ -53,6 +54,36 @@ namespace Identity.Infrastructure.Data.Extensions
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
+        }
+
+        private static async Task SeedAdditionalUsersAsync(UserManager<User> userManager)
+        {
+            await SeedUserAsync(userManager, "coach@gmail.com", "Coach", "Coach123!");
+            await SeedUserAsync(userManager, "courtowner@gmail.com", "CourtOwner", "CourtOwner123!");
+            await SeedUserAsync(userManager, "user@gmail.com", null, "User123!");
+        }
+
+        private static async Task SeedUserAsync(UserManager<User> userManager, string email, string role, string password)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new User
+                {
+                    UserName = email,
+                    Email = email,
+                    FirstName = "FirstName",
+                    LastName = "LastName",
+                    BirthDate = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Male,
+                    IsDeleted = false
+                };
+                var result = await userManager.CreateAsync(user, password);
+                if (result.Succeeded && role != null)
+                {
+                    await userManager.AddToRoleAsync(user, role);
                 }
             }
         }

@@ -3,7 +3,7 @@
     public interface IWalletTransactionRepository
     {
         Task AddWalletTransactionAsync(WalletTransaction transaction, CancellationToken cancellationToken);
-
+        Task<long> GetTransactionCountByUserIdAsync(Guid userId, CancellationToken cancellationToken);
         Task<List<WalletTransaction>> GetTransactionsByUserIdAsync(Guid userId, int page, int limit, CancellationToken cancellationToken);
     }
 }
