@@ -56,7 +56,9 @@ namespace Identity.API.Endpoints
            string FirstName,
            string LastName,
            DateTime BirthDate,
-           string Gender
+           string Gender,
+           string Phone,
+           string SelfIntroduction
        );
     }
 }

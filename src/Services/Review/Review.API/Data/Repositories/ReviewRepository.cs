@@ -2,7 +2,7 @@
 
 namespace Reviews.API.Data.Repositories
 {
-    public class ReviewRepository
+    public class ReviewRepository : IReviewRepository
     {
         private readonly ReviewDbContext _context;
 
