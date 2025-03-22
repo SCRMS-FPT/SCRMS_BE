@@ -2,27 +2,14 @@
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.AspNetCore.Mvc;
 
-using Microsoft.AspNetCore.Mvc;
-
-using Coach.API.Data.Models;
-
 namespace Coach.API.Features.Coaches.CreateCoach
 {
-    public record CreateCoachRequest(Guid SportId, string Bio, decimal RatePerHour);
-
-    public record CreateCoachResponse(
-    Guid Id,
-    DateTime CreatedAt,
-    List<Guid> SportIds);
-
     public class CreateCoachEndpoint : ICarterModule
-
     {
         public void AddRoutes(IEndpointRouteBuilder app)
-
         {
             app.MapPost("/coaches", async (
-           [FromBody] CreateCoachRequest request,
+            [FromForm] CreateCoachRequest request,
             [FromServices] ISender sender,
             HttpContext httpContext) =>
             {
@@ -34,6 +21,11 @@ namespace Coach.API.Features.Coaches.CreateCoach
 
                 var command = new CreateCoachCommand(
                     UserId: userId,
+                    FullName: request.FullName,
+                    Email: request.Email,
+                    Phone: request.Phone,
+                    AvatarFile: request.Avatar,
+                    ImageFiles: request.Images ?? new List<IFormFile>(),
                     Bio: request.Bio,
                     RatePerHour: request.RatePerHour,
                     SportIds: new List<Guid> { request.SportId }
@@ -42,6 +34,7 @@ namespace Coach.API.Features.Coaches.CreateCoach
                 var result = await sender.Send(command);
                 return Results.Created($"/coaches/{result.Id}", result);
             })
+            .DisableAntiforgery()
             .RequireAuthorization("Coach")
             .WithName("CreateCoach")
             .Produces<CreateCoachResponse>(StatusCodes.Status201Created)
@@ -51,4 +44,24 @@ namespace Coach.API.Features.Coaches.CreateCoach
             .WithDescription("Create a new coach profile using authenticated user").WithTags("Coach");
         }
     }
+
+    public class CreateCoachRequest
+    {
+        public Guid SportId { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Bio { get; set; }
+        public decimal RatePerHour { get; set; }
+        public IFormFile? Avatar { get; set; }
+        public List<IFormFile>? Images { get; set; }
+    }
+
+    public record CreateCoachResponse(
+        Guid Id,
+        string FullName,
+        string AvatarUrl,
+        List<string> ImageUrls,
+        DateTime CreatedAt,
+        List<Guid> SportIds);
 }

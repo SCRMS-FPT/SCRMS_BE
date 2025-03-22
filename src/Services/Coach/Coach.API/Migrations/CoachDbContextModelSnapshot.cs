@@ -22,11 +22,16 @@ namespace Coach.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Coach.API.Models.Coach", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.Coach", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Avatar")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Bio")
                         .IsRequired()
@@ -36,6 +41,25 @@ namespace Coach.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("ImageUrls")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<decimal>("RatePerHour")
                         .HasColumnType("decimal(18,2)");
 
@@ -44,7 +68,7 @@ namespace Coach.API.Migrations
                     b.ToTable("Coaches");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachBooking", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachBooking", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -93,7 +117,7 @@ namespace Coach.API.Migrations
                     b.ToTable("CoachBookings");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPackage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -131,7 +155,7 @@ namespace Coach.API.Migrations
                     b.ToTable("CoachPackages");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPackagePurchase", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPackagePurchase", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -165,7 +189,7 @@ namespace Coach.API.Migrations
                     b.ToTable("CoachPackagePurchases");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPromotion", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPromotion", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -205,7 +229,7 @@ namespace Coach.API.Migrations
                     b.ToTable("CoachPromotions");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachSchedule", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachSchedule", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -236,7 +260,7 @@ namespace Coach.API.Migrations
                     b.ToTable("CoachSchedules");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachSport", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachSport", b =>
                 {
                     b.Property<Guid>("CoachId")
                         .HasColumnType("uuid");
@@ -252,15 +276,15 @@ namespace Coach.API.Migrations
                     b.ToTable("CoachSports");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachBooking", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachBooking", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                    b.HasOne("Coach.API.Data.Models.Coach", "Coach")
                         .WithMany("Bookings")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Coach.API.Models.CoachPackage", "Package")
+                    b.HasOne("Coach.API.Data.Models.CoachPackage", "Package")
                         .WithMany("Bookings")
                         .HasForeignKey("PackageId");
 
@@ -269,9 +293,9 @@ namespace Coach.API.Migrations
                     b.Navigation("Package");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPackage", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                    b.HasOne("Coach.API.Data.Models.Coach", "Coach")
                         .WithMany("Packages")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -280,9 +304,9 @@ namespace Coach.API.Migrations
                     b.Navigation("Coach");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPackagePurchase", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPackagePurchase", b =>
                 {
-                    b.HasOne("Coach.API.Models.CoachPackage", "CoachPackage")
+                    b.HasOne("Coach.API.Data.Models.CoachPackage", "CoachPackage")
                         .WithMany("Purchases")
                         .HasForeignKey("CoachPackageId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -291,9 +315,9 @@ namespace Coach.API.Migrations
                     b.Navigation("CoachPackage");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPromotion", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPromotion", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                    b.HasOne("Coach.API.Data.Models.Coach", "Coach")
                         .WithMany("Promotions")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -302,9 +326,9 @@ namespace Coach.API.Migrations
                     b.Navigation("Coach");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachSchedule", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachSchedule", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                    b.HasOne("Coach.API.Data.Models.Coach", "Coach")
                         .WithMany("Schedules")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -313,9 +337,9 @@ namespace Coach.API.Migrations
                     b.Navigation("Coach");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachSport", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachSport", b =>
                 {
-                    b.HasOne("Coach.API.Models.Coach", "Coach")
+                    b.HasOne("Coach.API.Data.Models.Coach", "Coach")
                         .WithMany("CoachSports")
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -324,7 +348,7 @@ namespace Coach.API.Migrations
                     b.Navigation("Coach");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.Coach", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.Coach", b =>
                 {
                     b.Navigation("Bookings");
 
@@ -337,7 +361,7 @@ namespace Coach.API.Migrations
                     b.Navigation("Schedules");
                 });
 
-            modelBuilder.Entity("Coach.API.Models.CoachPackage", b =>
+            modelBuilder.Entity("Coach.API.Data.Models.CoachPackage", b =>
                 {
                     b.Navigation("Bookings");
 

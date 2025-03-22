@@ -10,6 +10,9 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="B2Net" Version="0.7.5" />
+		<PackageReference Include="Backblaze.Agent" Version="1.1.0" />
+		<PackageReference Include="Backblaze.Client" Version="1.1.0" />
 		<PackageReference Include="MassTransit" Version="8.3.7" />
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.3.7" />
 		<PackageReference Include="MassTransit.AspNetCore" Version="7.3.1" />
