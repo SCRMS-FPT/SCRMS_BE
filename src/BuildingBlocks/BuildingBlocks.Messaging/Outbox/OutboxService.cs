@@ -83,13 +83,18 @@ namespace BuildingBlocks.Messaging.Outbox
                     var publishedMessage = JsonSerializer.Deserialize(message.Content, messageType);
                     if (publishedMessage == null)
                     {
-                        throw new InvalidOperationException("Could not deserialize message");
+                        throw new InvalidOperationException($"Could not deserialize message {message.Id}");
                     }
 
+                    // Publish the message
                     await _publishEndpoint.Publish(publishedMessage, messageType, cancellationToken);
 
+                    // Mark as processed
                     message.ProcessedAt = DateTime.UtcNow;
                     await dbContext.SaveChangesAsync(cancellationToken);
+
+                    _logger.LogInformation("Published message {MessageId} of type {MessageType}",
+                        message.Id, message.Type);
                 }
                 catch (Exception ex)
                 {

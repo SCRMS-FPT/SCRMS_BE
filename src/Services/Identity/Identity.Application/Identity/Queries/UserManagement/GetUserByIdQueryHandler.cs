@@ -23,7 +23,9 @@ namespace Identity.Application.Identity.Queries.UserManagement
                 return null;
             }
 
-            return user.Adapt<UserDto>();
+            var roles = await _userRepository.GetRolesAsync(user);
+            var userDto = user.Adapt<UserDto>() with { Roles = roles.ToList() };
+            return userDto;
         }
     }
 }
