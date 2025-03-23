@@ -26,8 +26,9 @@ namespace Identity.Application.Identity.Queries.UserManagement
                 return null;
             }
 
-            // Adapt to UserDto (full user details, including Roles and CreatedAt)
-            return user.Adapt<UserDto>();
+            var roles = await _userRepository.GetRolesAsync(user);
+            var userDto = user.Adapt<UserDto>() with { Roles = roles.ToList() };
+            return userDto;
         }
 
         // Handler for GetUserProfileByIdQuery, returning UserProfileDto (without Roles and CreatedAt)
