@@ -36,11 +36,12 @@ namespace Identity.Application.Identity.Commands.Login
             }
 
             var token = await GenerateJwtToken(user);
-            var usedto = await _userRepository.GetFullUserByEmailAsync(command.Email);
+            var roles = await _userRepository.GetRolesAsync(user);
+            var userDto = user.Adapt<UserDto>() with { Roles = roles.ToList() };
             return new LoginUserResult(
                 Token: token,
                 UserId: user.Id,
-                User: usedto
+                User: userDto
             );
         }
 
