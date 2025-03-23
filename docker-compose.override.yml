@@ -1,4 +1,16 @@
 services:
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    container_name: cloudbeaver
+    restart: unless-stopped
+    ports:
+      - "8978:8978"
+    environment:
+      - CB_SERVER_NAME=CloudBeaver
+      - CB_ADMIN_NAME=admin
+      - CB_ADMIN_PASSWORD=Admin123
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
   courtbookingdb:
     image: postgres:latest
     container_name: courtbookingdb
@@ -7,7 +19,7 @@ services:
       - POSTGRES_PASSWORD=2405
       - POSTGRES_DB=CourtBookingDB
     ports:
-      - "5432:5432"
+      - "5399:5432"
     volumes:
       - postgres_courtbooking:/var/lib/postgresql/data
 
@@ -89,6 +101,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=2405
       - POSTGRES_DB=ReviewDB
+    restart: always
     ports:
       - "5439:5432"
     volumes:
@@ -305,3 +318,4 @@ volumes:
   postgres_notification:
   postgres_payment:
   postgres_review:
+  cloudbeaver_data:
