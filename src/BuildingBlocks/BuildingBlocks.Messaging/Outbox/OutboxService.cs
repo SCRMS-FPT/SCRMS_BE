@@ -63,49 +63,60 @@ namespace BuildingBlocks.Messaging.Outbox
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
 
+            // IMPORTANT: Remove AsNoTracking() to allow entity updates
             var messages = await dbContext.Set<OutboxMessage>()
                 .Where(m => m.ProcessedAt == null)
-                .OrderBy(m => m.CreatedAt) // Thêm ordering
+                .OrderBy(m => m.CreatedAt)
                 .Take(20)
-                .AsNoTracking() // Tránh tracking không cần thiết
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken);  // Removed AsNoTracking()
+
+            _logger.LogInformation("Found {MessageCount} unprocessed messages", messages.Count);
 
             foreach (var message in messages)
             {
                 try
                 {
+                    _logger.LogInformation("Processing message {MessageId} of type {MessageType}",
+                        message.Id, message.Type);
+
                     var messageType = Type.GetType(message.Type);
                     if (messageType == null)
                     {
-                        throw new InvalidOperationException($"Type {message.Type} not found");
+                        _logger.LogError("Type {MessageType} not found", message.Type);
+                        message.Error = $"Type {message.Type} not found";
+                        message.ProcessedAt = DateTime.UtcNow;  // Mark as processed with error
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                        continue;
                     }
 
                     var publishedMessage = JsonSerializer.Deserialize(message.Content, messageType);
                     if (publishedMessage == null)
                     {
-                        throw new InvalidOperationException($"Could not deserialize message {message.Id}");
+                        _logger.LogError("Failed to deserialize message {MessageId}", message.Id);
+                        message.Error = "Failed to deserialize message";
+                        message.ProcessedAt = DateTime.UtcNow;  // Mark as processed with error
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                        continue;
                     }
 
-                    // Publish the message
+                    _logger.LogInformation("Publishing message {MessageId} to message broker", message.Id);
                     await _publishEndpoint.Publish(publishedMessage, messageType, cancellationToken);
 
-                    // Mark as processed
+                    // CRITICAL FIX: Mark as processed after successful publishing
                     message.ProcessedAt = DateTime.UtcNow;
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    _logger.LogInformation("Published message {MessageId} of type {MessageType}",
-                        message.Id, message.Type);
+                    _logger.LogInformation("Message {MessageId} processed successfully", message.Id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error processing outbox message {MessageId}", message.Id);
-                    message.Error = ex.Message;
-                    message.ProcessedAt = DateTime.UtcNow;
+                    _logger.LogError(ex, "Error processing message {MessageId}", message.Id);
+                    message.Error = ex.ToString();
+                    message.ProcessedAt = DateTime.UtcNow;  // Mark as processed with error
                     await dbContext.SaveChangesAsync(cancellationToken);
                 }
             }
         }
-
         public Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default) where T : class
         {
             throw new NotImplementedException();

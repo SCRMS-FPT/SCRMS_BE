@@ -91,6 +91,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddOutbox<PaymentDbContext>();
+builder.Logging.AddConsole();
 
 var app = builder.Build();
 

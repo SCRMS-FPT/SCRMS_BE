@@ -77,6 +77,7 @@ builder.Services.AddHttpClient("NotificationAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7069");
 });
+builder.Logging.AddConsole();
 
 var app = builder.Build();
 app.UseCors(builder =>
