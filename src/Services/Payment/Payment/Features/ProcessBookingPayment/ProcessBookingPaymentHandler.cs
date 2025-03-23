@@ -13,8 +13,6 @@ namespace Payment.API.Features.ProcessBookingPayment
         string Description,
         string PaymentType,
         Guid? ReferenceId = null,
-        string PackageType = null,
-        DateTime? ValidUntil = null,
         Guid? CoachId = null,
         Guid? BookingId = null,
         Guid? PackageId = null) : IRequest<Guid>;
@@ -78,9 +76,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                         request.ReferenceId,
                         request.Amount,
                         DateTime.UtcNow,
-                        request.Description,
-                        request.PackageType,
-                        request.ValidUntil ?? DateTime.UtcNow.AddMonths(1) // Default package duration
+                        request.Description
                     );
 
                     await _outboxService.SaveMessageAsync(servicePackageEvent);

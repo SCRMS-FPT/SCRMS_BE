@@ -9,6 +9,7 @@ using Identity.Application.Consumers;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using BuildingBlocks.Messaging.Events;
 using BuildingBlocks.Messaging.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Identity.Application
 {
@@ -28,38 +29,51 @@ namespace Identity.Application
             services.AddScoped<IApplicationDbContext>(provider =>
                 (IApplicationDbContext)provider.GetRequiredService<IdentityDbContext>());
             services.AddMassTransit(x =>
-            {
-                x.AddConsumer<PaymentSucceededConsumer>(cfg =>
-                {
-                    // Thêm retry policy
-                    cfg.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
-                });
+           {
+               // Log when consumer is registered
+               var serviceProvider = services.BuildServiceProvider();
+               var logger = serviceProvider.GetRequiredService<ILogger<PaymentSucceededConsumer>>();
 
-                x.UsingRabbitMq((context, cfg) =>
-                {
-                    cfg.Host(configuration["MessageBroker:Host"], h =>
-                    {
-                        h.Username(configuration["MessageBroker:UserName"]);
-                        h.Password(configuration["MessageBroker:Password"]);
-                    });
+               // Register consumers
+               x.AddConsumer<PaymentSucceededConsumer>(cfg =>
+               {
+                   logger.LogInformation("Registering PaymentSucceededConsumer");
+                   cfg.UseMessageRetry(r => r.Interval(3, 1000));
+               });
 
-                    // Đăng ký endpoint chỉ nhận các event thanh toán liên quan đến Identity
-                    cfg.ReceiveEndpoint("identity-service-payments", e =>
-                    {
-                        // Cấu hình consumer
-                        e.ConfigureConsumer<PaymentSucceededConsumer>(context);
+               // Log the event types we're set up to consume
+               logger.LogInformation("Identity service set up to consume: PaymentSucceededEvent, ServicePackagePaymentEvent");
+               logger.LogInformation("ServicePackagePaymentEvent type: {Type}", typeof(ServicePackagePaymentEvent).AssemblyQualifiedName);
 
-                        // Filter message theo header hoặc message type
-                        e.UseFilter(new MessageTypeFilter(
-                            typeof(ServicePackagePaymentEvent),
-                            typeof(PaymentSucceededEvent) // Nhận cả event cũ để tương thích ngược
-                        ));
+               // Configure RabbitMQ
+               x.UsingRabbitMq((context, cfg) =>
+               {
+                   // Log connection information
+                   var host = configuration["MessageBroker:Host"];
+                   logger.LogInformation("Configuring RabbitMQ connection to host: {Host}", host);
 
-                        // Cấu hình cho PaymentSucceededEvent cũ - kiểm tra loại thanh toán
-                        e.UseFilter(new PaymentSucceededEventFilter("ServicePackage", "AccountUpgrade", "IdentityService"));
-                    });
-                });
-            });
+                   cfg.Host(host, h =>
+                   {
+                       h.Username(configuration["MessageBroker:UserName"]);
+                       h.Password(configuration["MessageBroker:Password"]);
+                   });
+
+                   // CRITICAL: Set up a specific receive endpoint for Identity service
+                   cfg.ReceiveEndpoint("identity-service-queue", e =>
+                   {
+                       logger.LogInformation("Configuring receive endpoint: identity-service-queue");
+
+                       // Configure the consumer
+                       e.ConfigureConsumer<PaymentSucceededConsumer>(context);
+                   });
+
+                   // This adds diagnostics to track message activity
+                   cfg.UseInMemoryOutbox();
+                   cfg.ConfigureEndpoints(context);
+
+                   logger.LogInformation("MassTransit configuration completed");
+               });
+           });
             services.AddFeatureManagement();
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
             return services;

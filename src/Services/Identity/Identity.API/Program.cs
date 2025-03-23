@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 using MassTransit;
+using BuildingBlocks.Messaging.MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +36,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddCors();
-
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy =>

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using BuildingBlocks.Messaging.Outbox;
 
 namespace Payment.API.Features.ProcessBookingPayment
 {
@@ -7,6 +8,11 @@ namespace Payment.API.Features.ProcessBookingPayment
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
+            app.MapGet("/api/debug/process-outbox", async (IOutboxService outboxService) =>
+            {
+                await outboxService.ProcessOutboxMessagesAsync(CancellationToken.None);
+                return Results.Ok("Outbox processing triggered");
+            });
             app.MapPost("/api/payments/wallet/booking", async (ProcessPaymentRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userId = Guid.Parse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
@@ -16,8 +22,6 @@ namespace Payment.API.Features.ProcessBookingPayment
                     request.Description,
                     request.PaymentType,
                     request.ReferenceId,
-                    request.PackageType,
-                    request.ValidUntil,
                     request.CoachId,
                     request.BookingId,
                     request.PackageId);
@@ -49,8 +53,6 @@ namespace Payment.API.Features.ProcessBookingPayment
         string PaymentType,
 
         Guid? ReferenceId = null,
-        string PackageType = null,
-        DateTime? ValidUntil = null,
         Guid? CoachId = null,
         Guid? BookingId = null,
         Guid? PackageId = null

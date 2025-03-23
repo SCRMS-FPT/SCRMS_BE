@@ -15,9 +15,7 @@
         Guid? ServicePackageId,
         decimal Amount,
         DateTime Timestamp,
-        string Description,
-        string PackageType,
-        DateTime ValidUntil) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
+        string Description) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
 
     // Event thanh toán cho Coach
     public record CoachPaymentEvent(
