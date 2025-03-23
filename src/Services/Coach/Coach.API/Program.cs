@@ -13,6 +13,7 @@ using MassTransit;
 using BuildingBlocks.Messaging.MassTransit;
 using BuildingBlocks.Messaging.Events;
 using BuildingBlocks.Messaging.Extensions;
+using Coach.API.Data.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -121,6 +122,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.InitialiseDatabaseAsync();
 }
 app.UseHealthChecks("/health",
     new HealthCheckOptions
