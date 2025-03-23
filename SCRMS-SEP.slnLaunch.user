@@ -8,6 +8,7 @@
       },
       {
         "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
+        "Path": "src\\Services\\Coach\\Coach.API\\Coach.API.csproj",
         "Action": "Start"
       }
     ]

@@ -41,7 +41,7 @@ namespace CourtBooking.API.Endpoints
             .WithDescription("Tạo một sân mới (yêu cầu quyền CourtOwner)");
 
             // Get Court Details
-            group.MapGet("/{id:guid}", [Authorize] async (Guid id, ISender sender) =>
+            group.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
             {
                 var result = await sender.Send(new GetCourtDetailsQuery(id));
                 var response = new GetCourtDetailsResponse(result.Court);
@@ -55,7 +55,7 @@ namespace CourtBooking.API.Endpoints
             .WithDescription("Lấy thông tin chi tiết của một sân cụ thể theo ID");
 
             // Get Courts
-            group.MapGet("/", [Authorize] async ([AsParameters] PaginationRequest request,
+            group.MapGet("/", async ([AsParameters] PaginationRequest request,
                 [FromQuery] Guid? sportCenterId, [FromQuery] Guid? sportId, [FromQuery] string? courtType, ISender sender) =>
             {
                 var query = new GetCourtsQuery(request, sportCenterId, sportId, courtType);

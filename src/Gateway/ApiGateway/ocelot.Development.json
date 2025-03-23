@@ -205,7 +205,19 @@
         }
       ],
       "UpstreamPathTemplate": "/api/sportcenters",
-      "UpstreamHttpMethod": [ "POST", "GET", "PUT" ],
+      "UpstreamHttpMethod": [ "GET" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/sportcenters",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "courtbooking.api",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/api/sportcenters",
+      "UpstreamHttpMethod": [ "POST", "PUT" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "IdentityAuthKey",
         "AllowedScopes": []
@@ -624,8 +636,8 @@
         "AuthenticationProviderKey": "IdentityAuthKey"
       }
     },
-    
-//review
+
+    //review
     {
       "DownstreamPathTemplate": "/api/reviews",
       "DownstreamScheme": "http",

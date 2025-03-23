@@ -8,11 +8,13 @@ namespace Reviews.API.Features.GetReviewsByCoachId
         {
             app.MapGet("/api/reviews/{coachId:guid}", async (
                 Guid coachId,
-                ISender sender, int page = 1, int limit = 10) =>
+                ISender sender,
+                int page = 1,
+                int limit = 10) =>
             {
                 var query = new GetReviewsByCoachIdQuery(coachId, page, limit);
-                var reviews = await sender.Send(query);
-                return Results.Ok(reviews);
+                var result = await sender.Send(query);
+                return Results.Ok(result);
             })
             .WithName("GetReviewsByCoachId");
         }

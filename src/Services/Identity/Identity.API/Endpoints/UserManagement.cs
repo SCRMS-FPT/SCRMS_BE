@@ -32,9 +32,15 @@ namespace Identity.API.Endpoints
                 return Results.Ok(result);
             });
 
-            userManagementGroup.MapGet("/{id}", async (Guid id, ISender sender) =>
+            userManagementGroup.MapGet("/{id}/full", async (Guid id, ISender sender) =>
             {
                 var result = await sender.Send(new GetUserByIdQuery(id));
+                return result is not null ? Results.Ok(result) : Results.NotFound();
+            }).RequireAuthorization("Admin");
+
+            userManagementGroup.MapGet("/{id}/profile", async (Guid id, ISender sender) =>
+            {
+                var result = await sender.Send(new GetUserProfileByIdQuery(id));
                 return result is not null ? Results.Ok(result) : Results.NotFound();
             });
 
@@ -50,7 +56,9 @@ namespace Identity.API.Endpoints
            string FirstName,
            string LastName,
            DateTime BirthDate,
-           string Gender
+           string Gender,
+           string Phone,
+           string SelfIntroduction
        );
     }
 }

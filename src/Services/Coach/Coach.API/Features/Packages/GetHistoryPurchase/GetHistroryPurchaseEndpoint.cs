@@ -34,7 +34,7 @@ namespace Coach.API.Features.Packages.GetHistoryPurchase
             })
             .RequireAuthorization()
             .WithName("GetHistoryPurchase")
-            .Produces<List<PurchaseRecord>>(StatusCodes.Status200OK);
+            .Produces<List<PurchaseRecord>>(StatusCodes.Status200OK).WithTags("Package");
         }
     }
 }

@@ -1,22 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BuildingBlocks.Pagination;
+using Microsoft.EntityFrameworkCore;
 using Reviews.API.Data.Repositories;
+using Reviews.API.Features.GetReviewReplies;
 
 namespace Reviews.API.Features.GetReviewsByCoachId
 {
-    public record GetReviewsByCoachIdQuery(Guid coachId, int Page, int Limit) : IRequest<List<ReviewResponse>>;
-
-    public record ReviewResponse(Guid Id, Guid ReviewerId, int Rating, string? Comment, DateTime CreatedAt);
+    public record GetReviewsByCoachIdQuery(Guid CoachId, int Page, int Limit) : IRequest<PaginatedResult<ReviewResponse>>;
+    public record ReviewResponse(Guid Id, Guid ReviewerId, int Rating, string? Comment, DateTime CreatedAt, List<ReviewReplyResponse> ListReplies);
 
     public class GetReviewsByCoachIdQueryValidator : AbstractValidator<GetReviewsByCoachIdQuery>
     {
         public GetReviewsByCoachIdQueryValidator()
         {
-            RuleFor(x => x.coachId)
+            RuleFor(x => x.CoachId)
                 .NotEmpty().WithMessage("CoachId is required.");
         }
     }
 
-    public class GetReviewsByCoachIdHandler : IRequestHandler<GetReviewsByCoachIdQuery, List<ReviewResponse>>
+    public class GetReviewsByCoachIdHandler : IRequestHandler<GetReviewsByCoachIdQuery, PaginatedResult<ReviewResponse>>
     {
         private readonly IReviewRepository _reviewRepository;
 
@@ -25,10 +26,31 @@ namespace Reviews.API.Features.GetReviewsByCoachId
             _reviewRepository = reviewRepository;
         }
 
-        public async Task<List<ReviewResponse>> Handle(GetReviewsByCoachIdQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<ReviewResponse>> Handle(GetReviewsByCoachIdQuery request, CancellationToken cancellationToken)
         {
-            var reviews = await _reviewRepository.GetReviewsByCoachIdAsync(request.coachId, request.Page, request.Limit, cancellationToken);
-            return reviews.Select(r => new ReviewResponse(r.Id, r.ReviewerId, r.Rating, r.Comment, r.CreatedAt)).ToList();
+            // Lấy tổng số review của coach
+            var totalCount = await _reviewRepository.CountReviewsByCoachIdAsync(request.CoachId, cancellationToken);
+
+            // Lấy danh sách review phân trang
+            var reviews = await _reviewRepository.GetReviewsByCoachIdAsync(request.CoachId, request.Page, request.Limit, cancellationToken);
+
+            // Chuyển đổi sang ReviewResponse
+            var reviewResponses = reviews.Select(r => new ReviewResponse(
+                r.Id,
+                r.ReviewerId,
+                r.Rating,
+                r.Comment,
+                r.CreatedAt,
+                r.Replies.Select(reply => new ReviewReplyResponse(reply.Id, reply.ResponderId, reply.ReplyText, reply.CreatedAt)).ToList()
+            )).ToList();
+
+            // Trả về kết quả phân trang
+            return new PaginatedResult<ReviewResponse>
+            (request.Page,
+                request.Limit,
+                 totalCount,
+                 reviewResponses
+            );
         }
     }
 }

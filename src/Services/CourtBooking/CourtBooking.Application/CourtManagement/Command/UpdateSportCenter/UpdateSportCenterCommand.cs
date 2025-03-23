@@ -18,7 +18,7 @@ public record UpdateSportCenterCommand(
     string Description
 ) : ICommand<UpdateSportCenterResult>;
 
-public record UpdateSportCenterResult(SportCenterListDTO SportCenter);
+public record UpdateSportCenterResult(SportCenterDetailDTO SportCenter);
 
 public class UpdateSportCenterCommandValidator : AbstractValidator<UpdateSportCenterCommand>
 {

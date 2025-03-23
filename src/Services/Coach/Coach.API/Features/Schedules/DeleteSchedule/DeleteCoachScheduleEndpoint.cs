@@ -30,7 +30,7 @@ namespace Coach.API.Features.Schedules.DeleteSchedule
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .WithSummary("Delete a Coach's Schedule")
-            .WithDescription("Deletes a schedule for a coach if no bookings are associated.");
+            .WithDescription("Deletes a schedule for a coach if no bookings are associated.").WithTags("Schedule");
         }
     }
 }

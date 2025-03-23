@@ -1,26 +1,36 @@
-﻿using Coach.API.Data;
-using Coach.API.Data.Repositories;
+﻿using Coach.API.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Coach.API.Features.Schedules.ViewAvailableSchedule
+namespace Coach.API.Features.Schedules.GetCoachSchedules
 {
-    public record ViewCoachAvailabilityQuery(Guid CoachUserId, int Page, int RecordPerPage) : IQuery<List<AvailableScheduleSlot>>;
-    public record AvailableScheduleSlot(int DayOfWeek, TimeOnly StartTime, TimeOnly EndTime);
+    // Query
+    public record GetCoachSchedulesQuery(
+        Guid CoachId,
+        DateOnly StartDate,
+        DateOnly EndDate,
+        int Page,
+        int RecordPerPage) : IQuery<CoachSchedulesResponse>;
 
-    public class ViewCoachAvailabilityCommandValidator : AbstractValidator<ViewCoachAvailabilityQuery>
-    {
-        public ViewCoachAvailabilityCommandValidator()
-        {
-            RuleFor(x => x.CoachUserId).NotEmpty();
-        }
-    }
+    // Response
+    public record CoachSchedulesResponse(
+        int Page,
+        int RecordPerPage,
+        int TotalRecords,
+        int TotalPages,
+        List<ScheduleSlotResponse> Schedules);
 
-    internal class ViewCoachAvailabilityQueryHandler : IQueryHandler<ViewCoachAvailabilityQuery, List<AvailableScheduleSlot>>
+    public record ScheduleSlotResponse(
+        string Date,
+        string StartTime,
+        string EndTime,
+        string Status);
+
+    internal class GetCoachSchedulesQueryHandler : IQueryHandler<GetCoachSchedulesQuery, CoachSchedulesResponse>
     {
         private readonly ICoachScheduleRepository _scheduleRepository;
         private readonly ICoachBookingRepository _bookingRepository;
 
-        public ViewCoachAvailabilityQueryHandler(
+        public GetCoachSchedulesQueryHandler(
             ICoachScheduleRepository scheduleRepository,
             ICoachBookingRepository bookingRepository)
         {
@@ -28,27 +38,57 @@ namespace Coach.API.Features.Schedules.ViewAvailableSchedule
             _bookingRepository = bookingRepository;
         }
 
-        public async Task<List<AvailableScheduleSlot>> Handle(ViewCoachAvailabilityQuery query, CancellationToken cancellationToken)
+        public async Task<CoachSchedulesResponse> Handle(GetCoachSchedulesQuery query, CancellationToken cancellationToken)
         {
-            var coachSchedules = await _scheduleRepository.GetCoachSchedulesByCoachIdAsync(query.CoachUserId, cancellationToken);
-            var bookedSchedules = await _bookingRepository.GetCoachBookingsByCoachIdAsync(query.CoachUserId, cancellationToken);
+            // Lấy lịch làm việc hàng tuần của coach
+            var weeklySchedules = await _scheduleRepository.GetCoachSchedulesByCoachIdAsync(query.CoachId, cancellationToken);
 
-            var availableSlots = new List<AvailableScheduleSlot>();
+            // Lấy các booking trong khoảng thời gian
+            var bookings = await _bookingRepository.GetCoachBookingsByCoachIdQueryable(query.CoachId)
+                .Where(b => b.BookingDate >= query.StartDate && b.BookingDate <= query.EndDate)
+                .ToListAsync(cancellationToken);
 
-            foreach (var schedule in coachSchedules)
+            var allSlots = new List<ScheduleSlotResponse>();
+
+            // Tạo danh sách slot cho từng ngày trong khoảng thời gian
+            for (var date = query.StartDate; date <= query.EndDate; date = date.AddDays(1))
             {
-                bool isBooked = bookedSchedules.Any(b =>
-                    (int)b.BookingDate.DayOfWeek + 1 == schedule.DayOfWeek &&
-                    b.StartTime < schedule.EndTime &&
-                    b.EndTime > schedule.StartTime);
+                // Ánh xạ DayOfWeek: .NET (0=Sunday, 6=Saturday) -> CoachSchedule (1=Sunday, 7=Saturday)
+                int dayOfWeek = (int)date.DayOfWeek + 1;
 
-                if (!isBooked)
+                var dailySchedules = weeklySchedules.Where(s => s.DayOfWeek == dayOfWeek).ToList();
+                foreach (var schedule in dailySchedules)
                 {
-                    availableSlots.Add(new AvailableScheduleSlot(schedule.DayOfWeek, schedule.StartTime, schedule.EndTime));
+                    string slotDate = date.ToString("yyyy-MM-dd");
+                    string startTime = schedule.StartTime.ToString("HH:mm:ss");
+                    string endTime = schedule.EndTime.ToString("HH:mm:ss");
+
+                    // Kiểm tra xem slot có bị booked không
+                    bool isBooked = bookings.Any(b =>
+                        b.BookingDate == date &&
+                        b.StartTime < schedule.EndTime &&
+                        b.EndTime > schedule.StartTime);
+
+                    string status = isBooked ? "booked" : "available";
+                    allSlots.Add(new ScheduleSlotResponse(slotDate, startTime, endTime, status));
                 }
             }
 
-            return availableSlots.Skip((query.Page - 1) * query.RecordPerPage).Take(query.RecordPerPage).ToList();
+            // Sắp xếp và phân trang
+            var orderedSlots = allSlots.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+            int totalRecords = orderedSlots.Count;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / query.RecordPerPage);
+            var paginatedSlots = orderedSlots
+                .Skip((query.Page - 1) * query.RecordPerPage)
+                .Take(query.RecordPerPage)
+                .ToList();
+
+            return new CoachSchedulesResponse(
+                query.Page,
+                query.RecordPerPage,
+                totalRecords,
+                totalPages,
+                paginatedSlots);
         }
     }
 }
