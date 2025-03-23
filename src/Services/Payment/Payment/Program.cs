@@ -91,6 +91,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Thêm Outbox pattern
 builder.Services.AddOutbox<PaymentDbContext>();
+builder.Logging.AddConsole();
 
 var app = builder.Build();
 
