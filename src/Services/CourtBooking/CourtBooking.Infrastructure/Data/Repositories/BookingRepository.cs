@@ -81,8 +81,37 @@ namespace CourtBooking.Infrastructure.Data.Repositories
 
         public async Task AddBookingAsync(Booking booking, CancellationToken cancellationToken)
         {
-            _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync(cancellationToken);
+            // Start a transaction to ensure all operations are atomic
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                // Add the booking entity to the context
+                _context.Bookings.Add(booking);
+
+                // Explicitly add all booking details to ensure they're tracked
+                // This is for clarity and to ensure they're properly saved
+                if (booking.BookingDetails.Any())
+                {
+                    foreach (var detail in booking.BookingDetails)
+                    {
+                        _context.Entry(detail).State = EntityState.Added;
+                    }
+                }
+
+                // Save all changes in a single operation
+                await _context.SaveChangesAsync(cancellationToken);
+
+                // Commit the transaction if everything succeeded
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Roll back the transaction if anything fails
+                await transaction.RollbackAsync(cancellationToken);
+
+                // Re-throw the exception to be handled by the caller
+                throw new ApplicationException($"Error saving booking: {ex.Message}", ex);
+            }
         }
 
         public IQueryable<Booking> GetBookingsQuery()

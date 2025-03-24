@@ -27,7 +27,7 @@ namespace CourtBooking.Domain.Models
         private Booking()
         { } // For ORM
 
-        public static Booking Create(BookingId id, UserId userId, DateTime bookingDate, string note = null)
+        public static Booking Create(BookingId id, UserId userId, DateTime bookingDate, string? note = null)
         {
             return new Booking
             {
@@ -48,9 +48,51 @@ namespace CourtBooking.Domain.Models
         {
             var bookingDetail = BookingDetail.Create(Id, courtId, startTime, endTime, schedules);
             _bookingDetails.Add(bookingDetail);
+            InitialDeposit += bookingDetail.TotalPrice * (minDepositPercentage / 100m);
             RecalculateTotals();
         }
+        public BookingDetail AddBookingDetailWithPromotion(CourtId courtId, TimeSpan startTime, TimeSpan endTime,
+            List<CourtSchedule> schedules, decimal minDepositPercentage, string discountType, decimal discountValue)
+        {
+            // Find appropriate schedule
+            var schedule = schedules.FirstOrDefault(s =>
+                s.StartTime <= startTime && s.EndTime >= endTime);
 
+            if (schedule == null)
+            {
+                throw new InvalidOperationException($"No valid schedule found for time slot {startTime} to {endTime}");
+            }
+
+            // Calculate original price
+            decimal originalPrice = schedule.PriceSlot;
+
+            // Calculate price after promotion
+            decimal finalPrice = originalPrice;
+            if (discountType.ToLower() == "percentage")
+            {
+                // Apply percentage discount
+                finalPrice = originalPrice * (1 - (discountValue / 100));
+            }
+            else if (discountType.ToLower() == "fixed")
+            {
+                // Apply fixed amount discount
+                finalPrice = Math.Max(0, originalPrice - discountValue);
+            }
+
+            // Create booking detail with discounted price
+            var bookingDetail = BookingDetail.Create(
+                BookingDetailId.Of(Guid.NewGuid()),
+                Id,
+                courtId,
+                startTime,
+                endTime,
+                finalPrice,
+                minDepositPercentage
+            );
+
+            _bookingDetails.Add(bookingDetail);
+            return bookingDetail;
+        }
         public void RemoveBookingDetail(BookingDetailId detailId)
         {
             var detail = _bookingDetails.FirstOrDefault(d => d.Id == detailId);
@@ -68,6 +110,11 @@ namespace CourtBooking.Domain.Models
             Status = BookingStatus.Confirmed;
         }
 
+        public void MarkAsPendingPayment()
+        {
+            Status = BookingStatus.PendingPayment;
+        }
+
         public void Cancel()
         {
             if (Status == BookingStatus.Cancelled)
@@ -77,24 +124,26 @@ namespace CourtBooking.Domain.Models
 
         public void MakeDeposit(decimal depositAmount)
         {
-            if (depositAmount <= 0)
-                throw new DomainException("Số tiền đặt cọc phải lớn hơn 0");
+            decimal minRequired = InitialDeposit - TotalPaid;
 
-            if (depositAmount > RemainingBalance)
-                throw new DomainException("Số tiền đặt cọc không thể lớn hơn số dư còn lại");
+            if (depositAmount < minRequired)
+                throw new DomainException($"Số tiền đặt cọc tối thiểu: {minRequired}");
 
             TotalPaid += depositAmount;
             RemainingBalance = TotalPrice - TotalPaid;
 
-            if (Status == BookingStatus.Pending)
+            if (Status == BookingStatus.Pending && TotalPaid >= InitialDeposit)
             {
-                InitialDeposit = depositAmount;
                 Status = BookingStatus.Confirmed;
+            }
+            if (TotalPaid > InitialDeposit)
+            {
+                Status = BookingStatus.Deposited;
             }
 
             if (RemainingBalance == 0)
             {
-                Status = BookingStatus.Deposited;
+                Status = BookingStatus.Completed;
             }
 
             AddDomainEvent(new BookingDepositMadeEvent(Id.Value, depositAmount, RemainingBalance));
@@ -105,15 +154,13 @@ namespace CourtBooking.Domain.Models
             if (paymentAmount <= 0)
                 throw new DomainException("Số tiền thanh toán phải lớn hơn 0");
 
-            if (paymentAmount > RemainingBalance)
-                throw new DomainException("Số tiền thanh toán không thể lớn hơn số dư còn lại");
 
             TotalPaid += paymentAmount;
             RemainingBalance = TotalPrice - TotalPaid;
 
             if (RemainingBalance == 0)
             {
-                Status = BookingStatus.Deposited;
+                Status = BookingStatus.Completed;
             }
 
             AddDomainEvent(new BookingPaymentMadeEvent(Id.Value, paymentAmount, RemainingBalance));
@@ -123,6 +170,7 @@ namespace CourtBooking.Domain.Models
         {
             TotalTime = _bookingDetails.Sum(d => (decimal)(d.EndTime - d.StartTime).TotalHours);
             TotalPrice = _bookingDetails.Sum(d => d.TotalPrice);
+
             RemainingBalance = TotalPrice - TotalPaid;
         }
 

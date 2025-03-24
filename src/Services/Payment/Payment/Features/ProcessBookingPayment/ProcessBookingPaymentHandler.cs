@@ -100,14 +100,14 @@ namespace Payment.API.Features.ProcessBookingPayment
                 else if (request.PaymentType == "CourtBooking" || request.PaymentType.StartsWith("Court"))
                 {
                     // Create a generic payment event for court booking
-                    var paymentEvent = new PaymentSucceededEvent(
+                    var paymentEvent = new BookCourtSucceededEvent(
                         transactionRecord.Id,
                         request.UserId,
                         request.ReferenceId,
                         request.Amount,
                         DateTime.UtcNow,
                         request.Description,
-                        "CourtBooking"
+                        "CourtBooking", "Confirmed"
                     );
 
                     await _outboxService.SaveMessageAsync(paymentEvent);

@@ -10,6 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using CourtBooking.Domain.Exceptions;
 using CourtBooking.Application.Data.Repositories;
+using BuildingBlocks.Messaging.Outbox;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
 {
@@ -18,15 +20,21 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
         private readonly IBookingRepository _bookingRepository;
         private readonly ICourtScheduleRepository _courtScheduleRepository;
         private readonly ICourtRepository _courtRepository;
+        private readonly ICourtPromotionRepository _courtPromotionRepository;
+        private readonly IOutboxService _outboxService;
 
         public CreateBookingHandler(
             IBookingRepository bookingRepository,
             ICourtScheduleRepository courtScheduleRepository,
-            ICourtRepository courtRepository)
+            ICourtRepository courtRepository,
+            ICourtPromotionRepository courtPromotionRepository,
+            IOutboxService outboxService)
         {
             _bookingRepository = bookingRepository;
             _courtScheduleRepository = courtScheduleRepository;
             _courtRepository = courtRepository;
+            _courtPromotionRepository = courtPromotionRepository; // Add this
+            _outboxService = outboxService;
         }
 
         public async Task<CreateBookingResult> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
@@ -40,7 +48,6 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                 bookingDate: request.Booking.BookingDate,
                 note: request.Booking.Note
             );
-
             // Thêm chi tiết booking
             foreach (var detail in request.Booking.BookingDetails)
             {
@@ -83,12 +90,47 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                     throw new ApplicationException($"Khung giờ từ {detail.StartTime} đến {detail.EndTime} đã được đặt");
                 }
 
-                // Truyền tham số MinDepositPercentage từ sân vào phương thức AddBookingDetail
-                booking.AddBookingDetail(courtId, detail.StartTime, detail.EndTime, schedules, court.MinDepositPercentage);
+                // Kiểm tra và lấy khuyến mãi đang áp dụng cho sân
+                var validPromotions = await _courtPromotionRepository.GetValidPromotionsForCourtAsync(
+                    courtId,
+                    request.Booking.BookingDate,
+                    request.Booking.BookingDate,
+                    cancellationToken);
+
+                // Lấy khuyến mãi có lợi nhất cho khách hàng
+                var bestPromotion = validPromotions
+                    .OrderByDescending(p => p.DiscountType.ToLower() == "percentage" ?
+                        p.DiscountValue :
+                        p.DiscountValue / 100) // Ưu tiên % giảm giá cao nhất
+                    .FirstOrDefault();
+
+                // Add booking detail với promotion (nếu có)
+                if (bestPromotion != null)
+                {
+                    // Tính giá sau khi áp dụng khuyến mãi
+                    // Lưu ý: Cần điều chỉnh phương thức AddBookingDetail để xử lý khuyến mãi
+                    booking.AddBookingDetailWithPromotion(
+                        courtId,
+                        detail.StartTime,
+                        detail.EndTime,
+                        schedules,
+                        court.MinDepositPercentage,
+                        bestPromotion.DiscountType,
+                        bestPromotion.DiscountValue);
+                }
+                else
+                {
+                    // Nếu không có khuyến mãi, sử dụng phương thức gốc
+                    booking.AddBookingDetail(courtId, detail.StartTime, detail.EndTime, schedules, court.MinDepositPercentage);
+                }
             }
 
             // Tính toán số tiền đặt cọc tối thiểu dựa trên tỷ lệ phần trăm
-            var minimumDepositAmount = CalculateMinimumDepositAmount(booking);
+            var minimumDepositAmount = booking.InitialDeposit;
+            if (minimumDepositAmount == 0)
+            {
+                minimumDepositAmount = await CalculateMinimumDepositAsync(booking, cancellationToken);
+            }
 
             // Xử lý đặt cọc nếu có
             if (request.Booking.DepositAmount > 0)
@@ -98,7 +140,6 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                 {
                     throw new ApplicationException($"Số tiền đặt cọc phải ít nhất là {minimumDepositAmount} (tỷ lệ đặt cọc tối thiểu của sân)");
                 }
-
                 // Thực hiện đặt cọc
                 booking.MakeDeposit(request.Booking.DepositAmount);
             }
@@ -108,30 +149,23 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                 throw new ApplicationException($"Sân này yêu cầu đặt cọc tối thiểu {minimumDepositAmount}");
             }
 
+            BookingStatus status = booking.Status;
+            booking.MarkAsPendingPayment();
             await _bookingRepository.AddBookingAsync(booking, cancellationToken);
-            return new CreateBookingResult(booking.Id.Value);
+            return new CreateBookingResult(booking.Id.Value, status.ToString());
         }
 
         // Phương thức tính toán số tiền đặt cọc tối thiểu dựa trên tỷ lệ phần trăm
-        private decimal CalculateMinimumDepositAmount(Booking booking)
+        private async Task<decimal> CalculateMinimumDepositAsync(Booking booking, CancellationToken cancellationToken)
         {
-            // Giả sử các chi tiết booking có mức % đặt cọc khác nhau (nếu đặt nhiều sân khác nhau)
-            var depositAmounts = booking.BookingDetails
-                .Select(detail => new
-                {
-                    Price = detail.TotalPrice,
-                    MinDepositPercentage = _courtRepository.GetCourtByIdAsync(detail.CourtId, CancellationToken.None).Result?.MinDepositPercentage ?? 100
-                })
-                .ToList();
-
-            decimal minimumDepositAmount = 0;
-
-            foreach (var item in depositAmounts)
+            decimal total = 0;
+            foreach (var detail in booking.BookingDetails)
             {
-                minimumDepositAmount += item.Price * item.MinDepositPercentage / 100;
+                var court = await _courtRepository.GetCourtByIdAsync(detail.CourtId, cancellationToken);
+                var percentage = court?.MinDepositPercentage ?? 100;
+                total += detail.TotalPrice * percentage / 100;
             }
-
-            return Math.Round(minimumDepositAmount, 2);
+            return Math.Round(total, 2);
         }
     }
 }

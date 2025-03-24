@@ -7,6 +7,7 @@ namespace CourtBooking.Domain.Enums
         Cancelled = 2,
         Completed = 3,
 
-        Deposited = 4
+        Deposited = 4,
+        PendingPayment = 5
     }
 }

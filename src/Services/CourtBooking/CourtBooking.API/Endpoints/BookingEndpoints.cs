@@ -12,7 +12,7 @@ using CourtBooking.Application.BookingManagement.Command.CancelBooking;
 namespace CourtBooking.API.Endpoints
 {
     public record CreateBookingRequest(BookingCreateDTO Booking);
-    public record CreateBookingResponse(Guid Id);
+    public record CreateBookingResponse(Guid Id, string Status);
     public record GetBookingDetailResponse(BookingDetailDto Booking);
     public record GetUserBookingsRequest(int Page = 1, int PageSize = 10, DateTime? StartDate = null, DateTime? EndDate = null, int? Status = null);
     public record GetUserBookingsResponse(PaginatedResult<BookingDto> Bookings);
@@ -36,7 +36,7 @@ namespace CourtBooking.API.Endpoints
 
                 var command = new CreateBookingCommand(request.Booking with { UserId = Guid.Parse(userId) });
                 var result = await sender.Send(command);
-                var response = new CreateBookingResponse(result.Id);
+                var response = new CreateBookingResponse(result.Id, result.Status);
                 return Results.Created($"/api/bookings/{response.Id}", response);
             })
             .WithName("CreateBooking")

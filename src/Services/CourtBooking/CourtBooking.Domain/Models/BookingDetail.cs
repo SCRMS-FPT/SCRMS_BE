@@ -33,30 +33,51 @@ namespace CourtBooking.Domain.Models
             };
         }
 
+        public static BookingDetail Create(BookingDetailId id, BookingId bookingId, CourtId courtId,
+           TimeSpan startTime, TimeSpan endTime, decimal totalPrice, decimal minDepositPercentage)
+        {
+            if (startTime >= endTime)
+                throw new DomainException("Start time must be lower than end time");
+
+            if (totalPrice < 0)
+                throw new DomainException("Total price cannot be negative");
+
+            return new BookingDetail
+            {
+                Id = id,
+                BookingId = bookingId,
+                CourtId = courtId,
+                StartTime = startTime,
+                EndTime = endTime,
+                TotalPrice = totalPrice
+            };
+        }
+
         private static decimal CalculatePrice(TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules)
         {
             decimal total = 0;
             TimeSpan current = startTime;
 
+            // Sort schedules by StartTime for easier processing
+            var sortedSchedules = schedules.OrderBy(s => s.StartTime).ToList();
+
             while (current < endTime)
             {
-                var schedule = schedules.FirstOrDefault(s => s.StartTime <= current && s.EndTime > current);
+                // Find the schedule that covers the current time
+                var schedule = sortedSchedules.FirstOrDefault(s => s.StartTime <= current && s.EndTime > current);
                 if (schedule == null)
-                    throw new DomainException("Not found this slot");
+                    throw new DomainException($"No schedule found for time slot starting at {current}");
 
-                TimeSpan nextBoundary = schedules
-                    .Where(s => s.StartTime > current)
-                    .OrderBy(s => s.StartTime)
-                    .Select(s => s.StartTime)
-                    .FirstOrDefault();
+                // Determine how long we stay in this schedule period
+                TimeSpan slotEndTime = schedule.EndTime < endTime ? schedule.EndTime : endTime;
+                TimeSpan duration = slotEndTime - current;
 
-                if (nextBoundary == default || nextBoundary > endTime)
-                    nextBoundary = endTime;
+                // Calculate price for this period using hourly rate
+                decimal priceForPeriod = schedule.PriceSlot * (decimal)duration.TotalHours;
+                total += priceForPeriod;
 
-                decimal pricePerHour = schedule.PriceSlot;
-                total += pricePerHour * (decimal)(nextBoundary - current).TotalHours;
-
-                current = nextBoundary;
+                // Move to the next time boundary
+                current = slotEndTime;
             }
 
             return total;

@@ -7,7 +7,11 @@
         "Action": "Start"
       },
       {
-        "Path": "src\\Services\\Coach\\Coach.API\\Coach.API.csproj",
+        "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
         "Action": "Start"
       }
     ]
