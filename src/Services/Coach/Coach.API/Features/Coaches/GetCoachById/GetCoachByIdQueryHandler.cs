@@ -46,7 +46,17 @@ namespace Coach.API.Features.Coaches.GetCoachById
                 p.Id, p.Name, p.Description, p.Price, p.SessionCount)).ToList();
 
             return new CoachResponse(
-                coach.UserId, sportIds, coach.Bio, coach.RatePerHour, coach.CreatedAt, packageResponses);
+                coach.UserId,
+                coach.FullName,
+                coach.Email,
+                coach.Phone,
+                coach.Avatar,
+                coach.GetImageUrlsList(),
+                sportIds,
+                coach.Bio,
+                coach.RatePerHour,
+                coach.CreatedAt,
+                packageResponses);
         }
     }
 }

@@ -38,6 +38,16 @@
         string Description,
         string PaymentType) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
 
+    public record BookCourtSucceededEvent(
+    Guid TransactionId,
+    Guid UserId,
+    Guid? ReferenceId,
+    decimal Amount,
+    DateTime Timestamp,
+    string Description,
+    string PaymentType,
+    string StatusBook) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
+
     public record RefundProcessedEvent(
         Guid TransactionId,
         Guid UserId,

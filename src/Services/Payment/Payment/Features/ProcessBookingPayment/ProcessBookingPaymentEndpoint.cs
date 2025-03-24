@@ -55,6 +55,7 @@ namespace Payment.API.Features.ProcessBookingPayment
         Guid? ReferenceId = null,
         Guid? CoachId = null,
         Guid? BookingId = null,
-        Guid? PackageId = null
+        Guid? PackageId = null,
+        string? status = "Confirmed"
     );
 }

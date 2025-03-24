@@ -1,4 +1,5 @@
 ﻿using Coach.API.Data;
+using Coach.API.Services;
 using Coach.API.Consumers;
 using Coach.API.Data.Repositories;
 using HealthChecks.UI.Client;
@@ -33,6 +34,10 @@ builder.Services.AddScoped<ICoachPackageRepository, CoachPackageRepository>();
 builder.Services.AddScoped<ICoachSportRepository, CoachSportRepository>();
 builder.Services.AddScoped<ICoachPromotionRepository, CoachPromotionRepository>();
 builder.Services.AddScoped<ICoachPackagePurchaseRepository, CoachPackagePurchaseRepository>();
+
+// Add this to service registration section
+builder.Services.Configure<BackblazeSettings>(builder.Configuration.GetSection("Backblaze"));
+builder.Services.AddScoped<IBackblazeService, BackblazeService>();
 
 // Chỉ đăng ký MessageBroker đơn giản
 builder.Services.AddMessageBroker(builder.Configuration, assembly);

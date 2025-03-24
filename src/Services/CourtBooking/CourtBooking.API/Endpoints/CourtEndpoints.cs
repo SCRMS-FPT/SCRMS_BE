@@ -100,7 +100,7 @@ namespace CourtBooking.API.Endpoints
             .WithDescription("Xóa một sân cụ thể theo ID (yêu cầu quyền sở hữu)");
 
             // Get Court Availability
-            group.MapGet("/{id:guid}/availability", [Authorize] async (
+            group.MapGet("/{id:guid}/availability", async (
                 Guid id,
                 [FromQuery] DateTime startDate,
                 [FromQuery] DateTime endDate,

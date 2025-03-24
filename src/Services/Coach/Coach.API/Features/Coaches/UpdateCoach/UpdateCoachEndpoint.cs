@@ -1,20 +1,16 @@
-﻿using Coach.API.Data.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Coach.API.Features.Coaches.UpdateCoach
 {
-    public record UpdateCoachRequest(string Bio, decimal RatePerHour, List<Guid> ListSport);
-
     public class UpdateCoachEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
-
         {
             app.MapPut("/api/coaches/{coachId:guid}", async (
-           [FromBody] UpdateCoachRequest request,
-           [FromQuery] Guid coachId,
+            [FromForm] UpdateCoachRequest request,
+            [FromRoute] Guid coachId,
             [FromServices] ISender sender,
             HttpContext httpContext) =>
             {
@@ -24,11 +20,23 @@ namespace Coach.API.Features.Coaches.UpdateCoach
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
 
-                var command = new UpdateCoachCommand(coachId, request.Bio, request.RatePerHour, request.ListSport);
+                var command = new UpdateCoachCommand(
+                    CoachId: coachId,
+                    FullName: request.FullName,
+                    Email: request.Email,
+                    Phone: request.Phone,
+                    NewAvatarFile: request.NewAvatar,
+                    NewImageFiles: request.NewImages ?? new List<IFormFile>(),
+                    ExistingImageUrls: request.ExistingImageUrls ?? new List<string>(),
+                    ImagesToDelete: request.ImagesToDelete ?? new List<string>(),
+                    Bio: request.Bio,
+                    RatePerHour: request.RatePerHour,
+                    SportIds: request.ListSport);
 
                 var result = await sender.Send(command);
-                return Results.Ok();
+                return Results.Ok(new { Message = "Coach profile updated successfully" });
             })
+            .DisableAntiforgery()
             .RequireAuthorization("Admin")
             .WithName("UpdateCoach")
             .Produces(StatusCodes.Status200OK)
@@ -37,5 +45,21 @@ namespace Coach.API.Features.Coaches.UpdateCoach
             .WithSummary("Update Coach")
             .WithDescription("Update coach profile").WithTags("Coach");
         }
+    }
+
+    public class UpdateCoachRequest
+    {
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Bio { get; set; }
+        public decimal RatePerHour { get; set; }
+        public List<Guid> ListSport { get; set; }
+
+        // Phần ảnh
+        public IFormFile? NewAvatar { get; set; }
+        public List<IFormFile>? NewImages { get; set; }
+        public List<string>? ExistingImageUrls { get; set; }
+        public List<string>? ImagesToDelete { get; set; }
     }
 }

@@ -9,6 +9,11 @@ namespace Coach.API.Features.Coaches.GetCoaches
 
     public record CoachResponse(
         Guid UserId,
+        string FullName,
+        string Email,
+        string Phone,
+        string Avatar,
+        List<string> ImageUrls,
         List<Guid> SportIds,
         string Bio,
         decimal RatePerHour,
@@ -54,7 +59,17 @@ namespace Coach.API.Features.Coaches.GetCoaches
                     p.Id, p.Name, p.Description, p.Price, p.SessionCount)).ToList();
 
                 responses.Add(new CoachResponse(
-                    coach.UserId, sportIds, coach.Bio, coach.RatePerHour, coach.CreatedAt, packageResponses));
+                    coach.UserId,
+                    coach.FullName,
+                    coach.Email,
+                    coach.Phone,
+                    coach.Avatar,
+                    coach.GetImageUrlsList(),
+                    sportIds,
+                    coach.Bio,
+                    coach.RatePerHour,
+                    coach.CreatedAt,
+                    packageResponses));
             }
 
             return responses;

@@ -16,6 +16,11 @@ namespace Coach.API.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FullName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Avatar = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ImageUrls = table.Column<string>(type: "text", nullable: false),
                     Bio = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     RatePerHour = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
