@@ -64,8 +64,33 @@ namespace Identity.Infrastructure.Data.Extensions
         private static async Task SeedAdditionalUsersAsync(UserManager<User> userManager)
         {
             await SeedUserAsync(userManager, "coach@gmail.com", "Coach", "Coach123!");
-            await SeedUserAsync(userManager, "courtowner@gmail.com", "CourtOwner", "CourtOwner123!");
+            await SeedCourtOwnerAsync(userManager, "courtowner@gmail.com", "CourtOwner", "CourtOwner123!");
             await SeedUserAsync(userManager, "user@gmail.com", null, "User123!");
+        }
+
+        private static async Task SeedCourtOwnerAsync(UserManager<User> userManager, string email, string role, string password)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            Guid CourtOwnerUserId = new Guid("8e445865-a24d-4543-a6c6-9443d048cdb9");
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = CourtOwnerUserId,
+                    UserName = email,
+                    Email = email,
+                    FirstName = "OwnerFirstName",
+                    LastName = "OwnerLastName",
+                    BirthDate = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Male,
+                    IsDeleted = false
+                };
+                var result = await userManager.CreateAsync(user, password);
+                if (result.Succeeded && role != null)
+                {
+                    await userManager.AddToRoleAsync(user, role);
+                }
+            }
         }
 
         private static async Task SeedUserAsync(UserManager<User> userManager, string email, string role, string password)

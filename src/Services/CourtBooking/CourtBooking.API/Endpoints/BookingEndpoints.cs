@@ -8,6 +8,7 @@ using CourtBooking.Application.BookingManagement.Queries.GetBookings;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Application.BookingManagement.Queries.GetBookingById;
 using CourtBooking.Application.BookingManagement.Command.CancelBooking;
+using CourtBooking.Application.BookingManagement.Queries.CalculateBookingPrice;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -18,6 +19,22 @@ namespace CourtBooking.API.Endpoints
     public record GetUserBookingsResponse(PaginatedResult<BookingDto> Bookings);
     public record UpdateBookingStatusRequest(int Status);
     public record UpdateBookingStatusResponse(bool IsSuccess);
+    public record CalculateBookingPriceRequest(BookingCreateDTO Booking);
+    public record CalculateBookingPriceResponse(
+        List<CourtPriceDetail> CourtPrices,
+        decimal TotalPrice,
+        decimal MinimumDeposit);
+
+    public record CourtPriceDetail(
+        Guid CourtId,
+        string CourtName,
+        TimeSpan StartTime,
+        TimeSpan EndTime,
+        decimal OriginalPrice,
+        decimal DiscountedPrice,
+        string? PromotionName,
+        string? DiscountType,
+        decimal? DiscountValue);
 
     public class BookingEndpoints : ICarterModule
     {
@@ -45,6 +62,24 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Tạo đặt sân mới")
             .WithDescription("Tạo một đơn đặt sân mới cho người dùng hiện tại");
+            group.MapPost("/calculate", [Authorize] async ([FromBody] CalculateBookingPriceRequest request, ISender sender, ClaimsPrincipal user) =>
+            {
+                var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Results.Unauthorized();
+                }
+
+                var query = new CalculateBookingPriceQuery(Guid.Parse(userId), request.Booking);
+                var result = await sender.Send(query);
+                return Results.Ok(result);
+            })
+            .WithName("CalculateBookingPrice")
+            .Produces<CalculateBookingPriceResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithSummary("Tính toán giá đặt sân")
+            .WithDescription("Tính toán giá đặt sân trước khi đặt, bao gồm giá gốc, giá sau giảm giá, và số tiền đặt cọc tối thiểu");
 
             group.MapGet("/", async (
                 HttpContext httpContext,

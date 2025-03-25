@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BuildingBlocks.Messaging.Events;
 using CourtBooking.Application.Consumers;
+using Microsoft.Extensions.Logging;
 
 namespace CourtBooking.Application;
 
@@ -26,6 +27,8 @@ public static class DependencyInjection
         {
             // Đăng ký consumer PaymentSucceededConsumer
             configure.AddConsumer<PaymentSucceededConsumer>();
+            configure.AddConsumer<BookCourtSucceededConsumer>();
+            configure.AddConsumer<PaymentFailedConsumer>();
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<PaymentSucceededConsumer>(cfg =>
@@ -33,7 +36,14 @@ public static class DependencyInjection
                     // Thêm retry policy
                     cfg.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
                 });
-
+                x.AddConsumer<BookCourtSucceededConsumer>(cfg =>
+                {
+                    cfg.UseMessageRetry(r => r.Interval(3, 1000));
+                });
+                x.AddConsumer<PaymentFailedConsumer>(cfg =>
+                {
+                    cfg.UseMessageRetry(r => r.Interval(3, 1000));
+                });
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(configuration["MessageBroker:Host"], h =>
@@ -43,20 +53,15 @@ public static class DependencyInjection
                     });
 
                     // Đăng ký endpoint chỉ nhận các event thanh toán liên quan đến Identity
-                    cfg.ReceiveEndpoint("court-booking-payment-succeeded", e =>
+                    cfg.ReceiveEndpoint("court-booking-payment", e =>
                     {
                         // Cấu hình consumer
+                        e.ConfigureConsumer<BookCourtSucceededConsumer>(context);
                         e.ConfigureConsumer<PaymentSucceededConsumer>(context);
-
-                        // Filter message theo header hoặc message type
-                        e.UseFilter(new MessageTypeFilter(
-                            typeof(ServicePackagePaymentEvent),
-                            typeof(PaymentSucceededEvent) // Nhận cả event cũ để tương thích ngược
-                        ));
-
-                        // Cấu hình cho PaymentSucceededEvent cũ - kiểm tra loại thanh toán
-                        e.UseFilter(new PaymentSucceededEventFilter("ServicePackage", "AccountUpgrade", "IdentityService"));
+                        e.ConfigureConsumer<PaymentFailedConsumer>(context);
                     });
+                    cfg.UseInMemoryOutbox();
+                    cfg.ConfigureEndpoints(context);
                 });
             });
         });

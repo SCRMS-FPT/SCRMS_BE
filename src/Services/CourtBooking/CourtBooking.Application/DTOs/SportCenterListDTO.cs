@@ -8,5 +8,15 @@ public record SportCenterListDTO(
     string Address,
     string Description,
     string Avatar,
-    List<string> ImageUrl
+    List<string> ImageUrl,
+    List<CourtListDTO> Courts
+);
+public record CourtListDTO(
+    Guid Id,
+    string Name,
+    Guid SportId,
+    string SportName,
+    bool IsActive,
+    string Description,
+    decimal? MinDepositPercentage
 );
