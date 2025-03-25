@@ -15,7 +15,8 @@ namespace Payment.API.Features.ProcessBookingPayment
         Guid? ReferenceId = null,
         Guid? CoachId = null,
         Guid? BookingId = null,
-        Guid? PackageId = null) : IRequest<Guid>;
+        Guid? PackageId = null,
+        string? Status = "Confirmed") : IRequest<Guid>;
 
     public class ProcessBookingPaymentHandler : IRequestHandler<ProcessBookingPaymentCommand, Guid>
     {
@@ -45,9 +46,21 @@ namespace Payment.API.Features.ProcessBookingPayment
             try
             {
                 var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
-                if (wallet == null || wallet.Balance < request.Amount)
-                    throw new Exception("Insufficient balance.");
 
+                // Improved error handling for insufficient balance
+                if (wallet == null)
+                {
+                    await HandlePaymentFailure(request, "User wallet not found", cancellationToken);
+                    throw new Exception("User wallet not found.");
+                }
+
+                if (wallet.Balance < request.Amount)
+                {
+                    await HandlePaymentFailure(request, "Insufficient balance", cancellationToken);
+                    throw new Exception("Insufficient balance.");
+                }
+
+                // Continue with existing success case...
                 var transactionRecord = new WalletTransaction
                 {
                     Id = Guid.NewGuid(),
@@ -107,7 +120,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                         request.Amount,
                         DateTime.UtcNow,
                         request.Description,
-                        "CourtBooking", "Confirmed"
+                        "CourtBooking", request.Status
                     );
 
                     await _outboxService.SaveMessageAsync(paymentEvent);
@@ -131,11 +144,34 @@ namespace Payment.API.Features.ProcessBookingPayment
                 await transaction.CommitAsync(cancellationToken);
                 return transactionRecord.Id;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
+
+                // Handle any other unexpected errors
+                await HandlePaymentFailure(request, ex.Message, cancellationToken);
                 throw;
             }
         }
+
+        // New method to handle payment failures
+        private async Task HandlePaymentFailure(ProcessBookingPaymentCommand request, string errorMessage, CancellationToken cancellationToken)
+        {
+            // Create a payment failure event
+            var failureEvent = new PaymentFailedEvent(
+                Guid.NewGuid(),  // No transaction ID since payment failed
+                request.UserId,
+                request.BookingId,
+                request.Amount,
+                DateTime.UtcNow,
+                $"Payment failed: {errorMessage}",
+                request.PaymentType,
+                "Failed"
+            );
+
+            // Save to outbox for reliability
+            await _outboxService.SaveMessageAsync(failureEvent);
+        }
     }
+
 }

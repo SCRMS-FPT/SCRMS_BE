@@ -108,7 +108,7 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
                         foreach (var booking in bookings)
                         {
                             // Chỉ xem xét các booking không ở trạng thái cancel
-                            if (booking.Status != Domain.Enums.BookingStatus.Cancelled)
+                            if (booking.Status != Domain.Enums.BookingStatus.Cancelled && booking.Status != Domain.Enums.BookingStatus.PaymentFail)
                             {
                                 var matchingBookingDetail = booking.BookingDetails
                                     .Where(bd =>

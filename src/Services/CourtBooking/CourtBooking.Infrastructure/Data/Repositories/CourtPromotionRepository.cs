@@ -22,7 +22,7 @@ namespace CourtBooking.Infrastructure.Data.Repositories
         public async Task<List<CourtPromotion>> GetPromotionsByCourtIdAsync(CourtId courtId, CancellationToken cancellationToken)
         {
             return await _context.CourtPromotions
-                .Where(p => p.CourtId.Value == courtId.Value)
+                .Where(p => p.CourtId == courtId)
                 .ToListAsync(cancellationToken);
         }
 

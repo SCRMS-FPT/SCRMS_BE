@@ -39,7 +39,7 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
 
         public async Task<CreateBookingResult> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
-            var userId = UserId.Of(request.Booking.UserId);
+            var userId = UserId.Of(request.UserId);
 
             // Tạo booking
             var booking = Booking.Create(
@@ -76,7 +76,7 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                     cancellationToken);
 
                 var conflictingBooking = existingBookings
-                    .Where(b => b.Status != Domain.Enums.BookingStatus.Cancelled)
+                    .Where(b => b.Status != Domain.Enums.BookingStatus.Cancelled && b.Status != Domain.Enums.BookingStatus.PaymentFail)
                     .SelectMany(b => b.BookingDetails)
                     .Where(bd =>
                         bd.CourtId.Value == detail.CourtId &&

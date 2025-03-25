@@ -34,7 +34,7 @@ namespace CourtBooking.API.Endpoints
             })
             .RequireAuthorization()
             .WithName("GetCourtPromotions")
-            .Produces<List<CourtPromotionDto>>(StatusCodes.Status200OK)
+            .Produces<List<CourtPromotionDTO>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Lấy danh sách khuyến mãi của sân")
             .WithDescription("Trả về danh sách các khuyến mãi áp dụng cho sân dựa trên courtId.");
@@ -63,7 +63,7 @@ namespace CourtBooking.API.Endpoints
             })
             .RequireAuthorization()
             .WithName("CreateCourtPromotion")
-            .Produces<CourtPromotionDto>(StatusCodes.Status201Created)
+            .Produces<CourtPromotionDTO>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .WithSummary("Tạo khuyến mãi mới cho sân")
             .WithDescription("Tạo một khuyến mãi mới cho sân dựa trên courtId.");
@@ -92,7 +92,7 @@ namespace CourtBooking.API.Endpoints
             })
             .RequireAuthorization()
             .WithName("UpdateCourtPromotion")
-            .Produces<CourtPromotionDto>(StatusCodes.Status200OK)
+            .Produces<CourtPromotionDTO>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .WithSummary("Cập nhật khuyến mãi")
             .WithDescription("Cập nhật thông tin khuyến mãi dựa trên promotionId.");

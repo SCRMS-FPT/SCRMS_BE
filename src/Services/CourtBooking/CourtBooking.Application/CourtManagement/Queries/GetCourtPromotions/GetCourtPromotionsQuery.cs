@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 
 namespace CourtBooking.Application.CourtManagement.Queries.GetCourtPromotions
 {
-    public record GetCourtPromotionsQuery(Guid CourtId, Guid UserId, string Role) : IRequest<List<CourtPromotionDto>>;
+    public record GetCourtPromotionsQuery(Guid CourtId, Guid UserId, string Role) : IRequest<List<CourtPromotionDTO>>;
 }

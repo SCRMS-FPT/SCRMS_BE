@@ -51,10 +51,14 @@ namespace CourtBooking.API.Endpoints
                 [FromQuery] int? limit,
                 [FromQuery] string? city,
                 [FromQuery] string? name,
+                [FromQuery] Guid? SportId,
+                [FromQuery] DateTime? BookingDate,
+                [FromQuery] TimeSpan? StartTime,
+                [FromQuery] TimeSpan? EndTime,
                 ISender sender) =>
             {
                 var paginationRequest = new PaginationRequest((page ?? 1) - 1, limit ?? 10);
-                var query = new GetSportCentersQuery(paginationRequest, city, name);
+                var query = new GetSportCentersQuery(paginationRequest, city, name, SportId, BookingDate, StartTime, EndTime);
                 var result = await sender.Send(query);
                 var response = result.Adapt<GetSportCentersResponse>();
                 return Results.Ok(response);

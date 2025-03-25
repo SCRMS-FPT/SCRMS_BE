@@ -24,7 +24,8 @@ namespace Payment.API.Features.ProcessBookingPayment
                     request.ReferenceId,
                     request.CoachId,
                     request.BookingId,
-                    request.PackageId);
+                    request.PackageId,
+                    request.Status);
 
                 var transactionId = await sender.Send(command);
                 return Results.Created($"/api/payments/wallet/transactions/{transactionId}",
@@ -56,6 +57,6 @@ namespace Payment.API.Features.ProcessBookingPayment
         Guid? CoachId = null,
         Guid? BookingId = null,
         Guid? PackageId = null,
-        string? status = "Confirmed"
+        string? Status = "Confirmed"
     );
 }

@@ -2,6 +2,7 @@
 using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Application.DTOs;
 using CourtBooking.Application.Extensions;
+using CourtBooking.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace CourtBooking.Application.CourtManagement.Queries.GetCourts;
 
@@ -17,11 +17,16 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
 {
     private readonly ICourtRepository _courtRepository;
     private readonly ISportRepository _sportRepository;
+    private readonly ICourtPromotionRepository _promotionRepository;
 
-    public GetCourtsHandler(ICourtRepository courtRepository, ISportRepository sportRepository)
+    public GetCourtsHandler(
+        ICourtRepository courtRepository,
+        ISportRepository sportRepository,
+        ICourtPromotionRepository promotionRepository)
     {
         _courtRepository = courtRepository;
         _sportRepository = sportRepository;
+        _promotionRepository = promotionRepository;
     }
 
     public async Task<GetCourtsResult> Handle(GetCourtsQuery query, CancellationToken cancellationToken)
@@ -29,10 +34,10 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
         int pageIndex = query.PaginationRequest.PageIndex;
         int pageSize = query.PaginationRequest.PageSize;
 
-        // Lấy danh sách các Court (giả định không có filter trực tiếp trong repository)
+        // Get paginated courts
         var courts = await _courtRepository.GetPaginatedCourtsAsync(pageIndex, pageSize, cancellationToken);
 
-        // Áp dụng các filter nếu có
+        // Apply filters if any
         if (query.sportCenterId.HasValue)
         {
             courts = courts.Where(c => c.SportCenterId.Value == query.sportCenterId.Value).ToList();
@@ -52,6 +57,30 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
         var sports = await _sportRepository.GetSportsByIdsAsync(sportIds, cancellationToken);
         var sportNames = sports.ToDictionary(s => s.Id, s => s.Name);
 
+        // Dictionary to store promotions for each court
+        var courtPromotions = new Dictionary<CourtId, List<CourtPromotionDTO>>();
+
+        // Fetch promotions for each court
+        foreach (var court in courts)
+        {
+            var promotions = await _promotionRepository.GetPromotionsByCourtIdAsync(court.Id, cancellationToken);
+
+            // Convert to DTOs
+            var promotionDtos = promotions.Select(p => new CourtPromotionDTO(
+                Id: p.Id.Value,
+                CourtId: p.CourtId.Value,
+                Description: p.Description,
+                DiscountType: p.DiscountType,
+                DiscountValue: p.DiscountValue,
+                ValidFrom: p.ValidFrom,
+                ValidTo: p.ValidTo,
+                CreatedAt: p.CreatedAt,
+                LastModified: p.LastModified
+            )).ToList();
+
+            courtPromotions[court.Id] = promotionDtos;
+        }
+
         var courtDtos = courts.Select(court => new CourtDTO(
             Id: court.Id.Value,
             CourtName: court.CourtName.Value,
@@ -63,10 +92,11 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
             Status: court.Status,
             CourtType: court.CourtType,
             SportName: sportNames.GetValueOrDefault(court.SportId, "Unknown Sport"),
-            SportCenterName: null, // Có thể bổ sung logic nếu cần
+            SportCenterName: null, // Can be enhanced if needed
+            Promotions: courtPromotions.ContainsKey(court.Id) ? courtPromotions[court.Id] : null,
             CreatedAt: court.CreatedAt,
             LastModified: court.LastModified,
-                MinDepositPercentage: court.MinDepositPercentage
+            MinDepositPercentage: court.MinDepositPercentage
         )).ToList();
 
         return new GetCourtsResult(new PaginatedResult<CourtDTO>(pageIndex, pageSize, totalCount, courtDtos));

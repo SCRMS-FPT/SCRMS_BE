@@ -9,7 +9,7 @@ using BuildingBlocks.Exceptions;
 
 namespace CourtBooking.Application.CourtManagement.Command.UpdateCourtPromotion
 {
-    public class UpdateCourtPromotionHandler : IRequestHandler<UpdateCourtPromotionCommand, CourtPromotionDto>
+    public class UpdateCourtPromotionHandler : IRequestHandler<UpdateCourtPromotionCommand, CourtPromotionDTO>
     {
         private readonly ICourtPromotionRepository _courtPromotionRepository;
         private readonly ICourtRepository _courtRepository;
@@ -25,7 +25,7 @@ namespace CourtBooking.Application.CourtManagement.Command.UpdateCourtPromotion
             _context = context;
         }
 
-        public async Task<CourtPromotionDto> Handle(UpdateCourtPromotionCommand request, CancellationToken cancellationToken)
+        public async Task<CourtPromotionDTO> Handle(UpdateCourtPromotionCommand request, CancellationToken cancellationToken)
         {
             var promotion = await _courtPromotionRepository.GetByIdAsync(CourtPromotionId.Of(request.PromotionId), cancellationToken);
             if (promotion == null)
@@ -40,7 +40,7 @@ namespace CourtBooking.Application.CourtManagement.Command.UpdateCourtPromotion
             promotion.Update(request.Description, request.DiscountType, request.DiscountValue, request.ValidFrom, request.ValidTo);
             await _courtPromotionRepository.UpdateAsync(promotion, cancellationToken);
 
-            return new CourtPromotionDto(
+            return new CourtPromotionDTO(
                 promotion.Id.Value,
                 promotion.CourtId.Value,
                 promotion.Description,

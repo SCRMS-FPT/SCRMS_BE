@@ -46,7 +46,7 @@
     DateTime Timestamp,
     string Description,
     string PaymentType,
-    string StatusBook) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
+    string? StatusBook) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
 
     public record RefundProcessedEvent(
         Guid TransactionId,
@@ -54,4 +54,14 @@
         decimal Amount,
         DateTime Timestamp,
         string Reason) : IntegrationEvent;
+
+    public record PaymentFailedEvent(
+        Guid TransactionId,
+        Guid UserId,
+        Guid? ReferenceId,
+        decimal Amount,
+        DateTime Timestamp,
+        string Description,
+        string PaymentType,
+        string Status) : PaymentBaseEvent(TransactionId, UserId, Amount, Timestamp, Description);
 }
