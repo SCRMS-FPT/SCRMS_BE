@@ -3,9 +3,12 @@ using Identity.Application.Identity.Commands.Login;
 using Identity.Application.Identity.Commands.Register;
 using Identity.Application.Identity.Commands.ResetPassword;
 using Identity.Application.Identity.Commands.Role;
+using Identity.Application.Identity.Commands.SigninWithGoogle;
+using Identity.Application.Identity.Commands.SignupWithGoogle;
 using Identity.Application.Identity.Commands.UpdateProfile;
-using Identity.Application.Identity.Queries.GetProfile;
 using Identity.Application.Identity.Queries.DashboardStats;
+using Identity.Application.Identity.Queries.GetProfile;
+using Identity.Application.Identity.Queries.Verification;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
@@ -20,6 +23,12 @@ namespace Identity.API.Endpoints
             var identityGroup = app.MapGroup("/api/identity")
                                    .WithTags("Identity");
 
+            identityGroup.MapGet("/verify-email", async ([FromQuery] string Token, ISender sender) =>
+            {
+                await sender.Send(new VerificationQuery(Token));
+                return Results.Ok();
+            });
+
             identityGroup.MapPost("/login", async (LoginUserRequest request, ISender sender) =>
             {
                 var command = request.Adapt<LoginUserCommand>();
@@ -27,9 +36,23 @@ namespace Identity.API.Endpoints
                 return Results.Ok(result);
             });
 
+            identityGroup.MapPost("/loginwithgoogle", async (LoginWithGoogle request, ISender sender) =>
+            {
+                var command = request.Adapt<SigninCommand>();
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            });
+
             identityGroup.MapPost("/register", async (RegisterUserRequest request, ISender sender) =>
             {
                 var command = request.Adapt<RegisterUserCommand>();
+                var result = await sender.Send(command);
+                return Results.Created($"/api/users/{result.Id}", result);
+            });
+
+            identityGroup.MapPost("/registerwithgoogle", async (RegisterWithGoogle request, ISender sender) =>
+            {
+                var command = request.Adapt<SignupCommand>();
                 var result = await sender.Send(command);
                 return Results.Created($"/api/users/{result.Id}", result);
             });
@@ -119,9 +142,10 @@ namespace Identity.API.Endpoints
             }).RequireAuthorization("Admin");
         }
     }
-
+    public record VerifyEmailRequest(string Token);
     public record ChangePasswordRequest(string OldPassword, string NewPassword);
     public record LoginUserRequest(string Email, string Password);
+    public record LoginWithGoogle(string Token);
     public record RegisterUserRequest(
         string FirstName,
         string LastName,
@@ -130,6 +154,7 @@ namespace Identity.API.Endpoints
         DateTime BirthDate,
         string Gender,
         string Password);
+    public record RegisterWithGoogle(string Token);
     public record ResetPasswordRequest(string Email);
     public record AssignRolesRequest(Guid UserId, List<string> Roles);
     public record UpdateProfileRequest(
