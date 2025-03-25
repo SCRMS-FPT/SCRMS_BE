@@ -47,6 +47,8 @@ namespace CourtBooking.Domain.Models
         public void AddBookingDetail(CourtId courtId, TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules, decimal minDepositPercentage = 100)
         {
             var bookingDetail = BookingDetail.Create(Id, courtId, startTime, endTime, schedules);
+            bookingDetail.SetCreatedAt(DateTime.UtcNow);
+            bookingDetail.SetLastModified(DateTime.UtcNow);
             _bookingDetails.Add(bookingDetail);
             InitialDeposit += bookingDetail.TotalPrice * (minDepositPercentage / 100m);
             RecalculateTotals();

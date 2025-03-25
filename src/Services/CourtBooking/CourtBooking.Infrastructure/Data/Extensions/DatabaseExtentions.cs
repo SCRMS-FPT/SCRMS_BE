@@ -271,49 +271,47 @@ public static class DatabaseExtentions
         foreach (var court in courts)
         {
             // Lịch ngày thường (Thứ 2 đến Thứ 6)
-            for (int day = 1; day <= 5; day++) // 1=Thứ 2, 5=Thứ 6
-            {
-                var dayOfWeekValue = new DayOfWeekValue(new[] { day });
 
-                // Buổi sáng
-                var morningSchedule = CourtSchedule.Create(
-                    CourtScheduleId.Of(Guid.NewGuid()),
-                    court.Id,
-                    dayOfWeekValue,
-                    new TimeSpan(6, 0, 0),  // 6 giờ sáng
-                    new TimeSpan(12, 0, 0), // 12 giờ trưa
-                    court.CourtType == CourtType.Indoor ? 120000m : 100000m // Sân trong nhà đắt hơn
-                );
-                morningSchedule.SetCreatedAt(DateTime.UtcNow);
-                morningSchedule.SetLastModified(DateTime.UtcNow);
-                schedules.Add(morningSchedule);
+            var dayOfWeekValue = new DayOfWeekValue(new[] { 1, 2, 3, 4, 5 });
 
-                // Buổi chiều
-                var afternoonSchedule = CourtSchedule.Create(
-                    CourtScheduleId.Of(Guid.NewGuid()),
-                    court.Id,
-                    dayOfWeekValue,
-                    new TimeSpan(12, 0, 0), // 12 giờ trưa
-                    new TimeSpan(18, 0, 0), // 6 giờ chiều
-                    court.CourtType == CourtType.Indoor ? 150000m : 130000m // Giá cao hơn vào giờ cao điểm
-                );
-                afternoonSchedule.SetCreatedAt(DateTime.UtcNow);
-                afternoonSchedule.SetLastModified(DateTime.UtcNow);
-                schedules.Add(afternoonSchedule);
+            // Buổi sáng
+            var morningSchedule = CourtSchedule.Create(
+                CourtScheduleId.Of(Guid.NewGuid()),
+                court.Id,
+                dayOfWeekValue,
+                new TimeSpan(6, 0, 0),  // 6 giờ sáng
+                new TimeSpan(12, 0, 0), // 12 giờ trưa
+                court.CourtType == CourtType.Indoor ? 120000m : 100000m // Sân trong nhà đắt hơn
+            );
+            morningSchedule.SetCreatedAt(DateTime.UtcNow);
+            morningSchedule.SetLastModified(DateTime.UtcNow);
+            schedules.Add(morningSchedule);
 
-                // Buổi tối
-                var eveningSchedule = CourtSchedule.Create(
-                    CourtScheduleId.Of(Guid.NewGuid()),
-                    court.Id,
-                    dayOfWeekValue,
-                    new TimeSpan(18, 0, 0), // 6 giờ chiều
-                    new TimeSpan(22, 0, 0), // 10 giờ tối
-                    court.CourtType == CourtType.Indoor ? 180000m : 160000m // Giá cao nhất vào buổi tối
-                );
-                eveningSchedule.SetCreatedAt(DateTime.UtcNow);
-                eveningSchedule.SetLastModified(DateTime.UtcNow);
-                schedules.Add(eveningSchedule);
-            }
+            // Buổi chiều
+            var afternoonSchedule = CourtSchedule.Create(
+                CourtScheduleId.Of(Guid.NewGuid()),
+                court.Id,
+                dayOfWeekValue,
+                new TimeSpan(12, 0, 0), // 12 giờ trưa
+                new TimeSpan(18, 0, 0), // 6 giờ chiều
+                court.CourtType == CourtType.Indoor ? 150000m : 130000m // Giá cao hơn vào giờ cao điểm
+            );
+            afternoonSchedule.SetCreatedAt(DateTime.UtcNow);
+            afternoonSchedule.SetLastModified(DateTime.UtcNow);
+            schedules.Add(afternoonSchedule);
+
+            // Buổi tối
+            var eveningSchedule = CourtSchedule.Create(
+                CourtScheduleId.Of(Guid.NewGuid()),
+                court.Id,
+                dayOfWeekValue,
+                new TimeSpan(18, 0, 0), // 6 giờ chiều
+                new TimeSpan(22, 0, 0), // 10 giờ tối
+                court.CourtType == CourtType.Indoor ? 180000m : 160000m // Giá cao nhất vào buổi tối
+            );
+            eveningSchedule.SetCreatedAt(DateTime.UtcNow);
+            eveningSchedule.SetLastModified(DateTime.UtcNow);
+            schedules.Add(eveningSchedule);
 
             // Lịch cuối tuần (Thứ 7 và Chủ nhật)
             var weekendDayOfWeekValue = new DayOfWeekValue(new[] { 6, 7 }); // 0=Chủ nhật, 6=Thứ 7
