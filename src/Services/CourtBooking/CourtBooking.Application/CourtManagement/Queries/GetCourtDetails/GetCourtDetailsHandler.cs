@@ -32,6 +32,23 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
         var sportCenter = await _context.SportCenters
             .FirstOrDefaultAsync(sc => sc.Id == court.SportCenterId, cancellationToken);
 
+        // Get court promotions
+        var promotions = await _context.CourtPromotions
+            .Where(p => p.CourtId == courtId)
+            .ToListAsync(cancellationToken);
+
+        var promotionDtos = promotions.Select(p => new CourtPromotionDTO(
+            Id: p.Id.Value,
+            CourtId: p.CourtId.Value,
+            Description: p.Description,
+            DiscountType: p.DiscountType,
+            DiscountValue: p.DiscountValue,
+            ValidFrom: p.ValidFrom,
+            ValidTo: p.ValidTo,
+            CreatedAt: p.CreatedAt,
+            LastModified: p.LastModified
+        )).ToList();
+
         List<FacilityDTO>? facilities = null;
         if (!string.IsNullOrEmpty(court.Facilities))
         {
@@ -50,9 +67,10 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
             CourtType: court.CourtType,
             SportName: sport?.Name,
             SportCenterName: sportCenter?.Name,
+            Promotions: promotionDtos,
             CreatedAt: court.CreatedAt,
             LastModified: court.LastModified,
-                MinDepositPercentage: court.MinDepositPercentage
+            MinDepositPercentage: court.MinDepositPercentage
         );
 
         return new GetCourtDetailsResult(courtDto);

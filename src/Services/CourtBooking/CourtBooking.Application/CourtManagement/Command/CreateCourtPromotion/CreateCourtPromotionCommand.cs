@@ -15,7 +15,7 @@ namespace CourtBooking.Application.CourtManagement.Command.CreateCourtPromotion
            decimal DiscountValue,
            DateTime ValidFrom,
            DateTime ValidTo,
-           Guid UserId) : IRequest<CourtPromotionDto>;
+           Guid UserId) : IRequest<CourtPromotionDTO>;
 
     public class CreateCourtPromotionCommandValidator : AbstractValidator<CreateCourtPromotionCommand>
     {

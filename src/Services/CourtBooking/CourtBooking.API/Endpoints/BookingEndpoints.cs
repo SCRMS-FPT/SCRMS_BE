@@ -34,7 +34,7 @@ namespace CourtBooking.API.Endpoints
                     return Results.Unauthorized();
                 }
 
-                var command = new CreateBookingCommand(request.Booking with { UserId = Guid.Parse(userId) });
+                var command = new CreateBookingCommand(Guid.Parse(userId), request.Booking);
                 var result = await sender.Send(command);
                 var response = new CreateBookingResponse(result.Id, result.Status);
                 return Results.Created($"/api/bookings/{response.Id}", response);

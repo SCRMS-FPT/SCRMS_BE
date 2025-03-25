@@ -20,6 +20,7 @@ namespace CourtBooking.Application.DTOs
     decimal MinDepositPercentage,
     string SportName,
     string? SportCenterName,
+    List<CourtPromotionDTO>? Promotions,
     DateTime CreatedAt,
     DateTime? LastModified
     );

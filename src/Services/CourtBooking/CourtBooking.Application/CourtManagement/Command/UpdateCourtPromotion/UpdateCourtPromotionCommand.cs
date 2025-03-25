@@ -14,5 +14,5 @@ namespace CourtBooking.Application.CourtManagement.Command.UpdateCourtPromotion
         decimal DiscountValue,
         DateTime ValidFrom,
         DateTime ValidTo,
-        Guid UserId) : IRequest<CourtPromotionDto>;
+        Guid UserId) : IRequest<CourtPromotionDTO>;
 }
