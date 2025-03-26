@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="B2Net" Version="0.7.5" />
+	  <PackageReference Include="Backblaze.Agent" Version="1.1.0" />
+	  <PackageReference Include="Backblaze.Client" Version="1.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
   </ItemGroup>
