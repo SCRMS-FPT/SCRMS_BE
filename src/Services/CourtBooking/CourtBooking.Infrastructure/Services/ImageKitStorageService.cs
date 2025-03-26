@@ -19,6 +19,13 @@ namespace CourtBooking.Infrastructure.Services
         public string UrlEndpoint { get; set; }
     }
 
+    public interface IFileStorageService
+    {
+        Task<string> UploadFileAsync(IFormFile file, string folderName);
+
+        Task<List<string>> UploadFilesAsync(IList<IFormFile> files, string folderName);
+    }
+
     public class ImageKitStorageService : IFileStorageService
     {
         private readonly HttpClient _httpClient;
