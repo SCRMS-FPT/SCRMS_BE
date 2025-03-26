@@ -40,15 +40,14 @@ namespace CourtBooking.Domain.Models
                 RemainingBalance = 0,
                 InitialDeposit = 0,
                 TotalPaid = 0,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow
             };
         }
 
         public void AddBookingDetail(CourtId courtId, TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules, decimal minDepositPercentage = 100)
         {
             var bookingDetail = BookingDetail.Create(Id, courtId, startTime, endTime, schedules);
-            bookingDetail.SetCreatedAt(DateTime.UtcNow);
-            bookingDetail.SetLastModified(DateTime.UtcNow);
             _bookingDetails.Add(bookingDetail);
             InitialDeposit += bookingDetail.TotalPrice * (minDepositPercentage / 100m);
             RecalculateTotals();
@@ -93,6 +92,8 @@ namespace CourtBooking.Domain.Models
             );
 
             _bookingDetails.Add(bookingDetail);
+            InitialDeposit += bookingDetail.TotalPrice * (minDepositPercentage / 100m);
+            RecalculateTotals();
             return bookingDetail;
         }
         public void RemoveBookingDetail(BookingDetailId detailId)
@@ -122,6 +123,11 @@ namespace CourtBooking.Domain.Models
             if (Status == BookingStatus.Cancelled)
                 throw new DomainException("Booking is already cancelled.");
             Status = BookingStatus.Cancelled;
+        }
+
+        public void SetInitialDeposit(decimal depositAmount)
+        {
+            InitialDeposit = depositAmount;
         }
 
         public void MakeDeposit(decimal depositAmount)

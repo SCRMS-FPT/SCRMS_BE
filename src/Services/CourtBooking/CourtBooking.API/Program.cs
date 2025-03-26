@@ -2,6 +2,7 @@
 using CourtBooking.Application;
 using CourtBooking.Infrastructure;
 using CourtBooking.Infrastructure.Data.Extensions;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,7 @@ builder.Services
     .AddApplicationServices(builder.Configuration)
     .AddInfrastructureServices(builder.Configuration)
     .AddApiServices(builder.Configuration);
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -44,15 +46,17 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddCors(options =>
+
+options.AddPolicy("ReactCORS", policy =>
 {
-    options.AddDefaultPolicy(
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
-});
+    policy.WithOrigins("http://localhost:5173") // Chỉ định rõ origin
+          .AllowAnyMethod()
+          .AllowAnyHeader()
+          .SetIsOriginAllowed(origin => true)
+          .SetIsOriginAllowedToAllowWildcardSubdomains()
+          .AllowCredentials(); // Bắt buộc cho cookie
+})
+    );
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
@@ -64,7 +68,7 @@ builder.Services.AddHttpClient("NotificationAPI", client =>
 var app = builder.Build();
 
 // Sử dụng middleware
-app.UseCors();
+app.UseCors("ReactCORS");
 
 if (app.Environment.IsDevelopment())
 {
@@ -73,7 +77,8 @@ if (app.Environment.IsDevelopment())
     await app.InitialiseDatabaseAsync();
 }
 
-// Sử dụng các dịch vụ API (bao gồm xác thực và phân quyền)
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseApiServices();
 
 app.Run();

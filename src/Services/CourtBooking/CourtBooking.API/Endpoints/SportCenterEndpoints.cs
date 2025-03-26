@@ -8,11 +8,17 @@ using CourtBooking.Application.CourtManagement.Queries.GetSportCenterById;
 using CourtBooking.Application.CourtManagement.Command.UpdateSportCenter;
 using Microsoft.AspNetCore.Authorization;
 using CourtBooking.Application.CourtManagement.Queries.GetAllCourtsOfSportCenter;
+using CourtBooking.Application.CourtManagement.Queries.GetSportCentersByOwner;
+using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
+using CourtBooking.Infrastructure.Services;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace CourtBooking.API.Endpoints
 {
     public record CreateSportCenterRequest(CreateSportCenterCommand SportCenter);
     public record CreateSportCenterResponse(Guid Id);
+    public record GetOwnedSportCentersResponse(PaginatedResult<SportCenterListDTO> SportCenters);
     public record GetSportCentersResponse(PaginatedResult<SportCenterListDTO> SportCenters);
     public record UpdateSportCenterRequest(
         Guid SportCenterId,
@@ -29,21 +35,54 @@ namespace CourtBooking.API.Endpoints
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
+
             var group = app.MapGroup("/api/sportcenters").WithTags("SportCenter");
 
             // Create Sport Center
-            group.MapPost("/", async ([FromBody] CreateSportCenterCommand command, ISender sender) =>
-            {
-                var result = await sender.Send(command);
-                var response = new CreateSportCenterResponse(result.Id);
-                return Results.Created($"/api/sportcenters/{response.Id}", response);
-            })
-            .WithName("CreateSportCenter")
-            .RequireAuthorization("AdminOrCourtOwner") // Giới hạn quyền Admin hoặc CourtOwner
-            .Produces<CreateSportCenterResponse>(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .WithSummary("Create Sport Center")
-            .WithDescription("Create a new sport center");
+            group.MapPost("/", async ([FromForm] CreateSportCenterFormModel model,
+                                    [FromServices] IFileStorageService fileStorage,
+                                    [FromServices] ISender sender) =>
+           {
+               // Upload the avatar image
+               string avatarUrl = "";
+               if (model.AvatarImage != null)
+               {
+                   avatarUrl = await fileStorage.UploadFileAsync(model.AvatarImage, "sportcenters/avatars");
+               }
+
+               // Upload gallery images
+               List<string> galleryUrls = new List<string>();
+               if (model.GalleryImages != null && model.GalleryImages.Count > 0)
+               {
+                   galleryUrls = await fileStorage.UploadFilesAsync(model.GalleryImages, "sportcenters/gallery");
+               }
+               // Create the command with the uploaded image URLs
+               var command = new CreateSportCenterCommand(
+                   Name: model.Name,
+                   PhoneNumber: model.PhoneNumber,
+                   AddressLine: model.AddressLine,
+                   City: model.City,
+                   District: model.District,
+                   Commune: model.Commune,
+                   Latitude: model.Latitude,
+                   Longitude: model.Longitude,
+                   Avatar: avatarUrl,
+                   ImageUrls: galleryUrls,
+                   Description: model.Description
+               );
+
+               var result = await sender.Send(command);
+               var response = new CreateSportCenterResponse(result.Id);
+               return Results.Created($"/api/sportcenters/{response.Id}", response);
+           })
+           .WithName("CreateSportCenter")
+           .RequireAuthorization("AdminOrCourtOwner")
+           .DisableAntiforgery()
+           .Accepts<CreateSportCenterFormModel>("multipart/form-data") // Accept multipart/form-data
+           .Produces<CreateSportCenterResponse>(StatusCodes.Status201Created)
+           .ProducesProblem(StatusCodes.Status400BadRequest)
+           .WithSummary("Create Sport Center with Images")
+           .WithDescription("Create a new sport center with uploaded images");
 
             // Get Sport Centers
             group.MapGet("/", async (
@@ -81,6 +120,49 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Lấy tất cả sân của một trung tâm")
             .WithDescription("Lấy tất cả sân của một trung tâm thể thao cụ thể theo ID");
+            group.MapGet("/owned", async (
+                            HttpContext httpContext,
+                            [FromQuery] int? page, // 1-based
+                            [FromQuery] int? limit,
+                            [FromQuery] string? city,
+                            [FromQuery] string? name,
+                            [FromQuery] Guid? SportId,
+                            [FromQuery] DateTime? BookingDate,
+                            [FromQuery] TimeSpan? StartTime,
+                            [FromQuery] TimeSpan? EndTime,
+                            ISender sender) =>
+                        {
+                            // Extract user ID from JWT token
+                            var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                                         ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
+                            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var ownerId))
+                            {
+                                return Results.Unauthorized();
+                            }
+
+                            var paginationRequest = new PaginationRequest((page ?? 1) - 1, limit ?? 10);
+                            var query = new GetSportCentersByOwnerQuery(
+                                ownerId,
+                                paginationRequest,
+                                city,
+                                name,
+                                SportId,
+                                BookingDate,
+                                StartTime,
+                                EndTime);
+
+                            var result = await sender.Send(query);
+                            var response = new GetOwnedSportCentersResponse(result.SportCenters);
+                            return Results.Ok(response);
+                        })
+                        .WithName("GetOwnedSportCenters")
+                        .RequireAuthorization("CourtOwner")
+                        .Produces<GetOwnedSportCentersResponse>(StatusCodes.Status200OK)
+                        .ProducesProblem(StatusCodes.Status401Unauthorized)
+                        .ProducesProblem(StatusCodes.Status403Forbidden)
+                        .WithSummary("Get Sport Centers by Owner")
+                        .WithDescription("Get all sport centers owned by the authenticated Court Owner with optional filters");
 
             // Update Sport Center
             group.MapPut("/{centerId:guid}", async (Guid centerId, [FromBody] UpdateSportCenterCommand command, ISender sender) =>
@@ -110,5 +192,20 @@ namespace CourtBooking.API.Endpoints
             .WithSummary("Get Sport Center By ID")
             .WithDescription("Get detailed information of a specific sport center");
         }
+    }
+
+    public class CreateSportCenterFormModel
+    {
+        public string Name { get; set; }
+        public string PhoneNumber { get; set; }
+        public string AddressLine { get; set; }
+        public string City { get; set; }
+        public string District { get; set; }
+        public string Commune { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string Description { get; set; }
+        public IFormFile AvatarImage { get; set; }
+        public List<IFormFile> GalleryImages { get; set; }
     }
 }

@@ -48,7 +48,11 @@ namespace CourtBooking.Application.BookingManagement.Queries.GetBookingById
             {
                 var ownedSportsCenters = await _sportCenterRepository.GetSportCentersByOwnerIdAsync(query.UserId, cancellationToken);
                 var ownedSportsCenterIds = ownedSportsCenters.Select(sc => sc.Id).ToHashSet();
-                hasPermission = booking.BookingDetails.Any(d => ownedSportsCenterIds.Contains(courts.First(c => c.Id == d.CourtId).SportCenterId));
+
+                // Check if booking is at an owned center OR if it's the court owner's own booking
+                hasPermission = booking.BookingDetails.Any(d =>
+                    ownedSportsCenterIds.Contains(courts.First(c => c.Id == d.CourtId).SportCenterId))
+                    || booking.UserId.Value == query.UserId;
             }
             else // User
             {

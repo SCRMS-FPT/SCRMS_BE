@@ -1,4 +1,5 @@
 ﻿using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.BookingManagement.Queries.GetBookings;
@@ -26,37 +27,52 @@ public class GetBookingsHandler : IRequestHandler<GetBookingsQuery, GetBookingsR
         if (query.Role == "Admin")
         {
             if (query.FilterUserId.HasValue)
-                bookingsQuery = bookingsQuery.Where(b => b.UserId.Value == query.FilterUserId.Value);
+                bookingsQuery = bookingsQuery.Where(b => b.UserId == UserId.Of(query.FilterUserId.Value));
             if (query.CourtId.HasValue)
-                bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d => d.CourtId.Value == query.CourtId.Value));
+                bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d => d.CourtId == CourtId.Of(query.CourtId ?? Guid.Empty)));
             if (query.SportsCenterId.HasValue)
             {
                 bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d =>
-                    _context.Courts.Any(c => c.Id.Value == d.CourtId.Value && c.SportCenterId.Value == query.SportsCenterId.Value)));
+                    _context.Courts.Any(c => c.Id == d.CourtId && c.SportCenterId == SportCenterId.Of(query.SportsCenterId ?? Guid.Empty))));
             }
         }
         else if (query.Role == "CourtOwner")
         {
             var ownedSportsCenters = await _sportCenterRepository.GetSportCentersByOwnerIdAsync(query.UserId, cancellationToken);
             var ownedSportsCenterIds = ownedSportsCenters.Select(sc => sc.Id).ToList();
-            bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d =>
-                _context.Courts.Any(c => c.Id == d.CourtId && ownedSportsCenterIds.Contains(c.SportCenterId))));
 
+            // Include both bookings for owned courts AND bookings made by the court owner
+            bookingsQuery = bookingsQuery.Where(b =>
+                // Bookings at courts they own
+                b.BookingDetails.Any(d =>
+                    _context.Courts.Any(c => c.Id == d.CourtId && ownedSportsCenterIds.Contains(c.SportCenterId)))
+                ||
+                // Bookings they made as a user
+                b.UserId == UserId.Of(query.UserId)
+            );
+
+            // Filtering by specific user if requested
             if (query.FilterUserId.HasValue)
-                bookingsQuery = bookingsQuery.Where(b => b.UserId.Value == query.FilterUserId);
+                bookingsQuery = bookingsQuery.Where(b => b.UserId == UserId.Of(query.FilterUserId.Value));
+
+            // Filtering by specific court
             if (query.CourtId.HasValue)
-                bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d => d.CourtId.Value == query.CourtId));
+                bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d => d.CourtId == CourtId.Of(query.CourtId ?? Guid.Empty)));
+
+            // Filtering by specific sports center
             if (query.SportsCenterId.HasValue)
             {
-                if (!ownedSportsCenterIds.Contains(SportCenterId.Of(query.SportsCenterId.Value)))
+                if (!ownedSportsCenterIds.Contains(SportCenterId.Of(query.SportsCenterId.Value)) &&
+                    !bookingsQuery.Any(b => b.UserId == UserId.Of(query.UserId)))
                     throw new UnauthorizedAccessException("You do not own this sports center");
+
                 bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d =>
                     _context.Courts.Any(c => c.Id == d.CourtId && c.SportCenterId == SportCenterId.Of(query.SportsCenterId.Value))));
             }
         }
         else // User
         {
-            bookingsQuery = bookingsQuery.Where(b => b.UserId.Value == query.UserId);
+            bookingsQuery = bookingsQuery.Where(b => b.UserId == UserId.Of(query.UserId));
         }
 
         // **Lọc bổ sung**
