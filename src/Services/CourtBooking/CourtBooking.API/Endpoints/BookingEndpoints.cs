@@ -9,6 +9,7 @@ using CourtBooking.Domain.Enums;
 using CourtBooking.Application.BookingManagement.Queries.GetBookingById;
 using CourtBooking.Application.BookingManagement.Command.CancelBooking;
 using CourtBooking.Application.BookingManagement.Queries.CalculateBookingPrice;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -93,14 +94,16 @@ namespace CourtBooking.API.Endpoints
                 [FromQuery] int page = 0,
                 [FromQuery] int limit = 10) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
                 var roleClaim = httpContext.User.FindFirst(ClaimTypes.Role);
 
-                if (userIdClaim == null || roleClaim == null)
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
 
-                var userId = Guid.Parse(userIdClaim.Value);
-                var role = roleClaim.Value;
+                // Fix: Add null handling for roleClaim
+                var role = roleClaim?.Value ?? "User";
 
                 var query = new GetBookingsQuery(
                     UserId: userId,
@@ -130,14 +133,14 @@ namespace CourtBooking.API.Endpoints
                 HttpContext httpContext,
                 [FromServices] ISender sender) =>
             {
-                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
                 var roleClaim = httpContext.User.FindFirst(ClaimTypes.Role);
 
-                if (userIdClaim == null || roleClaim == null)
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
-
-                var userId = Guid.Parse(userIdClaim.Value);
-                var role = roleClaim.Value;
+                var role = roleClaim?.Value ?? "User";
 
                 var query = new GetBookingByIdQuery(bookingId, userId, role);
                 var result = await sender.Send(query);
