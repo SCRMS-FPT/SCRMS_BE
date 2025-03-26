@@ -29,7 +29,9 @@ namespace CourtBooking.Domain.Models
                 CourtId = courtId,
                 StartTime = startTime,
                 EndTime = endTime,
-                TotalPrice = totalPrice
+                TotalPrice = totalPrice,
+                CreatedAt = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow
             };
         }
 
@@ -49,7 +51,9 @@ namespace CourtBooking.Domain.Models
                 CourtId = courtId,
                 StartTime = startTime,
                 EndTime = endTime,
-                TotalPrice = totalPrice
+                TotalPrice = totalPrice,
+                CreatedAt = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow
             };
         }
 

@@ -130,6 +130,7 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
             if (minimumDepositAmount == 0)
             {
                 minimumDepositAmount = await CalculateMinimumDepositAsync(booking, cancellationToken);
+                booking.SetInitialDeposit(minimumDepositAmount);
             }
 
             // Xử lý đặt cọc nếu có
@@ -148,7 +149,7 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                 // Nếu sân yêu cầu đặt cọc mà không cung cấp số tiền, ném ngoại lệ
                 throw new ApplicationException($"Sân này yêu cầu đặt cọc tối thiểu {minimumDepositAmount}");
             }
-
+            booking.MarkAsPendingPayment();
             BookingStatus status = booking.Status;
             booking.MarkAsPendingPayment();
             await _bookingRepository.AddBookingAsync(booking, cancellationToken);
