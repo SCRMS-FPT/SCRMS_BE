@@ -18,7 +18,12 @@ namespace Payment.API.Features.GetWalletBalance
         {
             var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
             if (wallet == null)
-                throw new Exception("Wallet not found");
+                return new UserWallet
+                {
+                    UserId = request.UserId,
+                    Balance = 0,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
             return wallet;
         }

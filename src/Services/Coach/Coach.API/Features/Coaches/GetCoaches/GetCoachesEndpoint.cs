@@ -11,7 +11,6 @@ namespace Coach.API.Features.Coaches.GetCoaches
                 var result = await sender.Send(new GetCoachesQuery());
                 return Results.Ok(result);
             })
-                .RequireAuthorization("Admin")
             .WithName("GetCoaches")
             .Produces<IEnumerable<CoachResponse>>().WithTags("Coach");
         }
