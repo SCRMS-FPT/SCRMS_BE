@@ -11,5 +11,6 @@
         Task<bool> CoachExistsAsync(Guid coachId, CancellationToken cancellationToken);
 
         Task<List<Models.Coach>> GetAllCoachesAsync(CancellationToken cancellationToken);
+
     }
 }

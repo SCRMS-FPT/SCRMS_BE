@@ -96,7 +96,9 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
             Promotions: courtPromotions.ContainsKey(court.Id) ? courtPromotions[court.Id] : null,
             CreatedAt: court.CreatedAt,
             LastModified: court.LastModified,
-            MinDepositPercentage: court.MinDepositPercentage
+            MinDepositPercentage: court.MinDepositPercentage,
+            CancellationWindowHours: court.CancellationWindowHours,
+            RefundPercentage: court.RefundPercentage
         )).ToList();
 
         return new GetCourtsResult(new PaginatedResult<CourtDTO>(pageIndex, pageSize, totalCount, courtDtos));

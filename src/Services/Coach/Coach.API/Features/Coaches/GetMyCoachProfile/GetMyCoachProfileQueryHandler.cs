@@ -1,30 +1,30 @@
-﻿using Coach.API.Data.Models;
 using Coach.API.Data;
+using Coach.API.Data.Models;
 using Coach.API.Data.Repositories;
 using Coach.API.Features.Coaches.GetCoaches;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Coach.API.Extensions;
-
-namespace Coach.API.Features.Coaches.GetCoachById
+namespace Coach.API.Features.Coaches.GetMyCoachProfile
 {
-    public record GetCoachByIdQuery(Guid Id) : IQuery<CoachResponse>;
+    public record GetMyCoachProfileQuery(Guid UserId) : IQuery<CoachResponse>;
 
-    public class GetCoachByIdQueryValidator : AbstractValidator<GetCoachByIdQuery>
+    public class GetMyCoachProfileQueryValidator : AbstractValidator<GetMyCoachProfileQuery>
     {
-        public GetCoachByIdQueryValidator()
+        public GetMyCoachProfileQueryValidator()
         {
-            RuleFor(x => x.Id).NotEmpty().WithMessage("Id is required");
+            RuleFor(x => x.UserId).NotEmpty().WithMessage("User ID is required");
         }
     }
 
-    public class GetCoachByIdQueryHandler : IQueryHandler<GetCoachByIdQuery, CoachResponse>
+    public class GetMyCoachProfileQueryHandler : IQueryHandler<GetMyCoachProfileQuery, CoachResponse>
     {
         private readonly ICoachRepository _coachRepository;
         private readonly ICoachSportRepository _sportRepository;
         private readonly ICoachPackageRepository _packageRepository;
         private readonly ICoachScheduleRepository _scheduleRepository; // Add this
 
-        public GetCoachByIdQueryHandler(
+        public GetMyCoachProfileQueryHandler(
             ICoachRepository coachRepository,
             ICoachSportRepository sportRepository,
             ICoachPackageRepository packageRepository,
@@ -36,11 +36,11 @@ namespace Coach.API.Features.Coaches.GetCoachById
             _scheduleRepository = scheduleRepository; // Add this
         }
 
-        public async Task<CoachResponse> Handle(GetCoachByIdQuery query, CancellationToken cancellationToken)
+        public async Task<CoachResponse> Handle(GetMyCoachProfileQuery query, CancellationToken cancellationToken)
         {
-            var coach = await _coachRepository.GetCoachByIdAsync(query.Id, cancellationToken);
+            var coach = await _coachRepository.GetCoachByIdAsync(query.UserId, cancellationToken);
             if (coach == null)
-                throw new CoachNotFoundException(query.Id);
+                throw new CoachNotFoundException(query.UserId);
 
             var sports = await _sportRepository.GetCoachSportsByCoachIdAsync(coach.UserId, cancellationToken);
             var packages = await _packageRepository.GetCoachPackagesByCoachIdAsync(coach.UserId, cancellationToken);
@@ -52,7 +52,9 @@ namespace Coach.API.Features.Coaches.GetCoachById
             var packageResponses = packages.Select(p => new CoachPackageResponse(
                 p.Id, p.Name, p.Description, p.Price, p.SessionCount)).ToList();
 
+            // Convert schedules to response format - same as in GetCoachByIdQueryHandler
             var weeklyScheduleResponses = schedules.ToWeeklyScheduleResponses();
+
             return new CoachResponse(
                 coach.UserId,
                 coach.FullName,

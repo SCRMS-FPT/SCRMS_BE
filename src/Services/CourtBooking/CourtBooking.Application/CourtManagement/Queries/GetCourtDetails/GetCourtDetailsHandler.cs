@@ -70,7 +70,9 @@ public class GetCourtDetailsHandler(IApplicationDbContext _context) : IQueryHand
             Promotions: promotionDtos,
             CreatedAt: court.CreatedAt,
             LastModified: court.LastModified,
-            MinDepositPercentage: court.MinDepositPercentage
+            MinDepositPercentage: court.MinDepositPercentage,
+            CancellationWindowHours: court.CancellationWindowHours,
+            RefundPercentage: court.RefundPercentage
         );
 
         return new GetCourtDetailsResult(courtDto);

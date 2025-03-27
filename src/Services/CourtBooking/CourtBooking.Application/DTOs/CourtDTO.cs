@@ -18,6 +18,8 @@ namespace CourtBooking.Application.DTOs
     CourtStatus Status,
     CourtType CourtType,
     decimal MinDepositPercentage,
+    int CancellationWindowHours,    // Added property
+        decimal RefundPercentage,
     string SportName,
     string? SportCenterName,
     List<CourtPromotionDTO>? Promotions,

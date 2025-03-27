@@ -43,18 +43,18 @@ namespace Coach.API.Features.Coaches.CreateCoach
     {
         private readonly ICoachRepository _coachRepository;
         private readonly ICoachSportRepository _sportRepository;
-        private readonly IBackblazeService _backblazeService;
+        private readonly IImageKitService _imageKitService;
         private readonly CoachDbContext _context;
 
         public CreateCoachCommandHandler(
             ICoachRepository coachRepository,
             ICoachSportRepository sportRepository,
-            IBackblazeService backblazeService,
+            IImageKitService imageKitService,
             CoachDbContext context)
         {
             _coachRepository = coachRepository;
             _sportRepository = sportRepository;
-            _backblazeService = backblazeService;
+            _imageKitService = imageKitService;
             _context = context;
         }
 
@@ -70,23 +70,17 @@ namespace Coach.API.Features.Coaches.CreateCoach
             string avatarUrl = string.Empty;
             if (command.AvatarFile != null)
             {
-                var uploadResult = await _backblazeService.UploadFileAsync(
+                avatarUrl = await _imageKitService.UploadFileAsync(
                     command.AvatarFile,
                     $"coaches/{command.UserId}/avatar",
                     cancellationToken);
-                avatarUrl = uploadResult.Url;
             }
 
             // Upload all image files
-            var imageUrls = new List<string>();
-            foreach (var imageFile in command.ImageFiles)
-            {
-                var uploadResult = await _backblazeService.UploadFileAsync(
-                    imageFile,
-                    $"coaches/{command.UserId}/images",
-                    cancellationToken);
-                imageUrls.Add(uploadResult.Url);
-            }
+            var imageUrls = await _imageKitService.UploadFilesAsync(
+                command.ImageFiles,
+                $"coaches/{command.UserId}/images",
+                cancellationToken);
 
             var coach = new Data.Models.Coach
             {
