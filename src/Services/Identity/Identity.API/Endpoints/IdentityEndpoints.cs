@@ -9,6 +9,7 @@ using Identity.Application.Identity.Commands.UpdateProfile;
 using Identity.Application.Identity.Queries.DashboardStats;
 using Identity.Application.Identity.Queries.GetProfile;
 using Identity.Application.Identity.Queries.Verification;
+using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
@@ -31,10 +32,17 @@ namespace Identity.API.Endpoints
 
             identityGroup.MapPost("/login", async (LoginUserRequest request, ISender sender) =>
             {
-                var command = request.Adapt<LoginUserCommand>();
-                var result = await sender.Send(command);
-                return Results.Ok(result);
-            });
+                try
+                {
+                    var command = request.Adapt<LoginUserCommand>();
+                    var result = await sender.Send(command);
+                    return Results.Ok(result);
+                }
+                catch
+                {
+                    return Results.Unauthorized();
+                }
+            }); 
 
             identityGroup.MapPost("/loginwithgoogle", async (LoginWithGoogle request, ISender sender) =>
             {
