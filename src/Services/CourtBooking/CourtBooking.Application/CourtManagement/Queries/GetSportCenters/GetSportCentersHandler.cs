@@ -44,46 +44,43 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
         }
 
         // Filter by availability on specific date and time if requested
-        if (query.BookingDate.HasValue && query.StartTime.HasValue && query.EndTime.HasValue)
+        if (query.BookingDate.HasValue)
         {
             var requestedDate = query.BookingDate.Value.Date; // Ensure we're comparing dates only
-            var startTime = query.StartTime.Value;
-            var endTime = query.EndTime.Value;
-            var dayOfWeek = DayOfWeekValue.Of(new List<int> { (int)requestedDate.DayOfWeek });
-
-            // Get all courts that have a schedule for the requested day and time
-            var availableCourts = await _context.Courts
-                .Where(c => c.CourtSchedules.Any(cs =>
-                    cs.DayOfWeek == dayOfWeek &&
-                    cs.StartTime <= startTime &&
-                    cs.EndTime >= endTime &&
-                    cs.Status == CourtScheduleStatus.Available))
-                .Select(c => c.Id)
-                .ToListAsync(cancellationToken);
 
             // Get all bookings for the requested date
-            var bookedCourts = await _context.BookingDetails
-                .Join(_context.Bookings,
-                    bd => bd.BookingId,
-                    b => b.Id,
-                    (bd, b) => new { BookingDetail = bd, Booking = b })
-                .Where(x => x.Booking.Status != BookingStatus.Cancelled &&
-                          x.Booking.BookingDate.Date == requestedDate &&
-                          ((x.BookingDetail.StartTime <= startTime && x.BookingDetail.EndTime > startTime) ||
-                           (x.BookingDetail.StartTime < endTime && x.BookingDetail.EndTime >= endTime) ||
-                           (x.BookingDetail.StartTime >= startTime && x.BookingDetail.EndTime <= endTime)))
-                .Select(x => x.BookingDetail.CourtId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
+            var bookedCourtsQuery = _context.BookingDetails
+            .Join(_context.Bookings,
+                bd => bd.BookingId,
+                b => b.Id,
+                (bd, b) => new { BookingDetail = bd, Booking = b })
+            .Where(x => x.Booking.Status != BookingStatus.Cancelled &&
+                  x.Booking.BookingDate.Date == requestedDate);
 
-            // Get courts that are available (have schedule and not booked)
-            var availableCourtIds = availableCourts
-                .Where(courtId => !bookedCourts.Contains(courtId))
-                .ToList();
+            if (query.StartTime.HasValue)
+            {
+                var startTime = query.StartTime.Value;
+                bookedCourtsQuery = bookedCourtsQuery.Where(x =>
+                    (x.BookingDetail.StartTime <= startTime && x.BookingDetail.EndTime > startTime) ||
+                    (x.BookingDetail.StartTime >= startTime));
+            }
 
-            // Filter sport centers that have available courts
+            if (query.EndTime.HasValue)
+            {
+                var endTime = query.EndTime.Value;
+                bookedCourtsQuery = bookedCourtsQuery.Where(x =>
+                    (x.BookingDetail.StartTime < endTime && x.BookingDetail.EndTime >= endTime) ||
+                    (x.BookingDetail.EndTime <= endTime));
+            }
+
+            var bookedCourts = await bookedCourtsQuery
+            .Select(x => x.BookingDetail.CourtId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+            // Filter sport centers that have courts not booked on the requested date and time
             sportCentersQuery = sportCentersQuery.Where(sc =>
-                sc.Courts.Any(c => availableCourtIds.Contains(c.Id)));
+            sc.Courts.Any(c => !bookedCourts.Contains(c.Id)));
         }
 
         // Get total count from filtered query
