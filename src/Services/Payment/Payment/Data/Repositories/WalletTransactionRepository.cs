@@ -16,6 +16,11 @@ namespace Payment.API.Data.Repositories
         {
             await _context.WalletTransactions.AddAsync(transaction, cancellationToken);
         }
+        public async Task<WalletTransaction?> GetByReferenceCodeAsync(Guid referenceCode)
+        {
+            return await _context.WalletTransactions
+                .FirstOrDefaultAsync(t => t.ReferenceId == referenceCode);
+        }
         public async Task<long> GetTransactionCountByUserIdAsync(Guid userId, CancellationToken cancellationToken)
         {
             return await _context.WalletTransactions
