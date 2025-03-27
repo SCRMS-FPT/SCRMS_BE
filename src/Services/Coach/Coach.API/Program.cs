@@ -34,7 +34,9 @@ builder.Services.AddScoped<ICoachPackageRepository, CoachPackageRepository>();
 builder.Services.AddScoped<ICoachSportRepository, CoachSportRepository>();
 builder.Services.AddScoped<ICoachPromotionRepository, CoachPromotionRepository>();
 builder.Services.AddScoped<ICoachPackagePurchaseRepository, CoachPackagePurchaseRepository>();
-
+// Add these configurations to your service registration
+builder.Services.Configure<ImageKitOptions>(builder.Configuration.GetSection("ImageKit"));
+builder.Services.AddHttpClient<IImageKitService, ImageKitService>();
 // Add this to service registration section
 builder.Services.Configure<BackblazeSettings>(builder.Configuration.GetSection("Backblaze"));
 builder.Services.AddScoped<IBackblazeService, BackblazeService>();

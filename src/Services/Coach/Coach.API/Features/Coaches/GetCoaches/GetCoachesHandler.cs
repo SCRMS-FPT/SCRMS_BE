@@ -7,8 +7,16 @@ namespace Coach.API.Features.Coaches.GetCoaches
 {
     public record GetCoachesQuery : IQuery<IEnumerable<CoachResponse>>;
 
+    public record CoachWeeklyScheduleResponse(
+    int DayOfWeek,         // 1=Sunday to 7=Saturday
+    string DayName,        // "Sunday", "Monday", etc.
+    string StartTime,      // "08:00:00" format
+    string EndTime,        // "17:00:00" format
+    Guid ScheduleId);      // The ID of the schedule record
+
+    // Update existing CoachResponse to include schedules
     public record CoachResponse(
-        Guid UserId,
+        Guid Id,
         string FullName,
         string Email,
         string Phone,
@@ -18,7 +26,8 @@ namespace Coach.API.Features.Coaches.GetCoaches
         string Bio,
         decimal RatePerHour,
         DateTime CreatedAt,
-        List<CoachPackageResponse> Packages);
+        List<CoachPackageResponse> Packages,
+        List<CoachWeeklyScheduleResponse>? WeeklySchedule = null); // New field
 
     public record CoachPackageResponse(
         Guid Id,
