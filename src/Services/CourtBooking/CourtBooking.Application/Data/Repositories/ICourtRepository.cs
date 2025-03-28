@@ -21,7 +21,7 @@ namespace CourtBooking.Application.Data.Repositories
         Task<List<Court>> GetAllCourtsOfSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
 
         Task<List<Court>> GetPaginatedCourtsAsync(int pageIndex, int pageSize, CancellationToken cancellationToken);
-
+        Task<List<Court>> GetCourtsBySportCenterIdsAsync(List<SportCenterId> sportCenterIds, CancellationToken cancellationToken);
         Task<long> GetTotalCourtCountAsync(CancellationToken cancellationToken);
 
         Task<Court?> GetCourtByIdAsync(Guid courtId, CancellationToken cancellationToken = default);

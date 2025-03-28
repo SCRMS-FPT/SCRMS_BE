@@ -32,7 +32,12 @@ namespace CourtBooking.Application.Data.Repositories
                 .Include(c => c.CourtSchedules)
                 .FirstOrDefaultAsync(c => c.Id == courtId, cancellationToken);
         }
-
+        public async Task<List<Court>> GetCourtsBySportCenterIdsAsync(List<SportCenterId> sportCenterIds, CancellationToken cancellationToken)
+        {
+            return await _context.Courts
+                .Where(c => sportCenterIds.Contains(c.SportCenterId))
+                .ToListAsync(cancellationToken);
+        }
         public async Task UpdateCourtAsync(Court court, CancellationToken cancellationToken)
         {
             _context.Courts.Update(court);
