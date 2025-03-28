@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtDetails;
-
+using CourtBooking.Application.CourtManagement.Queries.GetCourtsByOwner;
+using System.Security.Claims;
 namespace CourtBooking.API.Endpoints
 {
     public record CreateCourtRequest(CourtCreateDTO Court);
@@ -19,7 +20,7 @@ namespace CourtBooking.API.Endpoints
     public record UpdateCourtRequest(CourtUpdateDTO Court);
     public record UpdateCourtResponse(bool IsSuccess);
     public record DeleteCourtResponse(bool IsSuccess);
-
+    public record GetCourtsByOwnerResponse(PaginatedResult<CourtDTO> Courts);
     public class CourtEndpoints : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
@@ -68,7 +69,31 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Lấy danh sách sân")
             .WithDescription("Lấy danh sách sân có phân trang và lọc theo trung tâm, môn thể thao và loại sân");
+            group.MapGet("/owner-courts", [Authorize(Policy = "CourtOwner")] async (
+                [AsParameters] PaginationRequest request,
+                [FromQuery] Guid? sportId,
+                [FromQuery] string? courtType,
+                HttpContext httpContext,
+                ISender sender) =>
+            {
+                // Extract owner ID from JWT claims
+                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var ownerId))
+                {
+                    return Results.Problem("Unable to identify user", statusCode: StatusCodes.Status401Unauthorized);
+                }
 
+                var query = new GetCourtsByOwnerQuery(request, ownerId, sportId, courtType);
+                var result = await sender.Send(query);
+                var response = new GetCourtsByOwnerResponse(result.Courts);
+                return Results.Ok(response);
+            })
+            .WithName("GetCourtsByOwner")
+            .Produces<GetCourtsByOwnerResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithSummary("Lấy danh sách sân thuộc sở hữu của chủ sân")
+            .WithDescription("Lấy danh sách tất cả các sân thuộc các trung tâm mà người dùng hiện tại sở hữu");
             // Update Court
             group.MapPut("/{id:guid}", [Authorize(Policy = "CourtOwnerOfCenter")] async (Guid id, [FromBody] UpdateCourtRequest request, ISender sender) =>
             {

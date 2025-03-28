@@ -165,19 +165,73 @@ namespace CourtBooking.API.Endpoints
                         .WithDescription("Get all sport centers owned by the authenticated Court Owner with optional filters");
 
             // Update Sport Center
-            group.MapPut("/{centerId:guid}", async (Guid centerId, [FromBody] UpdateSportCenterCommand command, ISender sender) =>
+            group.MapPut("/{centerId:guid}", async (
+                Guid centerId,
+                [FromForm] UpdateSportCenterFormModel model,
+                [FromServices] IFileStorageService fileStorage,
+                [FromServices] ISender sender) =>
             {
-                command = command with { SportCenterId = centerId }; // Gán centerId từ path vào command
+                // Handle avatar image
+                string avatarUrl = model.ExistingAvatar ?? "";
+
+                if (!model.KeepExistingAvatar || model.AvatarImage != null)
+                {
+                    // If not keeping existing avatar or uploading a new one
+                    if (model.AvatarImage != null)
+                    {
+                        // Upload new avatar
+                        avatarUrl = await fileStorage.UploadFileAsync(model.AvatarImage, "sportcenters/avatars");
+                    }
+                    else
+                    {
+                        // User wants to remove avatar without providing a new one
+                        avatarUrl = "";
+                    }
+                }
+
+                // Handle gallery images
+                List<string> galleryUrls = new List<string>();
+
+                if (model.KeepExistingGallery && model.ExistingGalleryUrls != null)
+                {
+                    galleryUrls.AddRange(model.ExistingGalleryUrls);
+                }
+
+                if (model.GalleryImages != null && model.GalleryImages.Count > 0)
+                {
+                    // Add new gallery images
+                    var newGalleryUrls = await fileStorage.UploadFilesAsync(model.GalleryImages, "sportcenters/gallery");
+                    galleryUrls.AddRange(newGalleryUrls);
+                }
+
+                // Create command with updated information
+                var command = new UpdateSportCenterCommand(
+                    SportCenterId: centerId,
+                    Name: model.Name,
+                    PhoneNumber: model.PhoneNumber,
+                    AddressLine: model.AddressLine,
+                    City: model.City,
+                    District: model.District,
+                    Commune: model.Commune,
+                    Latitude: model.Latitude,
+                    Longitude: model.Longitude,
+                    Avatar: avatarUrl,
+                    ImageUrls: galleryUrls,
+                    Description: model.Description
+                );
+
                 var result = await sender.Send(command);
                 return Results.Ok(result.SportCenter);
             })
             .WithName("UpdateSportCenter")
-            .RequireAuthorization("AdminOrCourtOwner") // Yêu cầu JWT và quyền Admin hoặc CourtOwner
-            .Produces<SportCenterListDTO>(StatusCodes.Status200OK)
+            .RequireAuthorization("AdminOrCourtOwner")
+            .DisableAntiforgery() // Disable CSRF for file uploads
+            .Accepts<UpdateSportCenterFormModel>("multipart/form-data")
+            .Produces<SportCenterDetailDTO>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .WithSummary("Update Sport Center")
-            .WithDescription("Updates the information of an existing sport center");
+            .WithSummary("Update Sport Center with Images")
+            .WithDescription("Updates the information of an existing sport center with optional image uploads");
 
             group.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
             {
@@ -208,4 +262,24 @@ namespace CourtBooking.API.Endpoints
         public IFormFile AvatarImage { get; set; }
         public List<IFormFile> GalleryImages { get; set; }
     }
+
+    public class UpdateSportCenterFormModel
+    {
+        public string Name { get; set; }
+        public string PhoneNumber { get; set; }
+        public string AddressLine { get; set; }
+        public string City { get; set; }
+        public string District { get; set; }
+        public string Commune { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string Description { get; set; }
+        public IFormFile? AvatarImage { get; set; }
+        public List<IFormFile>? GalleryImages { get; set; }
+        public string? ExistingAvatar { get; set; }
+        public List<string>? ExistingGalleryUrls { get; set; }
+        public bool KeepExistingAvatar { get; set; } = true;
+        public bool KeepExistingGallery { get; set; } = true;
+    }
+
 }

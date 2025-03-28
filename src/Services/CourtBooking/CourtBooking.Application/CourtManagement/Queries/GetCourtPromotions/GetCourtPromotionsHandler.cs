@@ -43,8 +43,8 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtPromotions
             if (request.Role == "CourtOwner")
             {
                 var sportCenter = await _context.SportCenters
-                    .FirstOrDefaultAsync(sc => sc.Id.Value == court.SportCenterId.Value, cancellationToken);
-                if (sportCenter == null || sportCenter.OwnerId.Value != request.UserId)
+                    .FirstOrDefaultAsync(sc => sc.Id == court.SportCenterId, cancellationToken);
+                if (sportCenter == null || sportCenter.OwnerId != OwnerId.Of(request.UserId))
                     throw new UnauthorizedAccessException("Bạn không sở hữu sân này.");
             }
 

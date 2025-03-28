@@ -19,5 +19,18 @@
         "Action": "StartWithoutDebugging"
       }
     ]
+  },
+  {
+    "Name": "court pay",
+    "Projects": [
+      {
+        "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
+        "Action": "Start"
+      }
+    ]
   }
 ]
