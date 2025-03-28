@@ -8,6 +8,8 @@ using CourtBooking.Application.BookingManagement.Queries.GetBookings;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Application.BookingManagement.Queries.GetBookingById;
 using CourtBooking.Application.BookingManagement.Command.CancelBooking;
+using CourtBooking.Application.BookingManagement.Command.UpdateBookingNote;
+using CourtBooking.Application.BookingManagement.Command.UpdateBookingStatus;
 using CourtBooking.Application.BookingManagement.Queries.CalculateBookingPrice;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -18,7 +20,7 @@ namespace CourtBooking.API.Endpoints
     public record GetBookingDetailResponse(BookingDetailDto Booking);
     public record GetUserBookingsRequest(int Page = 1, int PageSize = 10, DateTime? StartDate = null, DateTime? EndDate = null, int? Status = null);
     public record GetUserBookingsResponse(PaginatedResult<BookingDto> Bookings);
-    public record UpdateBookingStatusRequest(int Status);
+    public record UpdateBookingStatusRequest(string Status);
     public record UpdateBookingStatusResponse(bool IsSuccess);
     public record CalculateBookingPriceRequest(BookingCreateDTO Booking);
     public record CalculateBookingPriceResponse(
@@ -157,6 +159,64 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get Booking By Id")
             .WithDescription("Get details of a specific booking if authorized");
+            // Add this endpoint in the AddRoutes method of CourtEndpoints.cs
+            group.MapPut("/bookings/{bookingId:guid}/status", [Authorize(Policy = "CourtOwner")] async (
+                Guid bookingId,
+                [FromBody] UpdateBookingStatusRequest request,
+                HttpContext httpContext,
+                ISender sender) =>
+            {
+                // Extract owner ID from JWT claims
+                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var ownerId))
+                {
+                    return Results.Problem("Unable to identify user", statusCode: StatusCodes.Status401Unauthorized);
+                }
+
+                if (!Enum.TryParse<BookingStatus>(request.Status, true, out var bookingStatus))
+                {
+                    return Results.Problem("Invalid booking status", statusCode: StatusCodes.Status400BadRequest);
+                }
+
+                var command = new UpdateBookingStatusCommand(bookingId, ownerId, bookingStatus);
+                var result = await sender.Send(command);
+                return result.IsSuccess
+                    ? Results.Ok(new UpdateBookingStatusResponse(result.IsSuccess))
+                    : Results.Problem(result.ErrorMessage, statusCode: StatusCodes.Status400BadRequest);
+            })
+                        .WithName("UpdateBookingStatus")
+                        .Produces<UpdateBookingStatusResponse>(StatusCodes.Status200OK)
+                        .ProducesProblem(StatusCodes.Status400BadRequest)
+                        .ProducesProblem(StatusCodes.Status401Unauthorized)
+                        .WithSummary("Update Booking Status")
+                        .WithDescription("Allows court owners to update the status of a booking for their courts.");
+
+            // Add this endpoint in the AddRoutes method of CourtEndpoints.cs
+            group.MapPut("/bookings/{bookingId:guid}/note", [Authorize(Policy = "User")] async (
+                Guid bookingId,
+                [FromBody] UpdateBookingNoteRequest request,
+                HttpContext httpContext,
+                ISender sender) =>
+            {
+                // Extract user ID from JWT claims
+                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    return Results.Problem("Unable to identify user", statusCode: StatusCodes.Status401Unauthorized);
+                }
+
+                var command = new UpdateBookingNoteCommand(bookingId, userId, request.Note);
+                var result = await sender.Send(command);
+                return result.IsSuccess
+                    ? Results.Ok(new UpdateBookingNoteResponse(result.IsSuccess))
+                    : Results.Problem(result.ErrorMessage, statusCode: StatusCodes.Status400BadRequest);
+            })
+            .WithName("UpdateBookingNote")
+            .Produces<UpdateBookingNoteResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithSummary("Update Booking Note")
+            .WithDescription("Allows users to update the note field of their own bookings.");
 
             group.MapPut("/{bookingId:guid}/cancel", async (
                 Guid bookingId,
@@ -191,4 +251,7 @@ namespace CourtBooking.API.Endpoints
             .WithDescription("Cancels a booking and processes refund if applicable based on the court's cancellation policy");
         }
     }
+
+    public record UpdateBookingNoteRequest(string Note);
+    public record UpdateBookingNoteResponse(bool IsSuccess);
 }

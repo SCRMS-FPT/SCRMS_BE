@@ -112,7 +112,13 @@ namespace CourtBooking.Domain.Models
                 throw new DomainException("Only pending bookings can be confirmed.");
             Status = BookingStatus.Confirmed;
         }
+        // Add this method to the Booking class in d:\SEP490_G37\m\SCRMS_BE\src\Services\CourtBooking\CourtBooking.Domain\Models\Booking.cs
 
+        public void UpdateNote(string note)
+        {
+            Note = note;
+            SetLastModified(DateTime.UtcNow);
+        }
         public void MarkAsPendingPayment()
         {
             Status = BookingStatus.PendingPayment;
