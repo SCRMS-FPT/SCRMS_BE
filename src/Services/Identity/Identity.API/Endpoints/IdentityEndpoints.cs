@@ -170,6 +170,7 @@ namespace Identity.API.Endpoints
          string LastName,
          string Phone,
          DateTime BirthDate,
-         string Gender
+         string Gender,
+         string SelfIntroduction
     );
 }
