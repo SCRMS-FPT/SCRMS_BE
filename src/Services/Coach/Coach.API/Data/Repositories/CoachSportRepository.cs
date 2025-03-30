@@ -44,6 +44,12 @@ namespace Coach.API.Data.Repositories
             return await _context.CoachSports.Where(cs => cs.CoachId == coachId).ToListAsync(cancellationToken);
         }
 
+        public async Task<IEnumerable<CoachSport>> GetCoachesBySportIdAsync(Guid sportId, CancellationToken cancellationToken)
+        {
+            return await _context.CoachSports
+                .Where(cs => cs.SportId == sportId)
+                .ToListAsync(cancellationToken);
+        }
         public async Task DeleteCoachSportAsync(CoachSport coachSport, CancellationToken cancellationToken)
         {
             var existingCoachSport = await _context.CoachSports

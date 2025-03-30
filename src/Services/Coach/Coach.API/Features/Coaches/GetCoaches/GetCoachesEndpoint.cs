@@ -6,13 +6,21 @@ namespace Coach.API.Features.Coaches.GetCoaches
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/coaches", async ([FromServices] ISender sender) =>
+            app.MapGet("/coaches", async (
+                [FromQuery] string? name,
+                [FromQuery] Guid? sportId,
+                [FromQuery] decimal? minPrice,
+                [FromQuery] decimal? maxPrice,
+                [FromServices] ISender sender) =>
             {
-                var result = await sender.Send(new GetCoachesQuery());
+                var query = new GetCoachesQuery(name, sportId, minPrice, maxPrice);
+                var result = await sender.Send(query);
                 return Results.Ok(result);
             })
             .WithName("GetCoaches")
-            .Produces<IEnumerable<CoachResponse>>().WithTags("Coach");
+            .Produces<IEnumerable<CoachResponse>>()
+            .WithTags("Coach")
+            .WithDescription("Get all coaches with optional filtering by name, sport, and price range");
         }
     }
 }
