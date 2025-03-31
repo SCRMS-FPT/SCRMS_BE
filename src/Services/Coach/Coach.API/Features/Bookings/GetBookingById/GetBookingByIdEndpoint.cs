@@ -23,7 +23,6 @@ namespace Coach.API.Features.Bookings.GetBookingById
                 var result = await sender.Send(new GetBookingByIdQuery(bookingId));
                 return Results.Ok(result);
             })
-            .RequireAuthorization("Coach")
             .WithName("GetBookingById")
             .Produces<BookingDetailResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
