@@ -20,7 +20,10 @@ namespace Coach.API.Data.Repositories
             }
             await _context.CoachBookings.AddAsync(booking, cancellationToken);
         }
-
+        public IQueryable<CoachBooking> GetCoachBookingsByUserIdQueryable(Guid userId)
+        {
+            return _context.CoachBookings.Where(b => b.UserId == userId);
+        }
         public async Task<CoachBooking?> GetCoachBookingByIdAsync(Guid bookingId, CancellationToken cancellationToken)
         {
             return await _context.CoachBookings.FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
