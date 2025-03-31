@@ -11,6 +11,7 @@
         Task<List<CoachBooking>> GetCoachBookingsByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
 
         Task<bool> HasOverlappingCoachBookingAsync(Guid coachId, DateOnly bookingDate, TimeOnly startTime, TimeOnly endTime, CancellationToken cancellationToken);
+        IQueryable<CoachBooking> GetCoachBookingsByUserIdQueryable(Guid userId);
 
         IQueryable<CoachBooking> GetCoachBookingsByCoachIdQueryable(Guid coachId); // Thêm phương thức mới
     }
