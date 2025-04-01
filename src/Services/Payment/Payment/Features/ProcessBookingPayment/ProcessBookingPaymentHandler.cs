@@ -14,6 +14,7 @@ namespace Payment.API.Features.ProcessBookingPayment
         string PaymentType,
         Guid? ReferenceId = null,
         Guid? CoachId = null,
+        Guid? ProviderId = null,
         Guid? BookingId = null,
         Guid? PackageId = null,
         string? Status = "Confirmed") : IRequest<Guid>;
@@ -40,28 +41,27 @@ namespace Payment.API.Features.ProcessBookingPayment
         public async Task<Guid> Handle(ProcessBookingPaymentCommand request, CancellationToken cancellationToken)
         {
             if (request.Amount <= 0)
-                throw new ArgumentException("Amount must be positive.");
+                throw new ArgumentException("Số tiền phải là số dương.");
 
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
 
-                // Improved error handling for insufficient balance
                 if (wallet == null)
                 {
-                    await HandlePaymentFailure(request, "User wallet not found", cancellationToken);
-                    throw new Exception("User wallet not found.");
+                    await HandlePaymentFailure(request, "Không tìm thấy ví người dùng", cancellationToken);
+                    throw new Exception("Không tìm thấy ví người dùng.");
                 }
 
                 if (wallet.Balance < request.Amount)
                 {
-                    await HandlePaymentFailure(request, "Insufficient balance", cancellationToken);
-                    throw new Exception("Insufficient balance.");
+                    await HandlePaymentFailure(request, "Số dư không đủ", cancellationToken);
+                    throw new Exception("Số dư không đủ.");
                 }
 
-                // Continue with existing success case...
-                var transactionRecord = new WalletTransaction
+                // 1. TRỪ TIỀN NGƯỜI DÙNG
+                var userTransaction = new WalletTransaction
                 {
                     Id = Guid.NewGuid(),
                     UserId = request.UserId,
@@ -75,16 +75,54 @@ namespace Payment.API.Features.ProcessBookingPayment
                 wallet.Balance -= request.Amount;
                 wallet.UpdatedAt = DateTime.UtcNow;
 
-                await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
+                await _walletTransactionRepository.AddWalletTransactionAsync(userTransaction, cancellationToken);
                 await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
-                await _context.SaveChangesAsync(cancellationToken);
 
-                // Generate the appropriate event based on payment type
+                // 2. CỘNG TIỀN CHO PROVIDER (NẾU CÓ)
+                if (request.ProviderId.HasValue && request.ProviderId.Value != Guid.Empty)
+                {
+                    // Tìm hoặc tạo ví của provider
+                    var providerWallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.ProviderId.Value, cancellationToken);
+
+                    if (providerWallet == null)
+                    {
+                        // Tạo ví mới nếu chưa có
+                        providerWallet = new UserWallet
+                        {
+                            UserId = request.ProviderId.Value,
+                            Balance = 0,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _userWalletRepository.AddUserWalletAsync(providerWallet, cancellationToken);
+                    }
+
+                    // Cộng toàn bộ số tiền vào ví provider (không trừ hoa hồng)
+                    providerWallet.Balance += request.Amount;
+                    providerWallet.UpdatedAt = DateTime.UtcNow;
+                    await _userWalletRepository.UpdateUserWalletAsync(providerWallet, cancellationToken);
+
+                    // Tạo giao dịch cộng tiền
+                    var providerTransaction = new WalletTransaction
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = request.ProviderId.Value,
+                        TransactionType = $"{request.PaymentType}Revenue",
+                        ReferenceId = request.ReferenceId,
+                        Amount = request.Amount, // Cộng toàn bộ số tiền (không trừ phí)
+                        Description = $"Doanh thu từ {request.Description}",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _walletTransactionRepository.AddWalletTransactionAsync(providerTransaction, cancellationToken);
+                }
+
+                // 3. TẠO EVENT PHÙ HỢP THEO LOẠI THANH TOÁN
+                // Các đoạn code còn lại không thay đổi
                 if (request.PaymentType == "ServicePackage" || request.PaymentType.StartsWith("Identity"))
                 {
-                    // Create service package upgrade event
+                    // Code xử lý ServicePackage
                     var servicePackageEvent = new ServicePackagePaymentEvent(
-                        transactionRecord.Id,
+                        userTransaction.Id,
                         request.UserId,
                         request.ReferenceId,
                         request.Amount,
@@ -98,7 +136,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                 {
                     // Create coach payment event
                     var coachEvent = new CoachPaymentEvent(
-                        transactionRecord.Id,
+                        userTransaction.Id,
                         request.UserId,
                         request.CoachId.Value,
                         request.Amount,
@@ -114,7 +152,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                 {
                     // Create a generic payment event for court booking
                     var paymentEvent = new BookCourtSucceededEvent(
-                        transactionRecord.Id,
+                        userTransaction.Id,
                         request.UserId,
                         request.ReferenceId,
                         request.Amount,
@@ -129,7 +167,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                 {
                     // Generic payment event for other types
                     var paymentEvent = new PaymentSucceededEvent(
-                        transactionRecord.Id,
+                        userTransaction.Id,
                         request.UserId,
                         request.ReferenceId,
                         request.Amount,
@@ -141,14 +179,13 @@ namespace Payment.API.Features.ProcessBookingPayment
                     await _outboxService.SaveMessageAsync(paymentEvent);
                 }
 
+                await _context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
-                return transactionRecord.Id;
+                return userTransaction.Id;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-
-                // Handle any other unexpected errors
                 await HandlePaymentFailure(request, ex.Message, cancellationToken);
                 throw;
             }
@@ -173,5 +210,4 @@ namespace Payment.API.Features.ProcessBookingPayment
             await _outboxService.SaveMessageAsync(failureEvent);
         }
     }
-
 }

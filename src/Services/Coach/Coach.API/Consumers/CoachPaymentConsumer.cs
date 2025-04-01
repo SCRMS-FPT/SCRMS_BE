@@ -3,6 +3,7 @@ using Coach.API.Data.Models;
 using Coach.API.Data.Repositories;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Consumers
 {
@@ -35,7 +36,8 @@ namespace Coach.API.Consumers
                 paymentEvent.PaymentType == "CoachPackage" ||
                 paymentEvent.PaymentType.StartsWith("Coach"))
             {
-                _logger.LogInformation("Xử lý thanh toán cho Coach: {TransactionId}", paymentEvent.TransactionId);
+                _logger.LogInformation("Xử lý thanh toán cho Coach: {TransactionId}, PaymentType: {PaymentType}",
+                    paymentEvent.TransactionId, paymentEvent.PaymentType);
 
                 // Thực hiện xử lý thanh toán cho coach
                 await ProcessCoachPayment(paymentEvent);
@@ -86,7 +88,55 @@ namespace Coach.API.Consumers
         {
             // Xử lý thanh toán cơ bản cho event cũ
             _logger.LogInformation("Xử lý thanh toán cơ bản: {TransactionId}", payment.TransactionId);
-            // Giữ lại để tương thích với event cũ
+
+            // Kiểm tra nếu là thanh toán mua gói coach
+            if (payment is PaymentSucceededEvent successEvent &&
+                successEvent.PaymentType == "CoachPackage" &&
+                successEvent.ReferenceId.HasValue)
+            {
+                await ProcessCoachPackagePaymentFromGenericEvent(successEvent);
+            }
+        }
+
+        private async Task ProcessCoachPackagePaymentFromGenericEvent(PaymentSucceededEvent payment)
+        {
+            if (!payment.ReferenceId.HasValue)
+            {
+                _logger.LogWarning("Không có ReferenceId trong sự kiện thanh toán gói: {TransactionId}",
+                    payment.TransactionId);
+                return;
+            }
+
+            var packageId = payment.ReferenceId.Value;
+            _logger.LogInformation("Xử lý mua gói huấn luyện từ PaymentSucceededEvent: {PackageId} cho người dùng {UserId}",
+                packageId, payment.UserId);
+
+            // Lấy thông tin gói coach
+            var package = await _packageRepository.GetCoachPackageByIdAsync(packageId, CancellationToken.None);
+            if (package == null)
+            {
+                _logger.LogWarning("Không tìm thấy gói huấn luyện với ID: {PackageId}", packageId);
+                return;
+            }
+
+            // Tạo mới CoachPackagePurchase
+            var packagePurchase = new CoachPackagePurchase
+            {
+                Id = Guid.NewGuid(),
+                UserId = payment.UserId,
+                CoachPackageId = packageId,
+                PurchaseDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMonths(3), // Giả sử gói có hiệu lực 3 tháng
+                SessionsUsed = 0, // Số buổi đã sử dụng ban đầu là 0
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Lưu vào database
+            await _packagePurchaseRepository.AddCoachPackagePurchaseAsync(packagePurchase, CancellationToken.None);
+
+            _logger.LogInformation("Đã tạo gói huấn luyện cho người dùng từ PaymentSucceededEvent: UserID {UserId}, PackageID {PackageId}",
+                payment.UserId, packageId);
         }
 
         private async Task ProcessCoachBookingPayment(CoachPaymentEvent payment)

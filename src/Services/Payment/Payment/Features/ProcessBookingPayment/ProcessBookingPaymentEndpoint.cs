@@ -16,6 +16,14 @@ namespace Payment.API.Features.ProcessBookingPayment
             app.MapPost("/api/payments/wallet/booking", async (ProcessPaymentRequest request, ISender sender, HttpContext httpContext) =>
             {
                 var userId = Guid.Parse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+
+                // Xác định ProviderId nếu chưa có
+                Guid? providerId = request.ProviderId;
+                if (providerId == null && (request.PaymentType == "CoachBooking" || request.PaymentType.StartsWith("Coach")))
+                {
+                    providerId = request.CoachId;  // Sử dụng CoachId làm ProviderId cho thanh toán Coach
+                }
+
                 var command = new ProcessBookingPaymentCommand(
                     userId,
                     request.Amount,
@@ -23,6 +31,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                     request.PaymentType,
                     request.ReferenceId,
                     request.CoachId,
+                    providerId,               // Truyền ProviderId vào command
                     request.BookingId,
                     request.PackageId,
                     request.Status);
@@ -55,6 +64,7 @@ namespace Payment.API.Features.ProcessBookingPayment
 
         Guid? ReferenceId = null,
         Guid? CoachId = null,
+        Guid? ProviderId = null,
         Guid? BookingId = null,
         Guid? PackageId = null,
         string? Status = "Confirmed"
