@@ -40,6 +40,7 @@ namespace Coach.API.Migrations
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     Price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     SessionCount = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "active"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
