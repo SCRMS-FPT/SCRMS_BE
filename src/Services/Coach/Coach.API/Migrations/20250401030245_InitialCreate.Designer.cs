@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Coach.API.Migrations
 {
     [DbContext(typeof(CoachDbContext))]
-    [Migration("20250322102024_InitialCreate")]
+    [Migration("20250401030245_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -147,6 +147,13 @@ namespace Coach.API.Migrations
 
                     b.Property<int>("SessionCount")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("active");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

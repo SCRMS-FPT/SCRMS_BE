@@ -9,7 +9,8 @@ namespace Coach.API.Data.Repositories
         Task<CoachPackage?> GetCoachPackageByIdAsync(Guid packageId, CancellationToken cancellationToken);
 
         Task UpdateCoachPackageAsync(CoachPackage package, CancellationToken cancellationToken);
-
+        Task<List<CoachPackage>> GetActivePackagesByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
+        Task<List<CoachPackage>> GetAllPackagesByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
         Task<List<CoachPackage>> GetCoachPackagesByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
     }
 }

@@ -71,6 +71,7 @@ namespace Coach.API.Data
                 entity.Property(p => p.Name).HasMaxLength(255);
                 entity.Property(p => p.Description).HasMaxLength(1000);
                 entity.Property(p => p.Price).HasColumnType("decimal(18,2)");
+                entity.Property(p => p.Status).HasMaxLength(20).HasDefaultValue("active");
                 entity.HasOne(cp => cp.Coach)
                     .WithMany(c => c.Packages)
                     .HasForeignKey(cp => cp.CoachId);

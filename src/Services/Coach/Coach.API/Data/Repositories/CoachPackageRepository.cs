@@ -34,7 +34,19 @@ namespace Coach.API.Data.Repositories
             await _context.CoachPackages.AddAsync(package, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
         }
+        public async Task<List<CoachPackage>> GetActivePackagesByCoachIdAsync(Guid coachId, CancellationToken cancellationToken)
+        {
+            return await _context.CoachPackages
+                .Where(p => p.CoachId == coachId && p.Status == "active")
+                .ToListAsync(cancellationToken);
+        }
 
+        public async Task<List<CoachPackage>> GetAllPackagesByCoachIdAsync(Guid coachId, CancellationToken cancellationToken)
+        {
+            return await _context.CoachPackages
+                .Where(p => p.CoachId == coachId)
+                .ToListAsync(cancellationToken);
+        }
         public async Task<CoachPackage?> GetCoachPackageByIdAsync(Guid packageId, CancellationToken cancellationToken)
         {
             return await _context.CoachPackages.FirstOrDefaultAsync(p => p.Id == packageId, cancellationToken);
