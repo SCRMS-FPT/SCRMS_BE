@@ -94,6 +94,11 @@ namespace Coach.API.Data
             modelBuilder.Entity<CoachPromotion>()
                 .Property(cp => cp.DiscountType)
                 .HasMaxLength(50);
+            modelBuilder.Entity<CoachPromotion>()
+                .HasOne(cp => cp.Package)
+                .WithMany(p => p.Promotions) // You'll need to add this collection to CoachPackage
+                .HasForeignKey(cp => cp.PackageId)
+                .IsRequired(false);
         }
     }
 }

@@ -36,9 +36,6 @@ builder.Services.AddScoped<ICoachPackagePurchaseRepository, CoachPackagePurchase
 // Add these configurations to your service registration
 builder.Services.Configure<ImageKitOptions>(builder.Configuration.GetSection("ImageKit"));
 builder.Services.AddHttpClient<IImageKitService, ImageKitService>();
-// Add this to service registration section
-builder.Services.Configure<BackblazeSettings>(builder.Configuration.GetSection("Backblaze"));
-builder.Services.AddScoped<IBackblazeService, BackblazeService>();
 
 // Chỉ đăng ký MessageBroker đơn giản
 builder.Services.AddMessageBroker(builder.Configuration, assembly);

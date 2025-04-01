@@ -1,9 +1,11 @@
 ﻿using Coach.API.Data;
+using BuildingBlocks.Exceptions;
 
 namespace Coach.API.Features.Promotion.CreateCoachPromotion
 {
     public record CreateCoachPromotionCommand(
         Guid CoachId,
+        Guid? PackageId, // Added PackageId
         string Description,
         string DiscountType,
         decimal DiscountValue,
@@ -28,20 +30,41 @@ namespace Coach.API.Features.Promotion.CreateCoachPromotion
                 .WithMessage("Valid to must be before valid from");
         }
     }
+
     public class CreateCoachPromotionCommandHandler(CoachDbContext context)
         : ICommandHandler<CreateCoachPromotionCommand, CreateCoachPromotionResult>
     {
         public async Task<CreateCoachPromotionResult> Handle(CreateCoachPromotionCommand command, CancellationToken cancellationToken)
         {
+            // If PackageId is provided, verify it belongs to the same coach
+            if (command.PackageId.HasValue)
+            {
+                var package = await context.CoachPackages.FindAsync(command.PackageId.Value);
+                if (package == null)
+                {
+                    throw new NotFoundException("Package not found");
+                }
+
+                if (package.CoachId != command.CoachId)
+                {
+                    throw new BadRequestException("The package does not belong to this coach");
+                }
+            }
+
             var coachPromotion = new CoachPromotion
             {
-                ValidTo = command.ValidTo,
+                Id = Guid.NewGuid(),
                 CoachId = command.CoachId,
+                PackageId = command.PackageId, // Set the PackageId
                 Description = command.Description,
                 DiscountType = command.DiscountType,
                 DiscountValue = command.DiscountValue,
                 ValidFrom = command.ValidFrom,
+                ValidTo = command.ValidTo,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
+
             await context.CoachPromotions.AddAsync(coachPromotion, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return new CreateCoachPromotionResult(coachPromotion.Id);

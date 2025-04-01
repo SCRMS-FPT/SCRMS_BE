@@ -88,6 +88,46 @@ namespace Coach.API.Features.Bookings.CreateBooking
 
             var duration = (command.EndTime - command.StartTime).TotalHours;
             var totalPrice = coach.RatePerHour * (decimal)duration;
+            string bookingStatus = "pending";
+            int sessionsRemaining = 0;
+
+            // Check if booking is using a package
+            if (command.PackageId.HasValue)
+            {
+                var package = await _packageRepository.GetCoachPackageByIdAsync(command.PackageId.Value, cancellationToken);
+                if (package == null)
+                    throw new Exception("Package not found");
+
+                // Check if the user has already purchased this package
+                var packagePurchases = await _context.CoachPackagePurchases
+                    .Where(p => p.UserId == command.UserId &&
+                                p.CoachPackageId == command.PackageId.Value &&
+                                p.ExpiryDate > DateTime.UtcNow)
+                    .OrderByDescending(p => p.PurchaseDate)
+                    .ToListAsync(cancellationToken);
+
+                var validPurchase = packagePurchases.FirstOrDefault(p => p.SessionsUsed < package.SessionCount);
+
+                if (validPurchase != null)
+                {
+                    // User has a valid package with remaining sessions
+                    validPurchase.SessionsUsed += 1;
+                    validPurchase.UpdatedAt = DateTime.UtcNow;
+
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    // Calculate remaining sessions
+                    sessionsRemaining = package.SessionCount - validPurchase.SessionsUsed;
+
+                    // Set booking status to completed since it's pre-paid through the package
+                    bookingStatus = "completed";
+                }
+                else
+                {
+                    // No valid package purchase or no remaining sessions
+                    throw new Exception("No valid package with remaining sessions found. Please purchase a package first or select a different payment method.");
+                }
+            }
 
             var booking = new CoachBooking
             {
@@ -98,22 +138,13 @@ namespace Coach.API.Features.Bookings.CreateBooking
                 BookingDate = command.BookingDate,
                 StartTime = command.StartTime,
                 EndTime = command.EndTime,
-                Status = "pending",
+                Status = bookingStatus,
                 TotalPrice = totalPrice,
                 PackageId = command.PackageId,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _bookingRepository.AddCoachBookingAsync(booking, cancellationToken);
-            int sessionsRemaining = 0;
-            if (command.PackageId.HasValue)
-            {
-                var package = await _packageRepository.GetCoachPackageByIdAsync(command.PackageId.Value, cancellationToken);
-                if (package == null)
-                    throw new Exception("Package not found");
-
-                // Logic xử lý package purchase nếu cần...
-            }
             await _context.SaveChangesAsync(cancellationToken);
 
             await _mediator.Publish(new BookingCreatedEvent(booking.Id, booking.UserId, booking.CoachId), cancellationToken);
