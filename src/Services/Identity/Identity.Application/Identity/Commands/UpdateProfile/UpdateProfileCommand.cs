@@ -9,7 +9,7 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
         string Phone,
         DateTime BirthDate,
         string Gender,
-        string SelfIntroduction = null
+        string? SelfIntroduction = null
     ) : ICommand<UserDto>;
 
     public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>

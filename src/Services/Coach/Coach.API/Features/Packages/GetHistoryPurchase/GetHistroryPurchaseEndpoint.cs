@@ -14,6 +14,7 @@ namespace Coach.API.Features.Packages.GetHistoryPurchase
                 HttpContext httpContext,
                 [FromQuery] bool? IsExpiried,
                 [FromQuery] bool? IsOutOfUse,
+                [FromQuery] Guid? CoachId,
                 [FromQuery] int Page = 1,
                 [FromQuery] int RecordPerPage = 10) =>
             {
@@ -27,7 +28,8 @@ namespace Coach.API.Features.Packages.GetHistoryPurchase
                     Page,
                     RecordPerPage,
                     IsExpiried,
-                    IsOutOfUse
+                    IsOutOfUse,
+                    CoachId
                 );
                 var result = await sender.Send(query);
                 return Results.Ok(result);

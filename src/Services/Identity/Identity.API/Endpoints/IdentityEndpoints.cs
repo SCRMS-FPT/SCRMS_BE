@@ -3,6 +3,7 @@ using Identity.Application.Identity.Commands.Login;
 using Identity.Application.Identity.Commands.Register;
 using Identity.Application.Identity.Commands.ResetPassword;
 using Identity.Application.Identity.Commands.Role;
+using Identity.Application.Identity.Commands.RefreshToken;
 using Identity.Application.Identity.Commands.UpdateProfile;
 using Identity.Application.Identity.Queries.GetProfile;
 using Identity.Application.Identity.Queries.DashboardStats;
@@ -81,7 +82,8 @@ namespace Identity.API.Endpoints
                     request.LastName,
                     request.Phone,
                     request.BirthDate,
-                    request.Gender
+                    request.Gender,
+                    request.SelfIntroduction
                 );
 
                 var updatedProfile = await sender.Send(command);
@@ -94,7 +96,24 @@ namespace Identity.API.Endpoints
                 await sender.Send(command);
                 return Results.Ok();
             });
+            // Thêm endpoint trong IdentityEndpoints.cs
+            identityGroup.MapPost("/refresh-token", async (ISender sender, HttpContext httpContext) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Results.Unauthorized();
 
+                if (!Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.BadRequest("Invalid user id in token");
+
+                var command = new RefreshTokenCommand(userId);
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            })
+            .RequireAuthorization()
+            .WithName("RefreshToken")
+            .WithDescription("Refresh the JWT token to update user roles and claims.");
             // Group cho các endpoint admin về Role
             var identityAdminGroup = app.MapGroup("/api/identity/admin")
                                         .WithTags("Identity - Admin")
@@ -137,6 +156,7 @@ namespace Identity.API.Endpoints
          string LastName,
          string Phone,
          DateTime BirthDate,
-         string Gender
+         string Gender,
+        string? SelfIntroduction = null
     );
 }
