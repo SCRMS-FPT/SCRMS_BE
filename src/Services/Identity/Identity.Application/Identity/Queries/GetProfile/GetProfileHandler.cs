@@ -1,6 +1,5 @@
 ﻿using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
-using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Application.Identity.Queries.GetProfile
 {
@@ -21,6 +20,8 @@ namespace Identity.Application.Identity.Queries.GetProfile
                 throw new DomainException("User not found", 404, "The requested user could not be located in the system.");
             }
 
+            var roles = await _userRepository.GetRolesAsync(user);
+
             return new UserDto(
                 user.Id,
                 user.FirstName,
@@ -28,8 +29,11 @@ namespace Identity.Application.Identity.Queries.GetProfile
                 user.Email,
                 user.PhoneNumber,
                 user.BirthDate,
-                user.Gender.ToString(), null,
-                user.CreatedAt
+                user.Gender.ToString(),
+                user.SelfIntroduction,
+                user.CreatedAt,
+                roles.ToList(),
+                user.GetImageUrlsList()
             );
         }
     }

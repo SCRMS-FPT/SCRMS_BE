@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Microsoft.AspNetCore.Http;
 
 namespace Identity.Application.Identity.Commands.UpdateProfile
 {
@@ -9,7 +10,11 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
         string Phone,
         DateTime BirthDate,
         string Gender,
-        string? SelfIntroduction = null
+        string? SelfIntroduction = null,
+        IFormFile? NewAvatarFile = null,
+        List<IFormFile>? NewImageFiles = null,
+        List<string>? ExistingImageUrls = null,
+        List<string>? ImagesToDelete = null
     ) : ICommand<UserDto>;
 
     public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>
@@ -33,6 +38,13 @@ namespace Identity.Application.Identity.Commands.UpdateProfile
 
             RuleFor(x => x.Gender)
                 .NotEmpty().WithMessage("Gender is required");
+
+            When(x => x.NewImageFiles != null, () =>
+            {
+                RuleForEach(x => x.NewImageFiles)
+                    .Must(file => file != null && file.Length > 0 && file.Length < 5242880)
+                    .WithMessage("Each image file must be less than 5MB");
+            });
         }
     }
 }

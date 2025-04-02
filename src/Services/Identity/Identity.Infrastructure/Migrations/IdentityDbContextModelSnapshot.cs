@@ -180,6 +180,9 @@ namespace Identity.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("integer");
 
+                    b.Property<string>("ImageUrls")
+                        .HasColumnType("jsonb");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 

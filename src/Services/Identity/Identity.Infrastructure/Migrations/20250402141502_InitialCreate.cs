@@ -37,6 +37,7 @@ namespace Identity.Infrastructure.Migrations
                     Gender = table.Column<int>(type: "integer", maxLength: 50, nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     SelfIntroduction = table.Column<string>(type: "text", nullable: true),
+                    ImageUrls = table.Column<string>(type: "jsonb", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),

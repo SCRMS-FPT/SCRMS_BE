@@ -14,7 +14,11 @@ namespace Identity.Infrastructure.Data.Extensions
             using var scope = app.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<IdentityDbContext>>();
-            await context.Database.MigrateAsync();
+            var isDatabaseCreated = await context.Database.CanConnectAsync();
+            if (!isDatabaseCreated)
+            {
+                await context.Database.MigrateAsync();
+            }
 
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();

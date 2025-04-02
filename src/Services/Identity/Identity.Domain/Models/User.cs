@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Domain.Models
 {
@@ -12,11 +13,36 @@ namespace Identity.Domain.Models
         public Gender Gender { get; set; }
         public bool IsDeleted { get; set; } = false;
         public string? SelfIntroduction { get; set; } = null!;
-
+        public string? ImageUrls { get; set; } = "{}";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastModifiedAt { get; set; }
-    }
+        public List<string> GetImageUrlsList()
+        {
+            if (string.IsNullOrEmpty(ImageUrls))
+                return new List<string>();
 
+            try
+            {
+                var imageUrlsObj = JsonSerializer.Deserialize<ImageUrlsWrapper>(ImageUrls);
+                return imageUrlsObj?.Images ?? new List<string>();
+            }
+            catch
+            {
+                return new List<string>();
+            }
+        }
+
+        public void SetImageUrlsList(List<string> urls)
+        {
+            var wrapper = new ImageUrlsWrapper { Images = urls ?? new List<string>() };
+            ImageUrls = JsonSerializer.Serialize(wrapper);
+        }
+
+    }
+    public class ImageUrlsWrapper
+    {
+        public List<string> Images { get; set; } = new List<string>();
+    }
     // Thêm enum Gender vào namespace
     public enum Gender
     { Male, Female, Other }

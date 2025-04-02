@@ -1,5 +1,6 @@
 ﻿using Identity.API;
 using Identity.Application;
+using Identity.Application.Services;
 using Identity.Infrastructure;
 using Identity.Infrastructure.Data.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -72,7 +73,9 @@ builder.Services.AddSwaggerGen(c =>
                     });
 });
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-
+// Añadir en Program.cs o archivo de configuración de servicios
+builder.Services.Configure<ImageKitOptions>(builder.Configuration.GetSection("ImageKit"));
+builder.Services.AddHttpClient<IImageKitService, ImageKitService>();
 builder.Services.AddHttpClient("NotificationAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7069");
