@@ -43,7 +43,7 @@ namespace Identity.API.Endpoints
                 {
                     return Results.Unauthorized();
                 }
-            }); 
+            });
 
             identityGroup.MapPost("/loginwithgoogle", async (LoginWithGoogle request, ISender sender) =>
             {
@@ -97,10 +97,13 @@ namespace Identity.API.Endpoints
                 return Results.Ok(profile);
             }).RequireAuthorization();
 
-            identityGroup.MapPut("/update-profile", async (UpdateProfileRequest request, ISender sender, HttpContext httpContext) =>
+            identityGroup.MapPut("/update-profile", async (
+                [FromForm] UpdateProfileRequest request,
+                ISender sender,
+                HttpContext httpContext) =>
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
-                                  ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
                     return Results.Unauthorized();
 
@@ -114,12 +117,17 @@ namespace Identity.API.Endpoints
                     request.Phone,
                     request.BirthDate,
                     request.Gender,
-                    request.SelfIntroduction
+                    request.SelfIntroduction,
+                    request.NewAvatarFile,
+                    request.NewImageFiles,
+                    request.ExistingImageUrls,
+                    request.ImagesToDelete
                 );
 
                 var updatedProfile = await sender.Send(command);
                 return Results.Ok(updatedProfile);
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization().DisableAntiforgery();
 
             identityGroup.MapPost("/users/reset-password", async (ResetPasswordRequest request, ISender sender) =>
             {
@@ -184,12 +192,17 @@ namespace Identity.API.Endpoints
     public record RegisterWithGoogle(string Token);
     public record ResetPasswordRequest(string Email);
     public record AssignRolesRequest(Guid UserId, List<string> Roles);
-    public record UpdateProfileRequest(
-         string FirstName,
-         string LastName,
-         string Phone,
-         DateTime BirthDate,
-         string Gender,
-        string? SelfIntroduction = null
-    );
+    public class UpdateProfileRequest
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public DateTime BirthDate { get; set; }
+        public string Gender { get; set; } = string.Empty;
+        public string? SelfIntroduction { get; set; }
+        public IFormFile? NewAvatarFile { get; set; }
+        public List<IFormFile>? NewImageFiles { get; set; }
+        public List<string>? ExistingImageUrls { get; set; }
+        public List<string>? ImagesToDelete { get; set; }
+    }
 }

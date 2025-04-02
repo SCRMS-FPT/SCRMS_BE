@@ -27,6 +27,7 @@ namespace Identity.Infrastructure.Data
                 b.Property(u => u.LastName).HasMaxLength(255).IsRequired();
                 b.Property(u => u.BirthDate).IsRequired();
                 b.Property(u => u.Gender).HasMaxLength(50).IsRequired();
+                b.Property(u => u.ImageUrls).HasColumnType("jsonb");
             });
 
             builder.Entity<ServicePackage>(b =>

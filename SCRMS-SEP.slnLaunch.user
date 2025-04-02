@@ -43,7 +43,7 @@
     ]
   },
   {
-    "Name": "match inden",
+    "Name": "match inden court",
     "Projects": [
       {
         "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
@@ -51,7 +51,11 @@
       },
       {
         "Path": "src\\Services\\Matching\\Matching.API\\Matching.API.csproj",
-        "Action": "Start"
+        "Action": "StartWithoutDebugging"
+      },
+      {
+        "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
+        "Action": "StartWithoutDebugging"
       }
     ]
   },

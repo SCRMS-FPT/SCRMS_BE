@@ -27,11 +27,15 @@ namespace Identity.Application.Identity.Queries.UserManagement
             }
 
             var roles = await _userRepository.GetRolesAsync(user);
-            var userDto = user.Adapt<UserDto>() with { Roles = roles.ToList() };
+            var userDto = user.Adapt<UserDto>() with
+            {
+                Roles = roles.ToList(),
+                ImageUrls = user.GetImageUrlsList()
+            };
             return userDto;
         }
 
-        // Handler for GetUserProfileByIdQuery, returning UserProfileDto (without Roles and CreatedAt)
+        // Handler for GetUserProfileByIdQuery, returning UserProfileDto
         public async Task<UserProfileDto?> Handle(
             GetUserProfileByIdQuery request,
             CancellationToken cancellationToken)
@@ -42,8 +46,14 @@ namespace Identity.Application.Identity.Queries.UserManagement
                 return null;
             }
 
-            // Adapt to UserProfileDto (only the required fields, excluding Roles and CreatedAt)
-            return user.Adapt<UserProfileDto>();
+            // Lấy profile của người dùng và thêm danh sách ảnh
+            var profileDto = user.Adapt<UserProfileDto>();
+
+            // Tạo đối tượng mới với danh sách ảnh
+            return profileDto with
+            {
+                ImageUrls = user.GetImageUrlsList()
+            };
         }
     }
 }

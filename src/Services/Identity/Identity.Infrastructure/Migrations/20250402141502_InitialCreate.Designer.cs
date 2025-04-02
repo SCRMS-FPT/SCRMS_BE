@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Identity.Infrastructure.Migrations
 {
     [DbContext(typeof(IdentityDbContext))]
-    [Migration("20250228093735_InitialCreate")]
+    [Migration("20250402141502_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -182,6 +182,9 @@ namespace Identity.Infrastructure.Migrations
                     b.Property<int>("Gender")
                         .HasMaxLength(50)
                         .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrls")
+                        .HasColumnType("jsonb");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");

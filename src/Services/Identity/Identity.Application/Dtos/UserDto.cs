@@ -10,7 +10,8 @@
     string Gender,
     string SelfIntroduction,
     DateTime CreatedAt,
-    List<string>? Roles = null);
+    List<string>? Roles = null,
+    List<string>? ImageUrls = null);
 
     public record UserProfileDto(
         Guid Id,
@@ -20,5 +21,6 @@
         string Phone,
         DateTime BirthDate,
         string Gender,
-        string SelfIntroduction);
+        string SelfIntroduction,
+        List<string>? ImageUrls = null);
 }
