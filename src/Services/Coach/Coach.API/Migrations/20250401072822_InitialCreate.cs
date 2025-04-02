@@ -56,31 +56,6 @@ namespace Coach.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CoachPromotions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CoachId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    DiscountType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    DiscountValue = table.Column<decimal>(type: "numeric", nullable: false),
-                    ValidFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    ValidTo = table.Column<DateOnly>(type: "date", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CoachPromotions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_CoachPromotions_Coaches_CoachId",
-                        column: x => x.CoachId,
-                        principalTable: "Coaches",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "CoachSchedules",
                 columns: table => new
                 {
@@ -178,6 +153,37 @@ namespace Coach.API.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "CoachPromotions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CoachId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PackageId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    DiscountType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DiscountValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    ValidFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    ValidTo = table.Column<DateOnly>(type: "date", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CoachPromotions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CoachPromotions_CoachPackages_PackageId",
+                        column: x => x.PackageId,
+                        principalTable: "CoachPackages",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_CoachPromotions_Coaches_CoachId",
+                        column: x => x.CoachId,
+                        principalTable: "Coaches",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_CoachBookings_CoachId",
                 table: "CoachBookings",
@@ -207,6 +213,11 @@ namespace Coach.API.Migrations
                 name: "IX_CoachPromotions_CoachId",
                 table: "CoachPromotions",
                 column: "CoachId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CoachPromotions_PackageId",
+                table: "CoachPromotions",
+                column: "PackageId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CoachSchedules_CoachId",

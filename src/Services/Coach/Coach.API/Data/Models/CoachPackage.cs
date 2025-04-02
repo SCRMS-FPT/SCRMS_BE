@@ -19,5 +19,6 @@ namespace Coach.API.Data.Models
         public virtual Coach Coach { get; set; }
         public virtual ICollection<CoachBooking> Bookings { get; set; }
         public virtual ICollection<CoachPackagePurchase> Purchases { get; set; }
+        public ICollection<CoachPromotion> Promotions { get; set; }
     }
 }

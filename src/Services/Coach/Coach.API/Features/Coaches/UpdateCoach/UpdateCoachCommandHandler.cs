@@ -34,16 +34,16 @@ namespace Coach.API.Features.Coaches.UpdateCoach
     public class UpdateCoachCommandHandler : ICommandHandler<UpdateCoachCommand, Unit>
     {
         private readonly CoachDbContext _context;
-        private readonly IBackblazeService _backblazeService;
+        private readonly IImageKitService _imageKitService; // Changed from IBackblazeService
         private readonly ICoachRepository _coachRepository;
 
         public UpdateCoachCommandHandler(
             CoachDbContext context,
-            IBackblazeService backblazeService,
+            IImageKitService imageKitService, // Changed from IBackblazeService
             ICoachRepository coachRepository)
         {
             _context = context;
-            _backblazeService = backblazeService;
+            _imageKitService = imageKitService;
             _coachRepository = coachRepository;
         }
 
@@ -65,11 +65,11 @@ namespace Coach.API.Features.Coaches.UpdateCoach
                 // Delete old avatar if it exists
                 if (!string.IsNullOrEmpty(coach.Avatar))
                 {
-                    await _backblazeService.DeleteFileAsync(coach.Avatar, "avatar", cancellationToken);
+                    await _imageKitService.DeleteFileAsync(coach.Avatar, cancellationToken);
                 }
 
-                // Upload new avatar
-                var (avatarUrl, _) = await _backblazeService.UploadFileAsync(
+                // Upload new avatar using ImageKit
+                var avatarUrl = await _imageKitService.UploadFileAsync(
                     command.NewAvatarFile,
                     $"coaches/{coach.UserId}/avatar",
                     cancellationToken);
@@ -84,7 +84,7 @@ namespace Coach.API.Features.Coaches.UpdateCoach
                 if (currentImages.Contains(imageUrl))
                 {
                     currentImages.Remove(imageUrl);
-                    await _backblazeService.DeleteFileAsync(imageUrl, "image", cancellationToken);
+                    await _imageKitService.DeleteFileAsync(imageUrl, cancellationToken);
                 }
             }
 
@@ -98,14 +98,15 @@ namespace Coach.API.Features.Coaches.UpdateCoach
                 }
             }
 
-            // 4. Upload new images
-            foreach (var imageFile in command.NewImageFiles)
+            // 4. Upload new images using ImageKit
+            if (command.NewImageFiles.Any())
             {
-                var (imageUrl, _) = await _backblazeService.UploadFileAsync(
-                    imageFile,
+                var newImageUrls = await _imageKitService.UploadFilesAsync(
+                    command.NewImageFiles,
                     $"coaches/{coach.UserId}/images",
                     cancellationToken);
-                updatedImages.Add(imageUrl);
+
+                updatedImages.AddRange(newImageUrls);
             }
 
             // Update basic coach properties

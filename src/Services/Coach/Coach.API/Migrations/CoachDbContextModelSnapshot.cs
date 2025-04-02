@@ -220,6 +220,9 @@ namespace Coach.API.Migrations
                     b.Property<decimal>("DiscountValue")
                         .HasColumnType("numeric");
 
+                    b.Property<Guid?>("PackageId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -232,6 +235,8 @@ namespace Coach.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoachId");
+
+                    b.HasIndex("PackageId");
 
                     b.ToTable("CoachPromotions");
                 });
@@ -330,7 +335,13 @@ namespace Coach.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Coach.API.Data.Models.CoachPackage", "Package")
+                        .WithMany("Promotions")
+                        .HasForeignKey("PackageId");
+
                     b.Navigation("Coach");
+
+                    b.Navigation("Package");
                 });
 
             modelBuilder.Entity("Coach.API.Data.Models.CoachSchedule", b =>
@@ -371,6 +382,8 @@ namespace Coach.API.Migrations
             modelBuilder.Entity("Coach.API.Data.Models.CoachPackage", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("Promotions");
 
                     b.Navigation("Purchases");
                 });
