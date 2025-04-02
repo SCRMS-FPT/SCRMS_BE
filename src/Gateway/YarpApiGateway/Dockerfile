@@ -7,23 +7,24 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
+
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Gateway/ApiGateway/ApiGateway.csproj", "src/Gateway/ApiGateway/"]
-RUN dotnet restore "./src/Gateway/ApiGateway/ApiGateway.csproj"
+COPY ["src/Gateway/YarpApiGateway/YarpApiGateway.csproj", "src/Gateway/YarpApiGateway/"]
+RUN dotnet restore "./src/Gateway/YarpApiGateway/YarpApiGateway.csproj"
 COPY . .
-WORKDIR "/src/src/Gateway/ApiGateway"
-RUN dotnet build "./ApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/src/Gateway/YarpApiGateway"
+RUN dotnet build "./YarpApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./ApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./YarpApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "ApiGateway.dll"]
+ENTRYPOINT ["dotnet", "YarpApiGateway.dll"]

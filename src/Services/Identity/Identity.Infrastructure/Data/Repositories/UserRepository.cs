@@ -1,14 +1,8 @@
 ﻿using Identity.Application.Data.Repositories;
+using Identity.Application.Dtos;
 using Identity.Domain.Models;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Identity.Application.Data;
 using Microsoft.EntityFrameworkCore;
-using Identity.Application.Dtos;
 
 namespace Identity.Infrastructure.Data.Repositories
 {
@@ -138,6 +132,32 @@ namespace Identity.Infrastructure.Data.Repositories
         public async Task<List<User>> GetAllUserAsync()
         {
             return await _userManager.Users.ToListAsync();
+        }
+
+        public async Task<IdentityResult> CreateUserByGoogleAsync(User user)
+        {
+            return await _userManager.CreateAsync(user);
+
+        }
+
+        public async Task<IList<UserLoginInfo>> GetLoginsAsync(User user)
+        {
+            return await _userManager.GetLoginsAsync(user);
+        }
+
+        public async Task<IdentityResult> AddLoginAsync(User user, UserLoginInfo info)
+        {
+            return await _userManager.AddLoginAsync(user, info);
+        }
+
+        public async Task<IdentityResult> VerifyEmailAsync(User user)
+        {
+            if (user.EmailConfirmed)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "Tài khoản đã xác minh" });
+            }
+            user.EmailConfirmed = true;
+            return await _userManager.UpdateAsync(user);
         }
     }
 }

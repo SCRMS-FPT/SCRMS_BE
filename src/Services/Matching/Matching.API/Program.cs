@@ -10,6 +10,7 @@ using System.Text;
 using Matching.API.Data.Repositories;
 using BuildingBlocks.Messaging.MassTransit;
 using BuildingBlocks.Messaging.Extensions;
+using Matching.API.Data.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,6 +109,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.InitialiseDatabaseAsync();
 }
 app.UseHealthChecks("/health",
     new HealthCheckOptions

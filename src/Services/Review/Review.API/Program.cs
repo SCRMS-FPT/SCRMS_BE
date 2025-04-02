@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Reviews.API.Data.Extensions;
 using Reviews.API.Data.Repositories;
 using System.Reflection;
 using System.Security.Claims;
@@ -109,6 +110,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.InitialiseDatabaseAsync();
 }
 app.UseHealthChecks("/health",
     new HealthCheckOptions

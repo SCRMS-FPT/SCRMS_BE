@@ -1,4 +1,5 @@
 using BuildingBlocks.Messaging.MassTransit;
+using Chat.API.Data.Extensions;
 using Chat.API.Data.Repositories;
 using Chat.API.Hubs;
 using HealthChecks.UI.Client;
@@ -105,6 +106,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.InitialiseDatabaseAsync();
 }
 app.UseHealthChecks("/health",
     new HealthCheckOptions

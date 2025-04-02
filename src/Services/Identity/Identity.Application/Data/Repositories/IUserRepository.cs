@@ -36,5 +36,9 @@ namespace Identity.Application.Data.Repositories
         Task<IdentityResult> UpdatePasswordAsync(User user, string oldPassword, string newPassword);
 
         Task<List<User>> GetAllUserAsync();
+        Task<IdentityResult> CreateUserByGoogleAsync(User user);
+        Task<IList<UserLoginInfo>> GetLoginsAsync(User user);
+        Task<IdentityResult> AddLoginAsync(User user, UserLoginInfo info);
+        Task<IdentityResult> VerifyEmailAsync(User user);
     }
 }

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
 		<PackageReference Include="MassTransit" Version="8.3.7" />
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.3.7" />
 		<PackageReference Include="MassTransit.AspNetCore" Version="7.3.1" />

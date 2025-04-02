@@ -1,15 +1,13 @@
 ﻿using BuildingBlocks.Behaviors;
-using Identity.Application.Data.Repositories;
+using BuildingBlocks.Messaging.Events;
+using Identity.Application.Consumers;
+using MassTransit;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using System.Reflection;
-using MassTransit;
-using Identity.Application.Consumers;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using BuildingBlocks.Messaging.Events;
-using BuildingBlocks.Messaging.Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace Identity.Application
 {
@@ -76,6 +74,9 @@ namespace Identity.Application
            });
             services.AddFeatureManagement();
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            services.Configure<GoogleSettings>(configuration.GetSection("Google"));
+            services.Configure<EndpointSettings>(configuration.GetSection("Endpoints"));
+
             return services;
         }
 
