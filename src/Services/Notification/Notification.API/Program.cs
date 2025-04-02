@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Notification.API.Data;
+using Notification.API.Data.Extensions;
 using Notification.API.Hubs;
 using Notification.API.Services;
 using System.Security.Claims;
@@ -111,6 +112,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.InitialiseDatabaseAsync();
 }
 app.UseHealthChecks("/health",
     new HealthCheckOptions
