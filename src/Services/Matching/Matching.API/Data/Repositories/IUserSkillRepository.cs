@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Matching.API.Features.Suggestions;
 
 namespace Matching.API.Data.Repositories
 {
@@ -13,5 +14,12 @@ namespace Matching.API.Data.Repositories
         Task UpdateUserSkillAsync(UserSkill userSkill, CancellationToken cancellationToken);
 
         Task<List<Guid>> GetSuggestionUserIdsAsync(Guid userId, int page, int limit, CancellationToken cancellationToken);
+
+        Task<Dictionary<Guid, List<UserSkill>>> GetSuggestionsWithSkillsAsync(
+            Guid userId,
+            int page,
+            int limit,
+            List<SportSkillFilter> sportSkillFilters,
+            CancellationToken cancellationToken);
     }
 }
