@@ -63,7 +63,6 @@ namespace CourtBooking.API.Endpoints
                 var result = await sender.Send(query);
                 return result == null ? Results.NotFound() : Results.Ok(result);
             })
-            .RequireAuthorization()
             .WithName("GetSportById")
             .Produces<SportDTO>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)

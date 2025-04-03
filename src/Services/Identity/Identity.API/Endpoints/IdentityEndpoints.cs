@@ -98,10 +98,11 @@ namespace Identity.API.Endpoints
             }).RequireAuthorization();
 
             identityGroup.MapPut("/update-profile", async (
-                [FromForm] UpdateProfileRequest request,
-                ISender sender,
-                HttpContext httpContext) =>
+                HttpContext httpContext,
+                ISender sender) =>
             {
+                var form = await httpContext.Request.ReadFormAsync();
+
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                 ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
@@ -110,24 +111,61 @@ namespace Identity.API.Endpoints
                 if (!Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.BadRequest("Invalid user id in token");
 
-                var command = new UpdateProfileCommand(
-                    userId,
-                    request.FirstName,
-                    request.LastName,
-                    request.Phone,
-                    request.BirthDate,
-                    request.Gender,
-                    request.SelfIntroduction,
-                    request.NewAvatarFile,
-                    request.NewImageFiles,
-                    request.ExistingImageUrls,
-                    request.ImagesToDelete
-                );
+                try
+                {
+                    // Đọc các giá trị từ form
+                    var firstName = form["FirstName"].ToString();
+                    var lastName = form["LastName"].ToString();
+                    var phone = form["Phone"].ToString();
+                    var gender = form["Gender"].ToString();
 
-                var updatedProfile = await sender.Send(command);
-                return Results.Ok(updatedProfile);
+                    DateTime birthDate;
+                    if (!DateTime.TryParse(form["BirthDate"].ToString(), out birthDate))
+                        return Results.BadRequest("Invalid birth date format");
+
+                    string? selfIntroduction = form["SelfIntroduction"].ToString();
+
+                    // Xử lý các file
+                    var avatarFile = form.Files.GetFile("NewAvatarFile");
+                    var imageFiles = form.Files.GetFiles("NewImageFiles").ToList();
+
+                    // Xử lý danh sách URLs
+                    List<string>? existingUrls = null;
+                    if (form.TryGetValue("ExistingImageUrls", out var existingUrlValues))
+                    {
+                        existingUrls = existingUrlValues.ToList();
+                    }
+
+                    List<string>? imagesToDelete = null;
+                    if (form.TryGetValue("ImagesToDelete", out var deleteUrlValues))
+                    {
+                        imagesToDelete = deleteUrlValues.ToList();
+                    }
+
+                    var command = new UpdateProfileCommand(
+                        userId,
+                        firstName,
+                        lastName,
+                        phone,
+                        birthDate,
+                        gender,
+                        selfIntroduction,
+                        avatarFile,
+                        imageFiles,
+                        existingUrls,
+                        imagesToDelete
+                    );
+
+                    var updatedProfile = await sender.Send(command);
+                    return Results.Ok(updatedProfile);
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem($"Error updating profile: {ex.Message}");
+                }
             })
-            .RequireAuthorization().DisableAntiforgery();
+            .RequireAuthorization()
+            .DisableAntiforgery();
 
             identityGroup.MapPost("/users/reset-password", async (ResetPasswordRequest request, ISender sender) =>
             {

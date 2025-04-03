@@ -27,11 +27,19 @@ namespace Identity.Application.Identity.Queries.UserManagement
             }
 
             var roles = await _userRepository.GetRolesAsync(user);
-            var userDto = user.Adapt<UserDto>() with
-            {
-                Roles = roles.ToList(),
-                ImageUrls = user.GetImageUrlsList()
-            };
+            var userDto = new UserDto(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.PhoneNumber,
+                user.BirthDate,
+                user.Gender.ToString(),
+                user.SelfIntroduction,
+                user.CreatedAt,
+                roles.ToList(),
+                user.GetImageUrlsList()
+            );
             return userDto;
         }
 
@@ -47,13 +55,17 @@ namespace Identity.Application.Identity.Queries.UserManagement
             }
 
             // Lấy profile của người dùng và thêm danh sách ảnh
-            var profileDto = user.Adapt<UserProfileDto>();
-
-            // Tạo đối tượng mới với danh sách ảnh
-            return profileDto with
-            {
-                ImageUrls = user.GetImageUrlsList()
-            };
+            return new UserProfileDto(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.PhoneNumber,
+                user.BirthDate,
+                user.Gender.ToString(),
+                user.SelfIntroduction,
+                user.GetImageUrlsList()
+            );
         }
     }
 }
