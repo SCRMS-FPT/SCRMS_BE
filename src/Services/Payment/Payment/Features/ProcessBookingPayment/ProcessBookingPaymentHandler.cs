@@ -179,7 +179,30 @@ namespace Payment.API.Features.ProcessBookingPayment
                     await _outboxService.SaveMessageAsync(paymentEvent);
                 }
 
-                await _context.SaveChangesAsync(cancellationToken);
+                try
+                {
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Detach the original entity from context tracking
+                    var originalEntry = _context.ChangeTracker.Entries<UserWallet>()
+                        .FirstOrDefault(e => e.Entity.UserId == request.UserId);
+                    if (originalEntry != null)
+                    {
+                        originalEntry.State = EntityState.Detached;
+                    }
+
+                    // Now reload the entity
+                    var freshWallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
+                    if (freshWallet == null) throw new Exception("Wallet no longer exists");
+
+                    freshWallet.Balance -= request.Amount;
+                    freshWallet.UpdatedAt = DateTime.UtcNow;
+
+                    await _userWalletRepository.UpdateUserWalletAsync(freshWallet, cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
                 await transaction.CommitAsync(cancellationToken);
                 return userTransaction.Id;
             }

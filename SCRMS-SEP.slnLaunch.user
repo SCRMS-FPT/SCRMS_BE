@@ -51,7 +51,7 @@
       },
       {
         "Path": "src\\Services\\Matching\\Matching.API\\Matching.API.csproj",
-        "Action": "StartWithoutDebugging"
+        "Action": "Start"
       },
       {
         "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",

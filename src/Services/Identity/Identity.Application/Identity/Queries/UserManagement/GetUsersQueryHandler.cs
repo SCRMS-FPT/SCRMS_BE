@@ -57,7 +57,19 @@ namespace Identity.Application.Identity.Queries.UserManagement
             foreach (var user in pagedUsers)
             {
                 var roles = await _userRepository.GetRolesAsync(user);
-                var userDto = user.Adapt<UserDto>() with { Roles = roles.ToList() };
+                var userDto = new UserDto(
+                    user.Id,
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.BirthDate,
+                    user.Gender.ToString(),
+                    user.SelfIntroduction,
+                    user.CreatedAt,
+                    roles.ToList(),
+                    user.GetImageUrlsList()
+                );
                 userDtos.Add(userDto);
             }
 

@@ -6,7 +6,7 @@ namespace Matching.API.Features.PendingResponses.GetPendingSwipes
 {
     public record GetPendingSwipesQuery(Guid UserId) : IRequest<List<PendingSwipeResponse>>;
 
-    public record PendingSwipeResponse(Guid SwiperId, DateTime CreatedAt);
+    public record PendingSwipeResponse(Guid SwipeActionId, Guid SwiperId, DateTime CreatedAt);
 
     public class GetPendingSwipesHandler : IRequestHandler<GetPendingSwipesQuery, List<PendingSwipeResponse>>
     {
@@ -20,7 +20,7 @@ namespace Matching.API.Features.PendingResponses.GetPendingSwipes
         public async Task<List<PendingSwipeResponse>> Handle(GetPendingSwipesQuery request, CancellationToken cancellationToken)
         {
             var pendingSwipes = await _swipeActionRepository.GetPendingSwipesByUserIdAsync(request.UserId, cancellationToken);
-            return pendingSwipes.Select(sa => new PendingSwipeResponse(sa.SwiperId, sa.CreatedAt)).ToList();
+            return pendingSwipes.Select(sa => new PendingSwipeResponse(sa.Id, sa.SwiperId, sa.CreatedAt)).ToList();
         }
     }
 }

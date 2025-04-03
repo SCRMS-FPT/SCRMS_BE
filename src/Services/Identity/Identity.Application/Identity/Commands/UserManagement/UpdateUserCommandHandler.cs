@@ -33,8 +33,14 @@ namespace Identity.Application.Identity.Commands.UserManagement
             user.PhoneNumber = request.Phone;
 
             await _userRepository.UpdateUserAsync(user);
+            var roles = await _userRepository.GetRolesAsync(user);
 
-            return user.Adapt<UserDto>();
+            var userDto = user.Adapt<UserDto>() with
+            {
+                Roles = roles.ToList(),
+                ImageUrls = user.GetImageUrlsList()
+            };
+            return userDto;
         }
     }
 }

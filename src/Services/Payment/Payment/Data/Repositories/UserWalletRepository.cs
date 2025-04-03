@@ -24,10 +24,10 @@ namespace Payment.API.Data.Repositories
             await _context.UserWallets.AddAsync(wallet, cancellationToken);
         }
 
-        public Task UpdateUserWalletAsync(UserWallet wallet, CancellationToken cancellationToken)
+        public async Task UpdateUserWalletAsync(UserWallet wallet, CancellationToken cancellationToken)
         {
             _context.UserWallets.Update(wallet);
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
     }
 }
