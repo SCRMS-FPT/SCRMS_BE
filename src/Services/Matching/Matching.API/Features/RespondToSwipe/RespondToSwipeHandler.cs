@@ -43,26 +43,26 @@ namespace Matching.API.Features.RespondToSwipe
                 {
                     reverseSwipe.Decision = "accepted";
                     await _swipeActionRepository.UpdateSwipeActionAsync(reverseSwipe, cancellationToken);
-
-                    var match = new Match
-                    {
-                        Id = Guid.NewGuid(),
-                        InitiatorId = swipeAction.SwiperId,
-                        MatchedUserId = request.UserId,
-                        MatchTime = DateTime.UtcNow,
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    await _matchRepository.AddMatchAsync(match, cancellationToken);
-                    await _context.SaveChangesAsync(cancellationToken);
-
-                    await _publishEndpoint.Publish(new MatchCreatedEvent(
-                                    match.InitiatorId,
-                                    match.MatchedUserId,
-                                    match.MatchTime
-                                ), cancellationToken);
-
-                    return new SwipeResult(true);
                 }
+
+                var match = new Match
+                {
+                    Id = Guid.NewGuid(),
+                    InitiatorId = swipeAction.SwiperId,
+                    MatchedUserId = request.UserId,
+                    MatchTime = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _matchRepository.AddMatchAsync(match, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                // await _publishEndpoint.Publish(new MatchCreatedEvent(
+                //                 match.InitiatorId,
+                //                 match.MatchedUserId,
+                //                 match.MatchTime
+                //             ), cancellationToken);
+
+                return new SwipeResult(true);
             }
 
             await _context.SaveChangesAsync(cancellationToken);

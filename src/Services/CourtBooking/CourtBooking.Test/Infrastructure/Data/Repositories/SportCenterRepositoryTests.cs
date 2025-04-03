@@ -41,7 +41,11 @@ namespace CourtBooking.Test.Infrastructure.Data.Repositories
 
             // Áp dụng migrations và đảm bảo bảng tồn tại
             using var context = new ApplicationDbContext(_options);
-            context.Database.Migrate();
+            var isDatabaseCreated = context.Database.CanConnectAsync().Result;
+            if (!isDatabaseCreated)
+            {
+                context.Database.MigrateAsync().Wait();
+            }
 
             // Kiểm tra và tạo bảng thủ công nếu cần
             EnsureSportCentersTableExists(context);

@@ -10,7 +10,11 @@ namespace Matching.API.Data.Extensions
 
             var context = scope.ServiceProvider.GetRequiredService<MatchingDbContext>();
 
-            context.Database.MigrateAsync().GetAwaiter().GetResult();
+            var isDatabaseCreated = await context.Database.CanConnectAsync();
+            if (!isDatabaseCreated)
+            {
+                await context.Database.MigrateAsync();
+            }
         }
     }
 }
