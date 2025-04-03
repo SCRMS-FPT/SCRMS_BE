@@ -1,13 +1,10 @@
-﻿using Identity.Application.Data;
-using Identity.Application.Dtos;
-using Identity.Domain.Exceptions;
-using Mapster;
-using Microsoft.Extensions.Options;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Application.Identity.Commands.Login
 {
@@ -37,7 +34,19 @@ namespace Identity.Application.Identity.Commands.Login
 
             var token = await GenerateJwtToken(user);
             var roles = await _userRepository.GetRolesAsync(user);
-            var userDto = user.Adapt<UserDto>() with { Roles = roles.ToList() };
+            var userDto = new UserDto(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.PhoneNumber,
+                user.BirthDate,
+                user.Gender.ToString(),
+                user.SelfIntroduction,
+                user.CreatedAt,
+                roles.ToList(),
+                user.GetImageUrlsList()
+            );
             return new LoginUserResult(
                 Token: token,
                 UserId: user.Id,
