@@ -218,6 +218,8 @@ services:
       - MessageBroker__UserName=guest
       - MessageBroker__Password=guest
       - ConnectionStrings__Database=Host=notificationdb;Port=5432;Database=NotificationDB;Username=postgres;Password=2405
+    env_file:
+      - .env
     ports:
       - "6006:8080"
       - "6066:8081"
