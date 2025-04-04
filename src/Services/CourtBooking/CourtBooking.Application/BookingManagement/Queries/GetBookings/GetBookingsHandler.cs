@@ -23,32 +23,52 @@ public class GetBookingsHandler : IRequestHandler<GetBookingsQuery, GetBookingsR
             .Include(b => b.BookingDetails)
             .AsQueryable();
 
-        // **Logic lọc theo vai trò**
-        if (query.Role == "Admin")
+        // Determine the effective role based on ViewAs parameter
+        string effectiveRole = query.Role;
+
+        // Handle ViewAs parameter - allows users to change their view perspective
+        if (!string.IsNullOrEmpty(query.ViewAs))
         {
+            // Security checks - restrict who can view as what
+            if (query.Role == "User" && query.ViewAs != "User")
+            {
+                throw new UnauthorizedAccessException("Regular users cannot view as other roles");
+            }
+
+            if (query.Role == "CourtOwner" && query.ViewAs != "User" && query.ViewAs != "CourtOwner")
+            {
+                throw new UnauthorizedAccessException("Court owners can only view as User or CourtOwner");
+            }
+
+            // Allow the view role override if it passed security checks
+            effectiveRole = query.ViewAs;
+        }
+
+        // **Logic lọc theo vai trò**
+        if (effectiveRole == "Admin")
+        {
+            // Admin can see all bookings but can filter
             if (query.FilterUserId.HasValue)
                 bookingsQuery = bookingsQuery.Where(b => b.UserId == UserId.Of(query.FilterUserId.Value));
+
             if (query.CourtId.HasValue)
                 bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d => d.CourtId == CourtId.Of(query.CourtId ?? Guid.Empty)));
+
             if (query.SportsCenterId.HasValue)
             {
                 bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d =>
                     _context.Courts.Any(c => c.Id == d.CourtId && c.SportCenterId == SportCenterId.Of(query.SportsCenterId ?? Guid.Empty))));
             }
         }
-        else if (query.Role == "CourtOwner")
+        else if (effectiveRole == "CourtOwner")
         {
             var ownedSportsCenters = await _sportCenterRepository.GetSportCentersByOwnerIdAsync(query.UserId, cancellationToken);
             var ownedSportsCenterIds = ownedSportsCenters.Select(sc => sc.Id).ToList();
 
-            // Include both bookings for owned courts AND bookings made by the court owner
+            // Include bookings for owned courts
             bookingsQuery = bookingsQuery.Where(b =>
-                // Bookings at courts they own
                 b.BookingDetails.Any(d =>
                     _context.Courts.Any(c => c.Id == d.CourtId && ownedSportsCenterIds.Contains(c.SportCenterId)))
-                ||
-                // Bookings they made as a user
-                b.UserId == UserId.Of(query.UserId)
             );
 
             // Filtering by specific user if requested
@@ -62,31 +82,33 @@ public class GetBookingsHandler : IRequestHandler<GetBookingsQuery, GetBookingsR
             // Filtering by specific sports center
             if (query.SportsCenterId.HasValue)
             {
-                if (!ownedSportsCenterIds.Contains(SportCenterId.Of(query.SportsCenterId.Value)) &&
-                    !bookingsQuery.Any(b => b.UserId == UserId.Of(query.UserId)))
+                if (!ownedSportsCenterIds.Contains(SportCenterId.Of(query.SportsCenterId.Value)))
                     throw new UnauthorizedAccessException("You do not own this sports center");
 
                 bookingsQuery = bookingsQuery.Where(b => b.BookingDetails.Any(d =>
                     _context.Courts.Any(c => c.Id == d.CourtId && c.SportCenterId == SportCenterId.Of(query.SportsCenterId.Value))));
             }
         }
-        else // User
+        else // User or CourtOwner viewing as User
         {
+            // Only show bookings made by this user
             bookingsQuery = bookingsQuery.Where(b => b.UserId == UserId.Of(query.UserId));
         }
 
         // **Lọc bổ sung**
         if (query.Status.HasValue)
             bookingsQuery = bookingsQuery.Where(b => b.Status == query.Status.Value);
+
         if (query.StartDate.HasValue)
             bookingsQuery = bookingsQuery.Where(b => b.BookingDate >= query.StartDate.Value);
+
         if (query.EndDate.HasValue)
             bookingsQuery = bookingsQuery.Where(b => b.BookingDate <= query.EndDate.Value);
 
         // **Lấy tổng số lượng và danh sách bookings**
         var totalCount = await bookingsQuery.CountAsync(cancellationToken);
         var bookings = await bookingsQuery
-            .OrderBy(b => b.BookingDate)
+            .OrderByDescending(b => b.CreatedAt) // Show newest bookings first
             .Skip(query.Page * query.Limit)
             .Take(query.Limit)
             .ToListAsync(cancellationToken);

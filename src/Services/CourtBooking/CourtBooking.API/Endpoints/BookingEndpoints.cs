@@ -87,6 +87,7 @@ namespace CourtBooking.API.Endpoints
             group.MapGet("/", async (
                 HttpContext httpContext,
                 [FromServices] ISender sender,
+                [FromQuery] string? view_as,
                 [FromQuery] Guid? user_id,
                 [FromQuery] Guid? court_id,
                 [FromQuery] Guid? sports_center_id,
@@ -110,6 +111,7 @@ namespace CourtBooking.API.Endpoints
                 var query = new GetBookingsQuery(
                     UserId: userId,
                     Role: role,
+                    ViewAs: view_as,
                     FilterUserId: user_id,
                     CourtId: court_id,
                     SportsCenterId: sports_center_id,
