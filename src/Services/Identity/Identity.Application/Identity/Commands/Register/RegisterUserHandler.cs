@@ -50,10 +50,10 @@ namespace Identity.Application.Identity.Commands.Register
             // Send email 
             await _publishEndpoint.Publish(
                 new SendMailEvent(
-                    command.Email, 
-                    GenerateVerificationEmail(command.Email, 
-                    _endpointSettings.Verification + GenerateToken(command.Email, _endpointSettings.VerificationKey)), 
-                    "Thư xác minh tài khoản của SCRMS", 
+                    command.Email,
+                    GenerateVerificationEmail(command.FirstName + " " + command.LastName,
+                    _endpointSettings.Verification + GenerateToken(command.Email, _endpointSettings.VerificationKey)),
+                    "Thư xác minh tài khoản của SCRMS",
                     true));
 
             return new RegisterUserResult(user.Id);
