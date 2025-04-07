@@ -91,14 +91,14 @@ namespace CourtBooking.Application.BookingManagement.Command.CancelBooking
             decimal refundAmount = 0;
             var firstBookingTime = bookingDetails.Min(d => d.StartTime);
 
-            // Tính khoảng thời gian giữa thời điểm hủy và thời điểm bắt đầu booking
-            // Chuyển DateTime sang TimeSpan tính từ thời điểm hiện tại
+            // Tính khoảng thời gian còn lại cho đến khi trận đấu bắt đầu
             DateTime bookingStartDateTime = booking.BookingDate.Add(firstBookingTime);
-            TimeSpan timeDifference = bookingStartDateTime - request.RequestedAt;
+            TimeSpan timeUntilStart = bookingStartDateTime - request.RequestedAt;
 
-            if (timeDifference.TotalHours >= court.CancellationWindowHours)
+            // Kiểm tra nếu thời gian còn lại nhiều hơn thời gian cửa sổ hủy
+            if (timeUntilStart.TotalHours >= court.CancellationWindowHours)
             {
-                // Eligible for refund
+                // Đủ điều kiện hoàn tiền
                 refundAmount = booking.TotalPrice * (court.RefundPercentage / 100);
             }
 
@@ -116,12 +116,22 @@ namespace CourtBooking.Application.BookingManagement.Command.CancelBooking
                 // Save changes to the booking
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
+                // Get the sport center to find its owner
+                var sportCenter = await _sportCenterRepository.GetSportCenterByIdAsync(court.SportCenterId.Value, cancellationToken);
+                if (sportCenter == null)
+                    throw new NotFoundException($"Sport center with ID {court.SportCenterId.Value} not found");
+
+                // Ensure we have the owner ID
+                if (sportCenter.OwnerId == null || sportCenter.OwnerId.Value == Guid.Empty)
+                    throw new InvalidOperationException("Sport center does not have an owner assigned");
+
                 // If refund is applicable, publish event for payment service
                 if (refundAmount > 0)
                 {
                     var refundEvent = new BookingCancelledRefundEvent(
                         booking.Id.Value,
                         booking.UserId.Value,
+                        sportCenter.OwnerId.Value,
                         refundAmount,
                         request.CancellationReason,
                         request.RequestedAt

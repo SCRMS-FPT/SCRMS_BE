@@ -1,8 +1,10 @@
 using BuildingBlocks.Messaging.Events;
+using CourtBooking.Application.Data;
 using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.ValueObjects;
 using MassTransit;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace CourtBooking.Application.Consumers
@@ -11,64 +13,72 @@ namespace CourtBooking.Application.Consumers
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly ILogger<BookCourtSucceededConsumer> _logger;
+        private readonly IApplicationDbContext _dbContext;
 
         public BookCourtSucceededConsumer(
             IBookingRepository bookingRepository,
+            IApplicationDbContext dbContext,
             ILogger<BookCourtSucceededConsumer> logger)
         {
             _bookingRepository = bookingRepository;
+            _dbContext = dbContext;
             _logger = logger;
         }
 
         public async Task Consume(ConsumeContext<BookCourtSucceededEvent> context)
         {
-            var message = context.Message;
-            _logger.LogInformation("Payment succeeded for booking: {BookingId}", message.ReferenceId);
+            var paymentEvent = context.Message;
 
-            if (!message.ReferenceId.HasValue)
+            _logger.LogInformation(
+                "Đã nhận BookCourtSucceededEvent: TransactionId = {TransactionId}, UserId = {UserId}, Amount = {Amount}, PaymentType = {PaymentType}",
+                paymentEvent.TransactionId, paymentEvent.UserId, paymentEvent.Amount, paymentEvent.PaymentType);
+
+            if (!paymentEvent.ReferenceId.HasValue)
             {
-                _logger.LogWarning("Payment success event received without booking ID");
+                _logger.LogWarning("Booking ID không có trong event");
                 return;
             }
 
-            try
-            {
-                var bookingId = BookingId.Of(message.ReferenceId.Value);
-                var booking = await _bookingRepository.GetBookingByIdAsync(bookingId, CancellationToken.None);
+            var bookingId = BookingId.Of(paymentEvent.ReferenceId.Value);
+            var booking = await _bookingRepository.GetBookingByIdAsync(bookingId, context.CancellationToken);
 
-                if (booking == null)
+            if (booking == null)
+            {
+                _logger.LogWarning("Không tìm thấy đặt sân với Id: {BookingId}", bookingId.Value);
+                return;
+            }
+
+            // Check if this is an initial payment or an additional payment
+            if (paymentEvent.PaymentType == "CourtBookingAdditional")
+            {
+                // Process additional payment through domain method
+                decimal oldRemainingBalance = booking.RemainingBalance;
+
+                // Use domain method to process payment instead of direct property assignment
+                booking.ProcessAdditionalPayment(paymentEvent.Amount);
+
+                _logger.LogInformation(
+                    "Cập nhật thanh toán bổ sung cho BookingId: {BookingId}, số dư ban đầu: {OldBalance}, số dư mới: {NewBalance}",
+                    bookingId.Value, oldRemainingBalance, booking.RemainingBalance);
+            }
+            else if (booking.Status == BookingStatus.PendingPayment)
+            {
+                // Initial payment - use domain methods to change status
+                if (Enum.TryParse<BookingStatus>(paymentEvent.StatusBook, out var status))
                 {
-                    _logger.LogWarning("Booking not found: {BookingId}", bookingId.Value);
-                    return;
+                    booking.UpdateStatus(status);
+                }
+                else
+                {
+                    booking.Confirm();
                 }
 
-                // Only update if booking is in pending payment state
-                if (booking.Status == BookingStatus.PendingPayment)
-                {
-                    if (Enum.TryParse<BookingStatus>(message.StatusBook, out var status))
-                    {
-                        booking.UpdateStatus(status);
-                    }
-                    else if (booking.RemainingBalance == 0)
-                    {
-                        booking.UpdateStatus(BookingStatus.Completed);
-                    }
-                    else
-                    {
-                        booking.UpdateStatus(BookingStatus.Confirmed);
-                    }
+                _logger.LogInformation("Đã cập nhật trạng thái đặt sân thành {Status} cho BookingId: {BookingId}",
+                    booking.Status, bookingId.Value);
+            }
 
-                    await _bookingRepository.UpdateBookingAsync(booking, CancellationToken.None);
-                    _logger.LogInformation("Booking {BookingId} status updated to {Status}",
-                        bookingId.Value, booking.Status);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing payment success for booking {BookingId}",
-                    message.ReferenceId);
-                // Consider a retry mechanism or dead-letter queue
-            }
+            await _bookingRepository.UpdateBookingAsync(booking, context.CancellationToken);
+            await _dbContext.SaveChangesAsync(context.CancellationToken);
         }
     }
 }

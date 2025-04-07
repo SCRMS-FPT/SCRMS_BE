@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,6 +23,11 @@ namespace Payment.API.Data
         {
             await _context.SaveChangesAsync(cancellationToken);
             return true;
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Database.BeginTransactionAsync(cancellationToken);
         }
     }
 }

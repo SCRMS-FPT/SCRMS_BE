@@ -24,7 +24,7 @@ public class CoachServiceClient : ICoachServiceClient
     {
         return await _resiliencyPolicy.ExecuteAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"/coaches/{coachId}", cancellationToken);
+            var response = await _httpClient.GetAsync($"/api/coaches/{coachId}", cancellationToken);
             return response.IsSuccessStatusCode;
         });
     }
