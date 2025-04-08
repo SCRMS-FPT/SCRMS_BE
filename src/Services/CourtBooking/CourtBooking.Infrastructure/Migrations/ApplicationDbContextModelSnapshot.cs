@@ -160,7 +160,8 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Facilities")
-                        .HasColumnType("JSONB");
+                        .HasColumnType("JSONB")
+                        .HasColumnName("Facilities");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -320,6 +321,11 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");

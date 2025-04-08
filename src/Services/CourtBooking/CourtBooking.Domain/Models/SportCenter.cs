@@ -13,6 +13,7 @@ namespace CourtBooking.Domain.Models
         public GeoLocation LocationPoint { get; private set; }
         public SportCenterImages Images { get; private set; }
         public string Description { get; private set; }
+        public bool IsDeleted { get; private set; }
 
         private List<Court> _courts = new();
         public IReadOnlyCollection<Court> Courts => _courts.AsReadOnly();
@@ -32,10 +33,11 @@ namespace CourtBooking.Domain.Models
             Description = description ?? string.Empty;
         }
 
-        public static SportCenter Create(SportCenterId id,OwnerId ownerId, string name, string phoneNumber,
+        public static SportCenter Create(SportCenterId id, OwnerId ownerId, string name, string phoneNumber,
             Location address, GeoLocation location, SportCenterImages images, string description)
         {
-            var newSportCenter = new SportCenter {
+            var newSportCenter = new SportCenter
+            {
                 Id = id,
                 OwnerId = ownerId,
                 Name = name,
@@ -43,7 +45,8 @@ namespace CourtBooking.Domain.Models
                 Address = address,
                 LocationPoint = location,
                 Images = images,
-                Description = description
+                Description = description,
+                IsDeleted = false // Explicitly set default value
             };
 
             //newCenter.AddDomainEvent
@@ -74,6 +77,12 @@ namespace CourtBooking.Domain.Models
         public void AddCourt(Court court)
         {
             _courts.Add(court);
+        }
+
+        public void SetIsDeleted(bool isDeleted)
+        {
+            IsDeleted = isDeleted;
+            SetLastModified(DateTime.UtcNow);
         }
 
         private string ValidateString(string value, string errorMessage)

@@ -72,7 +72,11 @@ namespace CourtBooking.Domain.Models
             CancellationWindowHours = cancellationWindowHours;
             RefundPercentage = refundPercentage;
         }
-
+        public void UpdateStatus(CourtStatus status)
+        {
+            Status = status;
+            SetLastModified(DateTime.UtcNow);
+        }
         public void AddCourtSlot(CourtId courtId, int[] dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
         {
             var dayOfWeekValue = new DayOfWeekValue(dayOfWeek);

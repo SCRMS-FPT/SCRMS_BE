@@ -80,6 +80,8 @@ namespace CourtBooking.Application.Data.Repositories
         {
             var query = _context.SportCenters.AsQueryable();
 
+            query = query.Where(sc => !sc.IsDeleted);
+
             if (!string.IsNullOrEmpty(city))
             {
                 query = query.Where(sc => sc.Address.City.ToLower() == city.ToLower());
@@ -113,6 +115,31 @@ namespace CourtBooking.Application.Data.Repositories
             var sportCenter = await GetSportCenterByIdAsync(sportCenterId, cancellationToken);
             // So sánh dựa trên property Value của OwnerId (vì OwnerId là wrapper của Guid)
             return sportCenter != null && sportCenter.OwnerId == OwnerId.Of(userId);
+        }
+
+        public async Task DeleteSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken)
+        {
+            var sportCenter = await _context.SportCenters
+                .FirstOrDefaultAsync(sc => sc.Id == sportCenterId, cancellationToken);
+
+            if (sportCenter != null)
+            {
+                _context.SportCenters.Remove(sportCenter);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        public async Task SoftDeleteSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken)
+        {
+            var sportCenter = await _context.SportCenters
+                .FirstOrDefaultAsync(sc => sc.Id == sportCenterId, cancellationToken);
+
+            if (sportCenter != null)
+            {
+                sportCenter.SetIsDeleted(true);
+                sportCenter.SetLastModified(DateTime.UtcNow);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
         }
     }
 }

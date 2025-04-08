@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-
+using BuildingBlocks.Pagination;
 namespace Coach.API.Features.Coaches.GetCoaches
 {
     public class GetCoachesEndpoint : ICarterModule
@@ -20,7 +20,7 @@ namespace Coach.API.Features.Coaches.GetCoaches
                 return Results.Ok(result);
             })
             .WithName("GetCoaches")
-            .Produces<IEnumerable<CoachResponse>>()
+            .Produces<PaginatedResult<CoachResponse>>()
             .WithTags("Coach")
             .WithDescription("Get all coaches with optional filtering by name, sport, and price range");
         }

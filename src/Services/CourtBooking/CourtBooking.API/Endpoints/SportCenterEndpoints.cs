@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using CourtBooking.Application.CourtManagement.Queries.GetSportCenters;
 using CourtBooking.Application.CourtManagement.Queries.GetSportCenterById;
 using CourtBooking.Application.CourtManagement.Command.UpdateSportCenter;
+using CourtBooking.Application.CourtManagement.Command.DeleteSportCenter;
+using CourtBooking.Application.CourtManagement.Command.SoftDeleteSportCenter;
 using Microsoft.AspNetCore.Authorization;
 using CourtBooking.Application.CourtManagement.Queries.GetAllCourtsOfSportCenter;
 using CourtBooking.Application.CourtManagement.Queries.GetSportCentersByOwner;
@@ -35,7 +37,6 @@ namespace CourtBooking.API.Endpoints
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-
             var group = app.MapGroup("/api/sportcenters").WithTags("SportCenter");
 
             // Create Sport Center
@@ -245,6 +246,38 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get Sport Center By ID")
             .WithDescription("Get detailed information of a specific sport center");
+
+            // Hard Delete Sport Center
+            group.MapDelete("/{centerId:guid}", async (
+                Guid centerId,
+                ISender sender) =>
+            {
+                var command = new DeleteSportCenterCommand(centerId);
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            })
+            .WithName("DeleteSportCenter")
+            .RequireAuthorization("AdminOrCourtOwner")
+            .Produces<DeleteSportCenterResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Delete Sport Center")
+            .WithDescription("Permanently deletes a sport center and all its courts");
+
+            // Soft Delete Sport Center
+            group.MapDelete("/{centerId:guid}/soft", async (
+                Guid centerId,
+                ISender sender) =>
+            {
+                var command = new SoftDeleteSportCenterCommand(centerId);
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            })
+            .WithName("SoftDeleteSportCenter")
+            .RequireAuthorization("AdminOrCourtOwner")
+            .Produces<SoftDeleteSportCenterResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Soft Delete Sport Center")
+            .WithDescription("Marks a sport center as deleted and sets all its courts to Closed status");
         }
     }
 
@@ -281,5 +314,4 @@ namespace CourtBooking.API.Endpoints
         public bool KeepExistingAvatar { get; set; } = true;
         public bool KeepExistingGallery { get; set; } = true;
     }
-
 }
