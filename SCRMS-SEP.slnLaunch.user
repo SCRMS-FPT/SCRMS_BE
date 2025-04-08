@@ -47,7 +47,7 @@
     ]
   },
   {
-    "Name": "match inden court",
+    "Name": "chat match inden court",
     "Projects": [
       {
         "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
@@ -60,6 +60,10 @@
       {
         "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
         "Action": "StartWithoutDebugging"
+      },
+      {
+        "Path": "src\\Services\\Chat\\Chat.API\\Chat.API.csproj",
+        "Action": "Start"
       }
     ]
   },

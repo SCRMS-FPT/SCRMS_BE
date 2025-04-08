@@ -1,4 +1,6 @@
-﻿namespace Chat.API.Features.CreateChatSession
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
+namespace Chat.API.Features.CreateChatSession
 {
     public class CreateChatSessionEndpoint : ICarterModule
     {
@@ -7,7 +9,8 @@
             app.MapPost("/api/chats", async (CreateChatSessionRequest request, ISender sender, HttpContext httpContext) =>
             {
                 // Lấy UserId từ JWT
-                var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
                     return Results.Unauthorized();
 

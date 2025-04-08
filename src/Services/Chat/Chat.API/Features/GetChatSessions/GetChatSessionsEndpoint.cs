@@ -6,7 +6,7 @@ namespace Chat.API.Features.GetChatSessions
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/chats", async (
+            app.MapGet("/api/chats/list", async (
                 ISender sender,
                 HttpContext httpContext,
                 int page,
