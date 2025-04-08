@@ -11,9 +11,11 @@ namespace Coach.API.Features.Coaches.GetCoaches
                 [FromQuery] Guid? sportId,
                 [FromQuery] decimal? minPrice,
                 [FromQuery] decimal? maxPrice,
-                [FromServices] ISender sender) =>
+                [FromServices] ISender sender,
+                [FromQuery] int pageIndex = 0,
+                [FromQuery] int pageSize = 10) =>
             {
-                var query = new GetCoachesQuery(name, sportId, minPrice, maxPrice);
+                var query = new GetCoachesQuery(name, sportId, minPrice, maxPrice, pageIndex, pageSize);
                 var result = await sender.Send(query);
                 return Results.Ok(result);
             })

@@ -2,6 +2,9 @@
 using Coach.API.Data;
 using Microsoft.AspNetCore.Mvc;
 using Coach.API.Data.Repositories;
+using BuildingBlocks.Pagination;
+using BuildingBlocks.CQRS;
+using MediatR;
 
 namespace Coach.API.Features.Coaches.GetCoaches
 {
@@ -10,8 +13,10 @@ namespace Coach.API.Features.Coaches.GetCoaches
         string? Name = null,
         Guid? SportId = null,
         decimal? MinPrice = null,
-        decimal? MaxPrice = null
-    ) : IQuery<IEnumerable<CoachResponse>>;
+        decimal? MaxPrice = null,
+    int PageIndex = 0,
+    int PageSize = 10
+    ) : IQuery<PaginatedResult<CoachResponse>>, IRequest<PaginatedResult<CoachResponse>>;
     public record CoachWeeklyScheduleResponse(
     int DayOfWeek,         // 1=Sunday to 7=Saturday
     string DayName,        // "Sunday", "Monday", etc.
@@ -42,7 +47,7 @@ namespace Coach.API.Features.Coaches.GetCoaches
         int SessionCount);
 
     // Handler
-    public class GetCoachesQueryHandler : IQueryHandler<GetCoachesQuery, IEnumerable<CoachResponse>>
+    public class GetCoachesQueryHandler : IQueryHandler<GetCoachesQuery, PaginatedResult<CoachResponse>>
     {
         private readonly ICoachRepository _coachRepository;
         private readonly ICoachSportRepository _sportRepository;
@@ -61,11 +66,10 @@ namespace Coach.API.Features.Coaches.GetCoaches
             _scheduleRepository = scheduleRepository;
         }
 
-        public async Task<IEnumerable<CoachResponse>> Handle(GetCoachesQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<CoachResponse>> Handle(GetCoachesQuery request, CancellationToken cancellationToken)
         {
             // Get all coaches first (we will filter in memory)
             var coaches = await _coachRepository.GetAllCoachesAsync(cancellationToken);
-            var responses = new List<CoachResponse>();
 
             // Apply name filter if provided
             if (!string.IsNullOrWhiteSpace(request.Name))
@@ -94,8 +98,18 @@ namespace Coach.API.Features.Coaches.GetCoaches
                 filteredCoaches = coaches.Where(c => coachIdsWithSport.Contains(c.UserId)).ToList();
             }
 
+            // Get total count for pagination
+            int totalCount = filteredCoaches.Count;
+
+            // Apply pagination
+            var paginatedCoaches = filteredCoaches
+                .Skip(request.PageIndex * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+
             // Map coaches to response objects
-            foreach (var coach in filteredCoaches)
+            var responses = new List<CoachResponse>();
+            foreach (var coach in paginatedCoaches)
             {
                 var sports = await _sportRepository.GetCoachSportsByCoachIdAsync(coach.UserId, cancellationToken);
                 var packages = await _packageRepository.GetCoachPackagesByCoachIdAsync(coach.UserId, cancellationToken);
@@ -129,7 +143,12 @@ namespace Coach.API.Features.Coaches.GetCoaches
                     weeklySchedules));
             }
 
-            return responses;
+            // Return paginated result
+            return new PaginatedResult<CoachResponse>(
+                request.PageIndex,
+                request.PageSize,
+                totalCount,
+                responses);
         }
 
         private string GetDayName(int dayOfWeek)
