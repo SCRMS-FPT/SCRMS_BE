@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Payment.API.Data.Models;
 
 namespace Payment.API.Data.Repositories
 {
@@ -35,6 +34,13 @@ namespace Payment.API.Data.Repositories
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync(cancellationToken);
+        }
+        public async Task<WalletTransaction> GetRecentTransactionByUserIdAsync(Guid userId, DateTime sinceTime, CancellationToken cancellationToken = default)
+        {
+            return await _context.WalletTransactions
+                .Where(t => t.UserId == userId && t.CreatedAt >= sinceTime)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

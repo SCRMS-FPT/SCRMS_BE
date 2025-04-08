@@ -1,10 +1,4 @@
-﻿using MediatR;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Payment.API.Data.Repositories;
-using Payment.API.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Payment.API.Data.Repositories;
 
 namespace Payment.API.Features.SePay
 {
@@ -31,23 +25,29 @@ namespace Payment.API.Features.SePay
             if (request.TransferType != "in")
                 return false;
 
-            // Kiểm tra giao dịch trùng lặp
-            var existingTransaction = await _transactionRepo.GetByReferenceCodeAsync(Guid.Parse(request.ReferenceCode));
-            if (existingTransaction != null)
-                return true; // Đã xử lý trước đó
+            // Lấy userId từ nội dung
+            string content = request.Content.Trim();
+
+            // Kiểm tra nếu nội dung là một GUID hợp lệ
+            if (!Guid.TryParse(content, out Guid userId))
+                return false;
 
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                string formattedGuid = $"{request.Content.Substring(0, 8)}-" +
-                       $"{request.Content.Substring(8, 4)}-" +
-                       $"{request.Content.Substring(12, 4)}-" +
-                       $"{request.Content.Substring(16, 4)}-" +
-                       $"{request.Content.Substring(20, 12)}";
-
-                var wallet = await _userWalletRepo.GetUserWalletByUserIdAsync(Guid.Parse(formattedGuid), cancellationToken);
+                var wallet = await _userWalletRepo.GetUserWalletByUserIdAsync(userId, cancellationToken);
                 if (wallet == null)
-                    return false;
+                {
+                    // Tạo ví mới nếu chưa có
+                    wallet = new UserWallet
+                    {
+                        UserId = userId,
+                        Balance = 0,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    await _userWalletRepo.AddUserWalletAsync(wallet, cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
 
                 // Cập nhật số dư ví
                 wallet.Balance += request.TransferAmount;
@@ -58,11 +58,11 @@ namespace Payment.API.Features.SePay
                 var transactionRecord = new WalletTransaction
                 {
                     Id = Guid.NewGuid(),
-                    UserId = wallet.UserId,
+                    UserId = userId,
                     TransactionType = "deposit",
                     ReferenceId = Guid.Parse(request.ReferenceCode),
                     Amount = request.TransferAmount,
-                    Description = request.Content,
+                    Description = "Nạp tiền qua chuyển khoản",
                     CreatedAt = DateTime.UtcNow
                 };
 
