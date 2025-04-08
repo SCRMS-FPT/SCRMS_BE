@@ -102,5 +102,12 @@ namespace CourtBooking.Application.Data.Repositories
 
             return court.SportCenterId.Value;
         }
+
+        public async Task<List<Court>> GetCourtsBySportCenterIdAsync(SportCenterId sportCenterId, CancellationToken cancellationToken)
+        {
+            return await _context.Courts
+                .Where(c => c.SportCenterId == sportCenterId)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

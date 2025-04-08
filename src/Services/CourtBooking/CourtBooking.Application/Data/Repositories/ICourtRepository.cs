@@ -29,5 +29,7 @@ namespace CourtBooking.Application.Data.Repositories
         Task<bool> IsOwnedByUserAsync(Guid courtId, Guid userId, CancellationToken cancellationToken = default);
 
         Task<Guid> GetSportCenterIdAsync(CourtId courtId, CancellationToken cancellationToken = default);
+
+        Task<List<Court>> GetCourtsBySportCenterIdAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
     }
 }

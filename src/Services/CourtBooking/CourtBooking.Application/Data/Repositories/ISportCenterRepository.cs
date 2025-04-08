@@ -32,5 +32,9 @@ namespace CourtBooking.Application.Data.Repositories
         Task<SportCenter?> GetSportCenterByIdAsync(Guid sportCenterId, CancellationToken cancellationToken = default);
 
         Task<bool> IsOwnedByUserAsync(Guid sportCenterId, Guid userId, CancellationToken cancellationToken = default);
+
+        Task DeleteSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
+
+        Task SoftDeleteSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
     }
 }

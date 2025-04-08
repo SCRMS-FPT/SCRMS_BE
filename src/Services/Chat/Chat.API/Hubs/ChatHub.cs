@@ -4,16 +4,19 @@ using System.Security.Claims;
 using StackExchange.Redis;
 using System.Text.RegularExpressions;
 using System.Text.Json;
+using Chat.API.Data.Repositories;
 
 namespace Chat.API.Hubs
 {
     public class ChatHub : Hub
     {
         private readonly StackExchange.Redis.IDatabase _redis;
+        private readonly IChatSessionRepository _chatSessionRepository;
 
-        public ChatHub(IConnectionMultiplexer redis)
+        public ChatHub(IConnectionMultiplexer redis, IChatSessionRepository chatSessionRepository)
         {
             _redis = redis.GetDatabase();
+            _chatSessionRepository = chatSessionRepository;
         }
 
         public override async Task OnConnectedAsync()
@@ -58,6 +61,31 @@ namespace Chat.API.Hubs
 
             await _redis.ListRightPushAsync($"chat:{sessionId}", JsonSerializer.Serialize(msg));
             await Clients.Group(sessionId.ToString()).SendAsync("ReceiveMessage", msg);
+        }
+
+        public async Task JoinChatSession(string sessionId)
+        {
+            var userId = Context.User!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new HubException("User not authenticated");
+            }
+
+            // Kiểm tra xem người dùng có quyền tham gia phiên chat này không
+            // (cần inject IChatSessionRepository vào hub)
+            var session = await _chatSessionRepository.GetChatSessionByIdAsync(Guid.Parse(sessionId));
+            if (session == null)
+            {
+                throw new HubException("Chat session not found");
+            }
+
+            if (session.User1Id != Guid.Parse(userId) && session.User2Id != Guid.Parse(userId))
+            {
+                throw new HubException("You do not have permission to join this chat session");
+            }
+
+            // Tham gia vào group
+            await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
         }
     }
 }
