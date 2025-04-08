@@ -40,11 +40,11 @@ namespace Payment.API.Features.RevenueReport
             DateTime? startDate = null, endDate = null;
             if (!string.IsNullOrEmpty(request.StartDate) && DateTime.TryParse(request.StartDate, out var parsedStart))
             {
-                startDate = parsedStart;
+                startDate = DateTime.SpecifyKind(parsedStart, DateTimeKind.Utc);
             }
             if (!string.IsNullOrEmpty(request.EndDate) && DateTime.TryParse(request.EndDate, out var parsedEnd))
             {
-                endDate = parsedEnd;
+                endDate = DateTime.SpecifyKind(parsedEnd, DateTimeKind.Utc);
             }
 
             // Truy vấn các giao dịch mua service package (giả sử PaymentType = "ServicePackage")
