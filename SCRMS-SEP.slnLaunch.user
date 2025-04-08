@@ -1,6 +1,6 @@
 [
   {
-    "Name": "court pay",
+    "Name": "court pay iden",
     "Projects": [
       {
         "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
@@ -8,6 +8,10 @@
       },
       {
         "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
         "Action": "Start"
       }
     ]
@@ -60,7 +64,7 @@
     ]
   },
   {
-    "Name": "court coach iden pay",
+    "Name": "match court coach iden pay",
     "Projects": [
       {
         "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
@@ -77,11 +81,36 @@
       {
         "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Matching\\Matching.API\\Matching.API.csproj",
+        "Action": "Start"
       }
     ]
   },
   {
-    "Name": "New Profile",
-    "Projects": []
+    "Name": "court rv iden coach pay",
+    "Projects": [
+      {
+        "Path": "src\\Services\\CourtBooking\\CourtBooking.API\\CourtBooking.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Review\\Review.API\\Reviews.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Coach\\Coach.API\\Coach.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
+        "Action": "Start"
+      }
+    ]
   }
 ]

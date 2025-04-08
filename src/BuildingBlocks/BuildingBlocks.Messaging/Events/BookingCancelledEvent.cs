@@ -3,6 +3,7 @@ namespace BuildingBlocks.Messaging.Events
     public record BookingCancelledRefundEvent(
             Guid BookingId,
             Guid UserId,
+            Guid SportCenterOwnerId,
             decimal RefundAmount,
             string CancellationReason,
             DateTime CancelledAt

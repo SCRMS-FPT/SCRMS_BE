@@ -52,6 +52,45 @@ namespace CourtBooking.Domain.Models
             InitialDeposit += bookingDetail.TotalPrice * (minDepositPercentage / 100m);
             RecalculateTotals();
         }
+
+        // Add to your Booking class:
+
+        /// <summary>
+        /// Process an additional payment for this booking
+        /// </summary>
+        /// <param name="amount">The amount being paid</param>
+        public void ProcessAdditionalPayment(decimal amount)
+        {
+            if (amount <= 0)
+                throw new ArgumentException("Payment amount must be positive", nameof(amount));
+
+            // Update remaining balance
+            RemainingBalance -= amount;
+
+            // Ensure we don't go below zero
+            if (RemainingBalance < 0)
+                RemainingBalance = 0;
+
+            // If fully paid, update status to confirmed
+            if (RemainingBalance == 0 && Status != BookingStatus.Confirmed)
+            {
+                Status = BookingStatus.Completed;
+            }
+
+            LastModified = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Update the status of this booking
+        /// </summary>
+        /// <param name="newStatus">The new status to set</param>
+        public void UpdateStatus(BookingStatus newStatus)
+        {
+            // Add any business rules or validations here
+            Status = newStatus;
+            LastModified = DateTime.UtcNow;
+        }
+
         public BookingDetail AddBookingDetailWithPromotion(CourtId courtId, TimeSpan startTime, TimeSpan endTime,
             List<CourtSchedule> schedules, decimal minDepositPercentage, string discountType, decimal discountValue)
         {
@@ -96,6 +135,7 @@ namespace CourtBooking.Domain.Models
             RecalculateTotals();
             return bookingDetail;
         }
+
         public void RemoveBookingDetail(BookingDetailId detailId)
         {
             var detail = _bookingDetails.FirstOrDefault(d => d.Id == detailId);
@@ -112,6 +152,7 @@ namespace CourtBooking.Domain.Models
                 throw new DomainException("Only pending bookings can be confirmed.");
             Status = BookingStatus.Confirmed;
         }
+
         // Add this method to the Booking class in d:\SEP490_G37\m\SCRMS_BE\src\Services\CourtBooking\CourtBooking.Domain\Models\Booking.cs
 
         public void UpdateNote(string note)
@@ -119,6 +160,7 @@ namespace CourtBooking.Domain.Models
             Note = note;
             SetLastModified(DateTime.UtcNow);
         }
+
         public void MarkAsPendingPayment()
         {
             Status = BookingStatus.PendingPayment;
@@ -168,7 +210,6 @@ namespace CourtBooking.Domain.Models
             if (paymentAmount <= 0)
                 throw new DomainException("Số tiền thanh toán phải lớn hơn 0");
 
-
             TotalPaid += paymentAmount;
             RemainingBalance = TotalPrice - TotalPaid;
 
@@ -186,11 +227,6 @@ namespace CourtBooking.Domain.Models
             TotalPrice = _bookingDetails.Sum(d => d.TotalPrice);
 
             RemainingBalance = TotalPrice - TotalPaid;
-        }
-
-        public void UpdateStatus(BookingStatus newStatus)
-        {
-            Status = newStatus;
         }
 
         public void SetCancellationReason(string reason)

@@ -5,6 +5,7 @@ namespace CourtBooking.Application.BookingManagement.Queries.GetBookings;
 public record GetBookingsQuery(
     Guid UserId,
     string Role,
+    string? ViewAs,
     Guid? FilterUserId,
     Guid? CourtId,
     Guid? SportsCenterId,

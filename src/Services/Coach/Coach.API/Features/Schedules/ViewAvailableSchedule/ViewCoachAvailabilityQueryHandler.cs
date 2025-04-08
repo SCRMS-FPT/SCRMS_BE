@@ -54,7 +54,7 @@ namespace Coach.API.Features.Schedules.GetCoachSchedules
             for (var date = query.StartDate; date <= query.EndDate; date = date.AddDays(1))
             {
                 // Ánh xạ DayOfWeek: .NET (0=Sunday, 6=Saturday) -> CoachSchedule (1=Sunday, 7=Saturday)
-                int dayOfWeek = (int)date.DayOfWeek + 1;
+                int dayOfWeek = date.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)date.DayOfWeek;
 
                 var dailySchedules = weeklySchedules.Where(s => s.DayOfWeek == dayOfWeek).ToList();
                 foreach (var schedule in dailySchedules)

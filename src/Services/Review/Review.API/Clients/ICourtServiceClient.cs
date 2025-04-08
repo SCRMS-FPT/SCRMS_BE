@@ -24,7 +24,7 @@ public class CourtServiceClient : ICourtServiceClient
     {
         return await _resiliencyPolicy.ExecuteAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"/courts/{courtId}", cancellationToken);
+            var response = await _httpClient.GetAsync($"/api/courts/{courtId}", cancellationToken);
             return response.IsSuccessStatusCode;
         });
     }

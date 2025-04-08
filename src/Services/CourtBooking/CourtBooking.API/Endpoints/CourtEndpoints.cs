@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtDetails;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtsByOwner;
+using CourtBooking.Application.Data.Repositories;
 using System.Security.Claims;
+using Microsoft.IdentityModel.JsonWebTokens;
 namespace CourtBooking.API.Endpoints
 {
     public record CreateCourtRequest(CourtCreateDTO Court);
@@ -76,8 +78,8 @@ namespace CourtBooking.API.Endpoints
                 HttpContext httpContext,
                 ISender sender) =>
             {
-                // Extract owner ID from JWT claims
-                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var ownerId))
                 {
                     return Results.Problem("Unable to identify user", statusCode: StatusCodes.Status401Unauthorized);
@@ -95,8 +97,25 @@ namespace CourtBooking.API.Endpoints
             .WithSummary("Lấy danh sách sân thuộc sở hữu của chủ sân")
             .WithDescription("Lấy danh sách tất cả các sân thuộc các trung tâm mà người dùng hiện tại sở hữu");
             // Update Court
-            group.MapPut("/{id:guid}", [Authorize(Policy = "CourtOwnerOfCenter")] async (Guid id, [FromBody] UpdateCourtRequest request, ISender sender) =>
+            group.MapPut("/{id:guid}", [Authorize] async (Guid id, [FromBody] UpdateCourtRequest request,
+                HttpContext httpContext, ISender sender, ICourtRepository courtRepository) =>
             {
+                // Lấy UserId từ JWT claim
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    return Results.Problem("Không thể xác định người dùng", statusCode: StatusCodes.Status401Unauthorized);
+                }
+
+                // Kiểm tra xem người dùng có phải là chủ sở hữu của sân này không
+                var isOwner = await courtRepository.IsOwnedByUserAsync(id, userId);
+                if (!isOwner)
+                {
+                    return Results.Problem("Bạn không có quyền cập nhật sân này", statusCode: StatusCodes.Status403Forbidden);
+                }
+
+                // Tiếp tục xử lý nếu người dùng là chủ sở hữu
                 var command = new UpdateCourtCommand(id, request.Court);
                 var result = await sender.Send(command);
                 var response = new UpdateCourtResponse(result.IsSuccess);
@@ -105,13 +124,30 @@ namespace CourtBooking.API.Endpoints
             .WithName("UpdateCourt")
             .Produces<UpdateCourtResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .WithSummary("Cập nhật sân")
             .WithDescription("Cập nhật thông tin sân (yêu cầu quyền sở hữu)");
 
             // Delete Court
-            group.MapDelete("/{id:guid}", [Authorize(Policy = "CourtOwnerOfCenter")] async (Guid id, ISender sender) =>
+            group.MapDelete("/{id:guid}", [Authorize] async (Guid id,
+                HttpContext httpContext, ISender sender, ICourtRepository courtRepository) =>
             {
+                // Lấy UserId từ JWT claim
+                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    return Results.Problem("Không thể xác định người dùng", statusCode: StatusCodes.Status401Unauthorized);
+                }
+
+                // Kiểm tra xem người dùng có phải là chủ sở hữu của sân này không
+                var isOwner = await courtRepository.IsOwnedByUserAsync(id, userId);
+                if (!isOwner)
+                {
+                    return Results.Problem("Bạn không có quyền xóa sân này", statusCode: StatusCodes.Status403Forbidden);
+                }
+
+                // Tiếp tục xử lý nếu người dùng là chủ sở hữu
                 var result = await sender.Send(new DeleteCourtCommand(id));
                 var response = new DeleteCourtResponse(result.IsSuccess);
                 return Results.Ok(response);
@@ -119,6 +155,7 @@ namespace CourtBooking.API.Endpoints
             .WithName("DeleteCourt")
             .Produces<DeleteCourtResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Xóa sân")

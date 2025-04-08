@@ -148,17 +148,17 @@ namespace Payment.API.Features.ProcessBookingPayment
 
                     await _outboxService.SaveMessageAsync(coachEvent);
                 }
-                else if (request.PaymentType == "CourtBooking" || request.PaymentType.StartsWith("Court"))
+                else if (request.PaymentType == "CourtBooking" || request.PaymentType == "CourtBookingAdditional" || request.PaymentType.StartsWith("Court"))
                 {
-                    // Create a generic payment event for court booking
                     var paymentEvent = new BookCourtSucceededEvent(
                         userTransaction.Id,
                         request.UserId,
-                        request.ReferenceId,
+                        request.ReferenceId ?? request.BookingId, // Use BookingId as ReferenceId if provided
                         request.Amount,
                         DateTime.UtcNow,
                         request.Description,
-                        "CourtBooking", request.Status
+                        request.PaymentType, // Pass the exact payment type (CourtBooking or CourtBookingAdditional)
+                        request.Status
                     );
 
                     await _outboxService.SaveMessageAsync(paymentEvent);

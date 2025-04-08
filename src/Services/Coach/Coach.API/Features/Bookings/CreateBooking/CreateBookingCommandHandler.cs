@@ -71,7 +71,7 @@ namespace Coach.API.Features.Bookings.CreateBooking
             if (coach == null)
                 throw new Exception("Coach not found");
 
-            var dayOfWeek = (int)command.BookingDate.DayOfWeek + 1;
+            var dayOfWeek = command.BookingDate.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)command.BookingDate.DayOfWeek;
             var schedules = await _scheduleRepository.GetCoachSchedulesByCoachIdAsync(command.CoachId, cancellationToken);
             var isValidTime = schedules.Any(s => s.DayOfWeek == dayOfWeek && command.StartTime >= s.StartTime && command.EndTime <= s.EndTime);
             if (!isValidTime)
