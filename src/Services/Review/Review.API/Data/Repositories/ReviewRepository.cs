@@ -56,6 +56,7 @@ namespace Reviews.API.Data.Repositories
         public async Task<List<Review>> GetReviewsBySubjectAsync(string subjectType, Guid subjectId, int page, int limit, CancellationToken cancellationToken)
         {
             return await _context.Reviews
+                .Include(r => r.Replies)
                 .Where(r => r.SubjectType == subjectType && r.SubjectId == subjectId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * limit)
@@ -135,6 +136,34 @@ namespace Reviews.API.Data.Repositories
             }
 
             return await query.CountAsync(cancellationToken);
+        }
+
+        public async Task<List<Review>> GetFlaggedReviewsAsync(int page, int limit, CancellationToken cancellationToken)
+        {
+            // Lấy danh sách ID của các review bị flag
+            var flaggedReviewIds = await _context.ReviewFlags
+                .Select(rf => rf.ReviewId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            // Lấy thông tin chi tiết của các review bị flag
+            return await _context.Reviews
+                .Include(r => r.Replies)
+                .Where(r => flaggedReviewIds.Contains(r.Id))
+                .OrderByDescending(r =>
+                    _context.ReviewFlags.Count(rf => rf.ReviewId == r.Id))
+                .ThenByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> CountFlaggedReviewsAsync(CancellationToken cancellationToken)
+        {
+            return await _context.ReviewFlags
+                .Select(rf => rf.ReviewId)
+                .Distinct()
+                .CountAsync(cancellationToken);
         }
     }
 }

@@ -74,6 +74,7 @@ public class SportCenterConfiguration : IEntityTypeConfiguration<SportCenter>
 
 
         builder.Property(sc => sc.IsDeleted)
+        .HasColumnName("is_deleted")
         .HasDefaultValue(false)
         .IsRequired();
 

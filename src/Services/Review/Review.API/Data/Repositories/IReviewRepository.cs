@@ -29,5 +29,9 @@
         Task<int> CountReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
 
         Task<int> CountFlaggedReviewsAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
+
+        Task<List<Review>> GetFlaggedReviewsAsync(int page, int limit, CancellationToken cancellationToken);
+
+        Task<int> CountFlaggedReviewsAsync(CancellationToken cancellationToken);
     }
 }
