@@ -49,7 +49,7 @@ builder.Services.AddCors(options =>
 
 options.AddPolicy("ReactCORS", policy =>
 {
-    policy.WithOrigins("http://localhost:5173") // Chỉ định rõ origin
+    policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // Chỉ định rõ origin
           .AllowAnyMethod()
           .AllowAnyHeader()
           .SetIsOriginAllowed(origin => true)

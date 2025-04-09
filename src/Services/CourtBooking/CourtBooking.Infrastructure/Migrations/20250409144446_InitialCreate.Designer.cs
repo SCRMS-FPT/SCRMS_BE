@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250408150414_InitialCreate")]
+    [Migration("20250409144446_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -328,7 +328,8 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");

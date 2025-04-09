@@ -325,7 +325,8 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");

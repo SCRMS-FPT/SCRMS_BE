@@ -62,7 +62,7 @@ namespace CourtBooking.Infrastructure.Migrations
                     Images_Avatar = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     Images_ImageUrls = table.Column<string>(type: "jsonb", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     Address_AddressLine = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Address_City = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Address_Commune = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
