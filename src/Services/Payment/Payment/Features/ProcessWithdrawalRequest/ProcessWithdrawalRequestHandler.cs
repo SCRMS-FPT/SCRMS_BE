@@ -54,6 +54,9 @@ namespace Payment.API.Features.ProcessWithdrawalRequest
             withdrawalRequest.ProcessedAt = DateTime.UtcNow;
             withdrawalRequest.ProcessedByUserId = request.AdminUserId;
 
+            // Đảm bảo CreatedAt luôn là UTC
+            withdrawalRequest.CreatedAt = DateTime.SpecifyKind(withdrawalRequest.CreatedAt, DateTimeKind.Utc);
+
             await _withdrawalRequestRepository.UpdateAsync(withdrawalRequest, cancellationToken);
 
             // Nếu phê duyệt, cập nhật số dư ví và tạo giao dịch

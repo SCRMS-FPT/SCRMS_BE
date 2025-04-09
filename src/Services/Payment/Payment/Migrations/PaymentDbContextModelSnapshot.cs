@@ -119,7 +119,6 @@ namespace Payment.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AdminNote")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<decimal>("Amount")

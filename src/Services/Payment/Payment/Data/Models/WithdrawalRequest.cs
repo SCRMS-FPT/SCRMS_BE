@@ -13,7 +13,7 @@ namespace Payment.API.Data.Models
         public string AccountNumber { get; set; }
         public string AccountHolderName { get; set; }
         public string Status { get; set; } // "Pending", "Approved", "Rejected"
-        public string AdminNote { get; set; }
+        public string? AdminNote { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? ProcessedAt { get; set; }
         public Guid? ProcessedByUserId { get; set; }

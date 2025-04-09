@@ -68,7 +68,7 @@ namespace Payment.API.Migrations
                     AccountNumber = table.Column<string>(type: "text", nullable: false),
                     AccountHolderName = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    AdminNote = table.Column<string>(type: "text", nullable: false),
+                    AdminNote = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ProcessedByUserId = table.Column<Guid>(type: "uuid", nullable: true)

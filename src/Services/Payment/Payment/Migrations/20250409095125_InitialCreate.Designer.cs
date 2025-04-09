@@ -12,7 +12,7 @@ using Payment.API.Data;
 namespace Payment.API.Migrations
 {
     [DbContext(typeof(PaymentDbContext))]
-    [Migration("20250409044250_InitialCreate")]
+    [Migration("20250409095125_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -122,7 +122,6 @@ namespace Payment.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AdminNote")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<decimal>("Amount")
