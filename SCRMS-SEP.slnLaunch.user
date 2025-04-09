@@ -116,5 +116,35 @@
         "Action": "Start"
       }
     ]
+  },
+  {
+    "Name": "iden chat match",
+    "Projects": [
+      {
+        "Path": "src\\Services\\Matching\\Matching.API\\Matching.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Chat\\Chat.API\\Chat.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
+        "Action": "Start"
+      }
+    ]
+  },
+  {
+    "Name": "iden pay",
+    "Projects": [
+      {
+        "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
+        "Action": "StartWithoutDebugging"
+      },
+      {
+        "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
+        "Action": "Start"
+      }
+    ]
   }
 ]

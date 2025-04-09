@@ -5,6 +5,7 @@ using StackExchange.Redis;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using Chat.API.Data.Repositories;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Chat.API.Hubs
 {
@@ -21,48 +22,40 @@ namespace Chat.API.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.User!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            await _redis.HashSetAsync("online_status", userId, "online");
+            var userIdClaim = Context.User?.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = userIdClaim.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await _redis.HashSetAsync("online_status", userId, "online");
+            }
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var userId = Context.User!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            await _redis.HashSetAsync("online_status", userId, "offline");
+            var userIdClaim = Context.User?.FindFirst(JwtRegisteredClaimNames.Sub)
+                                ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = userIdClaim.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await _redis.HashSetAsync("online_status", userId, "offline");
+            }
             await base.OnDisconnectedAsync(exception);
         }
 
+        [Obsolete("Use the REST API endpoint POST /api/chats/{chatSessionId}/messages instead")]
         public async Task SendMessage(Guid sessionId, string message)
         {
-            // Rate limiting
-            var userId = Context.User!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var rateLimitKey = $"rate_limit:{userId}";
-            var currentCount = await _redis.StringIncrementAsync(rateLimitKey);
-            if (currentCount == 1)
+            // Chuyển hướng đến API endpoint (không xử lý ở đây)
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
-                await _redis.KeyExpireAsync(rateLimitKey, TimeSpan.FromMinutes(1));
+                throw new HubException("User not authenticated");
             }
 
-            if (currentCount > 30)
-            {
-                throw new Exception("Rate limit exceeded");
-            }
-
-            // Lưu tin nhắn tạm
-            var msg = new ChatMessage
-            {
-                Id = Guid.NewGuid(),
-                ChatSessionId = sessionId,
-                SenderId = Guid.Parse(userId),
-                MessageText = message,
-                SentAt = DateTime.UtcNow
-            };
-
-            await _redis.ListRightPushAsync($"chat:{sessionId}", JsonSerializer.Serialize(msg));
-            await Clients.Group(sessionId.ToString()).SendAsync("ReceiveMessage", msg);
+            throw new HubException("This method is deprecated. Please use the REST API endpoint POST /api/chats/{chatSessionId}/messages instead.");
         }
-
         public async Task JoinChatSession(string sessionId)
         {
             var userId = Context.User!.FindFirst(ClaimTypes.NameIdentifier)?.Value;

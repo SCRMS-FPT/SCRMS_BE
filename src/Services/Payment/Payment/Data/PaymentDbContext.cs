@@ -14,6 +14,7 @@ namespace Payment.API.Data
         public DbSet<UserWallet> UserWallets { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +30,14 @@ namespace Payment.API.Data
 
             modelBuilder.Entity<UserWallet>()
                 .HasKey(u => u.UserId);
+
+            modelBuilder.Entity<WithdrawalRequest>()
+                .HasIndex(w => w.UserId)
+                .HasDatabaseName("IX_WithdrawalRequests_UserId");
+
+            modelBuilder.Entity<WithdrawalRequest>()
+                .HasIndex(w => w.Status)
+                .HasDatabaseName("IX_WithdrawalRequests_Status");
         }
     }
 }

@@ -1,4 +1,10 @@
-﻿namespace Payment.API.Data.Repositories
+﻿using Payment.API.Data.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Payment.API.Data.Repositories
 {
     public interface IWalletTransactionRepository
     {
