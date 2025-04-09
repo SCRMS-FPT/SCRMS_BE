@@ -11,10 +11,14 @@ namespace Chat.API.Features.SendMessage
     public class SendMessageHandler : IRequestHandler<SendMessageCommand, ChatMessage>
     {
         private readonly IChatMessageRepository _chatMessageRepository;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public SendMessageHandler(IChatMessageRepository chatMessageRepository)
+        public SendMessageHandler(
+            IChatMessageRepository chatMessageRepository,
+            IHubContext<ChatHub> hubContext)
         {
             _chatMessageRepository = chatMessageRepository;
+            _hubContext = hubContext;
         }
 
         public async Task<ChatMessage> Handle(SendMessageCommand request, CancellationToken cancellationToken)
@@ -35,7 +39,13 @@ namespace Chat.API.Features.SendMessage
                 UpdatedAt = DateTime.UtcNow
             };
 
+            // 1. Lưu tin nhắn vào database
             await _chatMessageRepository.AddChatMessageAsync(chatMessage);
+
+            // 2. Phát sóng tin nhắn qua SignalR đến tất cả clients trong phiên chat
+            await _hubContext.Clients.Group(request.ChatSessionId.ToString())
+                .SendAsync("ReceiveMessage", chatMessage, cancellationToken);
+
             return chatMessage;
         }
     }
