@@ -103,6 +103,58 @@ namespace Payment.API.Migrations
 
                     b.ToTable("WalletTransactions");
                 });
+
+            modelBuilder.Entity("Payment.API.Data.Models.WithdrawalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccountHolderName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AdminNote")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ProcessedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_WithdrawalRequests_Status");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_WithdrawalRequests_UserId");
+
+                    b.ToTable("WithdrawalRequests");
+                });
 #pragma warning restore 612, 618
         }
     }

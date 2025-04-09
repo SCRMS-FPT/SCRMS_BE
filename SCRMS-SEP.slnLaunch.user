@@ -133,5 +133,18 @@
         "Action": "Start"
       }
     ]
+  },
+  {
+    "Name": "iden pay",
+    "Projects": [
+      {
+        "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
+        "Action": "StartWithoutDebugging"
+      },
+      {
+        "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
+        "Action": "Start"
+      }
+    ]
   }
 ]

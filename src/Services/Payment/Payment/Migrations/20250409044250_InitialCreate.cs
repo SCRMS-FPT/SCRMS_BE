@@ -57,6 +57,27 @@ namespace Payment.API.Migrations
                     table.PrimaryKey("PK_WalletTransactions", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "WithdrawalRequests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    BankName = table.Column<string>(type: "text", nullable: false),
+                    AccountNumber = table.Column<string>(type: "text", nullable: false),
+                    AccountHolderName = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    AdminNote = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ProcessedByUserId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WithdrawalRequests", x => x.Id);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessages_ProcessedAt",
                 table: "OutboxMessages",
@@ -67,6 +88,16 @@ namespace Payment.API.Migrations
                 table: "WalletTransactions",
                 columns: new[] { "UserId", "CreatedAt" })
                 .Annotation("Npgsql:IndexInclude", new[] { "Amount" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WithdrawalRequests_Status",
+                table: "WithdrawalRequests",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WithdrawalRequests_UserId",
+                table: "WithdrawalRequests",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -80,6 +111,9 @@ namespace Payment.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "WalletTransactions");
+
+            migrationBuilder.DropTable(
+                name: "WithdrawalRequests");
         }
     }
 }
