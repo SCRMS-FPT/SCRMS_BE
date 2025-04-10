@@ -70,6 +70,8 @@ public class GetBookingsHandler : IRequestHandler<GetBookingsQuery, GetBookingsR
                 b.BookingDetails.Any(d =>
                     _context.Courts.Any(c => c.Id == d.CourtId && ownedSportsCenterIds.Contains(c.SportCenterId)))
             );
+            // Loại trừ những booking được tạo bởi chính court owner
+            bookingsQuery = bookingsQuery.Where(b => b.UserId != UserId.Of(query.UserId));
 
             // Filtering by specific user if requested
             if (query.FilterUserId.HasValue)

@@ -1,4 +1,4 @@
-﻿using BuildingBlocks.Messaging.Events;
+using BuildingBlocks.Messaging.Events;
 using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
 using MassTransit;
