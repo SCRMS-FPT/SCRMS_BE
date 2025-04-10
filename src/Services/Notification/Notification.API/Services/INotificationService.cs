@@ -22,5 +22,6 @@
             Guid ownerId,
             string message,
             Dictionary<string, string>? data = null);
+        Task SendMail(string to, string subject, string body, bool isHtml);
     }
 }

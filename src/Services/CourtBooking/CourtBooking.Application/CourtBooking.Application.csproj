@@ -17,4 +17,8 @@
     <ProjectReference Include="..\CourtBooking.Domain\CourtBooking.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="CourtManagement\Command\DeleteSportCenter\" />
+  </ItemGroup>
+
 </Project>

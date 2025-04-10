@@ -48,7 +48,7 @@ namespace Reviews.Test.Features
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Equal(reviewId, result[0].Id);
+            Assert.Equal(reviewId, result.Data.First().Id);
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace Reviews.Test.Features
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Empty(result);
+            Assert.Empty(result.Data);
         }
     }
 }
