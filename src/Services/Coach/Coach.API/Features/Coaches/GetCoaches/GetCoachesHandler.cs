@@ -70,6 +70,7 @@ namespace Coach.API.Features.Coaches.GetCoaches
         {
             // Get all coaches first (we will filter in memory)
             var coaches = await _coachRepository.GetAllCoachesAsync(cancellationToken);
+            // Coaches đã được lọc theo status = "active" trong repository
 
             // Apply name filter if provided
             if (!string.IsNullOrWhiteSpace(request.Name))

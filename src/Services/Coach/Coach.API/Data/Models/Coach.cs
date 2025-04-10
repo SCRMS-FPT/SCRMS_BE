@@ -26,6 +26,8 @@ namespace Coach.API.Data.Models
         public decimal RatePerHour { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [MaxLength(20)]
+        public string Status { get; set; } = "active";
         public virtual ICollection<CoachSchedule> Schedules { get; set; }
         public virtual ICollection<CoachSport> CoachSports { get; set; }
         public virtual ICollection<CoachBooking> Bookings { get; set; }

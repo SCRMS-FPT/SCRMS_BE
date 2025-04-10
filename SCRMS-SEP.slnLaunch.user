@@ -68,7 +68,7 @@
     ]
   },
   {
-    "Name": "match court coach iden pay",
+    "Name": "chat rv match court coach iden pay",
     "Projects": [
       {
         "Path": "src\\Services\\Identity\\Identity.API\\Identity.API.csproj",
@@ -88,6 +88,14 @@
       },
       {
         "Path": "src\\Services\\Matching\\Matching.API\\Matching.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Chat\\Chat.API\\Chat.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Review\\Review.API\\Reviews.API.csproj",
         "Action": "Start"
       }
     ]

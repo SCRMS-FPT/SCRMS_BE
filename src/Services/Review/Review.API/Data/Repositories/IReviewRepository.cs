@@ -19,6 +19,8 @@
         Task<List<Review>> GetReviewsByCoachIdAsync(Guid coachId, int page, int limit, CancellationToken cancellationToken);
 
         Task<int> CountReviewRepliesAsync(Guid reviewId, CancellationToken cancellationToken);
+        Task<ReviewFlag?> GetReviewFlagByIdAsync(Guid flagId, CancellationToken cancellationToken);
+        Task UpdateReviewFlagAsync(ReviewFlag flag, CancellationToken cancellationToken);
 
         Task<int> CountReviewsByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
 

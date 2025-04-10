@@ -4,7 +4,7 @@
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/reviews/{reviewId}", async (Guid reviewId, ISender sender) =>
+            app.MapGet("/api/review/{reviewId}", async (Guid reviewId, ISender sender) =>
             {
                 var query = new GetReviewDetailQuery(reviewId);
                 var review = await sender.Send(query);

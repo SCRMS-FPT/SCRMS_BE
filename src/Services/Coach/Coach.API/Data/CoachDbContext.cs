@@ -29,6 +29,7 @@ namespace Coach.API.Data
                 entity.HasKey(c => c.UserId);
                 entity.Property(c => c.Bio).HasMaxLength(1000);
                 entity.Property(c => c.RatePerHour).HasColumnType("decimal(18,2)");
+                entity.Property(c => c.Status).HasMaxLength(20).HasDefaultValue("active"); // Thêm cấu hình này
             });
 
             modelBuilder.Entity<CoachSport>(entity =>
