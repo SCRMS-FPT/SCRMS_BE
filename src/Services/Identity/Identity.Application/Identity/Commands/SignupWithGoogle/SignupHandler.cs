@@ -1,11 +1,10 @@
-﻿using Google.Apis.Auth;
+﻿using BuildingBlocks.Messaging.Events;
+using Google.Apis.Auth;
 using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text;
-using System.Text.Json;
 
 namespace Identity.Application.Identity.Commands.SignupWithGoogle
 {
@@ -15,13 +14,15 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
         private readonly GoogleSettings _googleSettings;
         private readonly EndpointSettings _emailSettings;
         private readonly ILogger<SignupHandler> _logger;
+        private readonly IPublisher _publisher;
 
-        public SignupHandler(IUserRepository userRepository, IOptions<GoogleSettings> googleSettings, IOptions<EndpointSettings> emailSettings, ILogger<SignupHandler> logger)
+        public SignupHandler(IUserRepository userRepository, IOptions<GoogleSettings> googleSettings, IOptions<EndpointSettings> emailSettings, ILogger<SignupHandler> logger, IPublisher publisher)
         {
             _userRepository = userRepository;
             _googleSettings = googleSettings.Value;
             _logger = logger;
             _emailSettings = emailSettings.Value;
+            _publisher = publisher;
         }
 
         public async Task<SignupResult> Handle(SignupCommand command, CancellationToken cancellationToken)
@@ -90,24 +91,7 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
                 }
 
                 // Send gmail
-                HttpClient httpClient = new HttpClient();
-                var requestData = new
-                {
-                    to = payload.Email,
-                    subject = "Đăng ký thành công dịch vụ của SCRMS",
-                    //body = "Bạn đã đăng ký thành công dựa trên gmail này",
-                    body = GenerateAnnouncement(),
-                    isHtml = true,
-                };
-                string jsonContent = JsonSerializer.Serialize(requestData);
-                StringContent httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await httpClient.PostAsync(_emailSettings.SendEmail, httpContent);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogError($"Error: {response.StatusCode} - {response.ReasonPhrase}");
-                }
-
+                _publisher.Publish(new SendMailEvent(payload.Email, GenerateAnnouncement(), "Đăng ký thành công dịch vụ của SCRMS", true));
 
                 _logger.LogInformation("User {Email} registered successfully via Google.", user.Email);
                 return new SignupResult(user.Id);

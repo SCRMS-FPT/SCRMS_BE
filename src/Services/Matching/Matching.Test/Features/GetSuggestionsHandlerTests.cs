@@ -1,5 +1,6 @@
 ﻿using Matching.API.Data.Repositories;
 using Matching.API.Features.Suggestions;
+using Matching.API.Data.Models;
 using Moq;
 
 namespace Matching.Test.Features
@@ -20,11 +21,14 @@ namespace Matching.Test.Features
         {
             // Arrange
             var userId = Guid.NewGuid();
-            _userSkillRepoMock.Setup(m => m.GetSuggestionUserIdsAsync(userId, 1, 10, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Guid>());
+            var filters = new List<SportSkillFilter>();
+
+            _userSkillRepoMock.Setup(m => m.GetSuggestionsWithSkillsAsync(userId, 1, 10, filters, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<Guid, List<UserSkill>>());
+
 
             // Act
-            var result = await _handler.Handle(new GetSuggestionsQuery(1, 10, userId), CancellationToken.None);
+            var result = await _handler.Handle(new GetSuggestionsQuery(1, 10, userId, filters), CancellationToken.None);
 
             // Assert
             Assert.Empty(result);
@@ -35,16 +39,38 @@ namespace Matching.Test.Features
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var suggestionIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-            _userSkillRepoMock.Setup(m => m.GetSuggestionUserIdsAsync(userId, 1, 10, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(suggestionIds);
+            var suggestedUser1 = Guid.NewGuid();
+            var suggestedUser2 = Guid.NewGuid();
+            var filters = new List<SportSkillFilter>();
+
+            var mockData = new Dictionary<Guid, List<UserSkill>>
+            {
+                {
+                    suggestedUser1,
+                    new List<UserSkill>
+                    {
+                        new UserSkill { SportId = Guid.NewGuid(), SkillLevel = "Intermediate" }
+                    }
+                },
+                {
+                    suggestedUser2,
+                    new List<UserSkill>
+                    {
+                        new UserSkill { SportId = Guid.NewGuid(), SkillLevel = "Advanced" }
+                    }
+                }
+            };
+
+            _userSkillRepoMock.Setup(m => m.GetSuggestionsWithSkillsAsync(userId, 1, 10, filters, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockData);
 
             // Act
-            var result = await _handler.Handle(new GetSuggestionsQuery(1, 10, userId), CancellationToken.None);
+            var result = await _handler.Handle(new GetSuggestionsQuery(1, 10, userId, filters), CancellationToken.None);
 
             // Assert
             Assert.Equal(2, result.Count);
-            Assert.All(result, profile => Assert.Contains(profile.Id, suggestionIds));
+            Assert.Contains(result, r => r.Id == suggestedUser1);
+            Assert.Contains(result, r => r.Id == suggestedUser2);
         }
 
         [Fact]
@@ -52,16 +78,37 @@ namespace Matching.Test.Features
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var suggestionIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
-            _userSkillRepoMock.Setup(m => m.GetSuggestionUserIdsAsync(userId, 2, 1, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(suggestionIds.Skip(1).Take(1).ToList());
+            var filters = new List<SportSkillFilter>();
+
+            var allSuggestions = new Dictionary<Guid, List<UserSkill>>
+            {
+                {
+                    Guid.NewGuid(),
+                    new List<UserSkill> { new UserSkill { SportId = Guid.NewGuid(), SkillLevel = "Beginner" } }
+                },
+                {
+                    Guid.NewGuid(),
+                    new List<UserSkill> { new UserSkill { SportId = Guid.NewGuid(), SkillLevel = "Advanced" } }
+                },
+                {
+                    Guid.NewGuid(),
+                    new List<UserSkill> { new UserSkill { SportId = Guid.NewGuid(), SkillLevel = "Intermediate" } }
+                }
+            };
+
+            var pagedSuggestions = allSuggestions.Skip(1).Take(1)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            _userSkillRepoMock.Setup(m => m.GetSuggestionsWithSkillsAsync(userId, 2, 1, filters, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagedSuggestions);
 
             // Act
-            var result = await _handler.Handle(new GetSuggestionsQuery(2, 1, userId), CancellationToken.None);
+            var result = await _handler.Handle(new GetSuggestionsQuery(2, 1, userId, filters), CancellationToken.None);
 
             // Assert
             Assert.Single(result);
-            Assert.Equal(suggestionIds[1], result[0].Id);
+            Assert.Equal(pagedSuggestions.First().Key, result[0].Id);
         }
     }
 }
+

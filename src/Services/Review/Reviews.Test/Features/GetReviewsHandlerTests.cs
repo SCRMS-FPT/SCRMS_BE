@@ -70,7 +70,7 @@ namespace Reviews.Test.Features
             var response = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Equal(reviews.Select(r => r.Id), response.Select(r => r.Id));
+            Assert.Equal(reviews.Select(r => r.Id), response.Data.Select(r => r.Id));
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace Reviews.Test.Features
             var response = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Single(response);
+            Assert.Single(response.Data);
         }
 
         [Fact]
@@ -114,7 +114,7 @@ namespace Reviews.Test.Features
             var response = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Equal(paginatedReviews[0].Id, response[0].Id);
+            Assert.Equal(paginatedReviews[0].Id, response.Data.First().Id);
         }
     }
 }

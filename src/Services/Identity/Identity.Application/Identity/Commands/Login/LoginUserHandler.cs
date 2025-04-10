@@ -1,13 +1,10 @@
-﻿using Identity.Application.Data;
-using Identity.Application.Dtos;
-using Identity.Domain.Exceptions;
-using Mapster;
-using Microsoft.Extensions.Options;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using Identity.Application.Data.Repositories;
+using Identity.Domain.Exceptions;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Application.Identity.Commands.Login
 {

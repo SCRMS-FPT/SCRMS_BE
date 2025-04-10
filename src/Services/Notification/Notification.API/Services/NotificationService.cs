@@ -108,5 +108,12 @@ namespace Notification.API.Services
         {
             throw new NotImplementedException();
         }
+
+        public async Task SendMail(string to, string subject, string body, bool isHtml)
+        {
+            _logger.LogInformation($"Sending mail into {to}");
+            await _emailService.SendEmailAsync(to, subject, body, isHtml );
+            await Task.CompletedTask;
+        }
     }
 }

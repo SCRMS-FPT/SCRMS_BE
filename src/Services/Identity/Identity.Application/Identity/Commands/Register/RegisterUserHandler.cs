@@ -1,10 +1,10 @@
-﻿using Identity.Application.Data.Repositories;
+using BuildingBlocks.Messaging.Events;
+using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
+using MassTransit;
 using Microsoft.Extensions.Options;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 
 namespace Identity.Application.Identity.Commands.Register
 {
@@ -12,16 +12,13 @@ namespace Identity.Application.Identity.Commands.Register
     {
         private readonly IUserRepository _userRepository;
         private readonly EndpointSettings _endpointSettings;
-        private readonly IHttpClientFactory? _httpClientFactory;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public RegisterUserHandler(
-            IUserRepository userRepository, 
-            IOptions<EndpointSettings> endpointSettings,
-            IHttpClientFactory? httpClientFactory = null)
+        public RegisterUserHandler(IUserRepository userRepository, IOptions<EndpointSettings> endpointSettings, IPublishEndpoint publishEndpoint)
         {
             _userRepository = userRepository;
             _endpointSettings = endpointSettings.Value;
-            _httpClientFactory = httpClientFactory;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<RegisterUserResult> Handle(
@@ -50,34 +47,18 @@ namespace Identity.Application.Identity.Commands.Register
                 );
             }
 
-            // Skip email sending in test environments when httpClientFactory is null
-            if (_httpClientFactory != null)
-            {
-                try
-                {
-                    // Send email 
-                    HttpClient httpClient = _httpClientFactory.CreateClient();
-                    var requestData = new
-                    {
-                        to = command.Email,
-                        subject = "Thư xác minh tài khoản của SCRMS",
-                        body = GenerateVerificationEmail(command.Email, _endpointSettings.Verification + GenerateToken(command.Email, _endpointSettings.VerificationKey)),
-                        isHtml = true,
-                    };
-                    string jsonContent = JsonSerializer.Serialize(requestData);
-                    StringContent httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                    await httpClient.PostAsync(_endpointSettings.SendEmail, httpContent, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    // Log the error but don't fail the registration
-                    Console.WriteLine($"Failed to send verification email: {ex.Message}");
-                }
-            }
+            // Send email 
+            await _publishEndpoint.Publish(
+                new SendMailEvent(
+                    command.Email,
+                    GenerateVerificationEmail(command.FirstName + " " + command.LastName,
+                    _endpointSettings.Verification + GenerateToken(command.Email, _endpointSettings.VerificationKey)),
+                    "Thư xác minh tài khoản của SCRMS",
+                    true));
 
             return new RegisterUserResult(user.Id);
         }
-        
+
         /// <summary>
         /// Generate the token to encrypt the data for sending
         /// </summary>
