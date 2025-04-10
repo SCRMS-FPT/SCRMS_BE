@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Coach.API.Migrations
 {
     [DbContext(typeof(CoachDbContext))]
-    [Migration("20250401072822_InitialCreate")]
+    [Migration("20250410162348_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -65,6 +65,13 @@ namespace Coach.API.Migrations
 
                     b.Property<decimal>("RatePerHour")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("active");
 
                     b.HasKey("UserId");
 

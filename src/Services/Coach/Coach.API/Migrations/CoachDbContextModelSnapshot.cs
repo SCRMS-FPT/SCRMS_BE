@@ -63,6 +63,13 @@ namespace Coach.API.Migrations
                     b.Property<decimal>("RatePerHour")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("active");
+
                     b.HasKey("UserId");
 
                     b.ToTable("Coaches");
