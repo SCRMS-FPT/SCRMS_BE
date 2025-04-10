@@ -53,12 +53,12 @@ namespace Identity.Test.Application.Identity.Commands
 
             var handler = new UpdateProfileHandler(_userRepositoryMock.Object, _imageKitServiceMock.Object);
             var command = new UpdateProfileCommand(
-                user.Id, 
-                "NewFirst", 
-                "NewLast", 
-                "+987654321", 
-                DateTime.UtcNow.AddYears(-20), 
-                "Male", 
+                user.Id,
+                "NewFirst",
+                "NewLast",
+                "+987654321",
+                DateTime.UtcNow.AddYears(-20),
+                "Male",
                 "Hello!"
             );
 
@@ -79,12 +79,12 @@ namespace Identity.Test.Application.Identity.Commands
                 .ReturnsAsync((User?)null);
             var handler = new UpdateProfileHandler(_userRepositoryMock.Object, _imageKitServiceMock.Object);
             var command = new UpdateProfileCommand(
-                Guid.NewGuid(), 
-                "NewFirst", 
-                "NewLast", 
-                "+987654321", 
-                DateTime.UtcNow.AddYears(-20), 
-                "Male", 
+                Guid.NewGuid(),
+                "NewFirst",
+                "NewLast",
+                "+987654321",
+                DateTime.UtcNow.AddYears(-20),
+                "Male",
                 "Hello!"
             );
 
@@ -94,7 +94,7 @@ namespace Identity.Test.Application.Identity.Commands
             // Assert
             await act.Should().ThrowAsync<DomainException>().WithMessage("User not found");
         }
-        
+
         [Fact]
         public async Task Handle_ShouldUpdateImagesSuccessfully()
         {
@@ -112,36 +112,36 @@ namespace Identity.Test.Application.Identity.Commands
                 Email = "test@example.com",
                 CreatedAt = DateTime.UtcNow
             };
-            
+
             // Add existing images to user
             user.SetImageUrlsList(existingImageUrls);
-            
+
             _userRepositoryMock.Setup(x => x.GetUserByIdAsync(userId))
                 .ReturnsAsync(user);
             _userRepositoryMock.Setup(x => x.UpdateUserAsync(user))
                 .ReturnsAsync(IdentityResult.Success);
             _userRepositoryMock.Setup(x => x.GetRolesAsync(user))
                 .ReturnsAsync(new List<string> { "User" });
-            
+
             // Setup for image deletion
             _imageKitServiceMock.Setup(x => x.DeleteFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
-            
+
             // Create a mock IFormFile for the avatar
             var mockAvatarFile = CreateMockFormFile("avatar.jpg", "image/jpeg");
-            
+
             // Setup for new image uploads
             _imageKitServiceMock.Setup(x => x.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("new-avatar.jpg");
-            
+
             var handler = new UpdateProfileHandler(_userRepositoryMock.Object, _imageKitServiceMock.Object);
             var command = new UpdateProfileCommand(
-                userId, 
-                "NewFirst", 
-                "NewLast", 
-                "+987654321", 
-                DateTime.UtcNow.AddYears(-20), 
-                "Male", 
+                userId,
+                "NewFirst",
+                "NewLast",
+                "+987654321",
+                DateTime.UtcNow.AddYears(-20),
+                "Male",
                 "Hello!",
                 mockAvatarFile,
                 null,
@@ -158,17 +158,17 @@ namespace Identity.Test.Application.Identity.Commands
             result.ImageUrls.Should().Contain("new-avatar.jpg");
             result.ImageUrls.Should().Contain("image1.jpg");
             result.ImageUrls.Should().NotContain("image2.jpg");
-            
+
             // Verify image deletion was called
             _imageKitServiceMock.Verify(x => x.DeleteFileAsync("image2.jpg", It.IsAny<CancellationToken>()), Times.Once);
         }
-        
+
         // Helper method to create mock IFormFile
         private IFormFile CreateMockFormFile(string fileName, string contentType)
         {
             var content = "mock file content";
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            
+
             var formFile = new Mock<IFormFile>();
             formFile.Setup(f => f.FileName).Returns(fileName);
             formFile.Setup(f => f.ContentType).Returns(contentType);
@@ -176,7 +176,7 @@ namespace Identity.Test.Application.Identity.Commands
             formFile.Setup(f => f.OpenReadStream()).Returns(stream);
             formFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-            
+
             return formFile.Object;
         }
     }

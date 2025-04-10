@@ -40,10 +40,10 @@ namespace Identity.Test.Application.Identity.Queries
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
-            
+
             _userRepositoryMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
-            
+
             // Setup GetRolesAsync to return a non-null collection (empty list if no roles)
             _userRepositoryMock.Setup(x => x.GetRolesAsync(user))
                 .ReturnsAsync(new List<string>());
@@ -76,7 +76,7 @@ namespace Identity.Test.Application.Identity.Queries
             // Assert
             result.Should().BeNull();
         }
-        
+
         [Fact]
         public async Task Handle_ShouldReturnUserProfileDto_WhenUserExistsForProfileQuery()
         {
@@ -95,7 +95,7 @@ namespace Identity.Test.Application.Identity.Queries
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
-            
+
             _userRepositoryMock.Setup(x => x.GetUserByIdAsync(userId))
                 .ReturnsAsync(user);
 
