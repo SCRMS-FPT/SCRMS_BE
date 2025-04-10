@@ -1,91 +1,111 @@
 using BuildingBlocks.Pagination;
 using Microsoft.EntityFrameworkCore;
+using Reviews.API.Data.Models;
 using Reviews.API.Data.Repositories;
-using Reviews.API.Features.GetReviewReplies;
-using Reviews.API.Features.GetReviews;
 
 namespace Reviews.API.Features.GetFlaggedReviews
 {
-    public record GetFlaggedReviewsQuery(int Page, int Limit) : IRequest<PaginatedResult<FlaggedReviewResponse>>;
+    public record GetFlaggedReviewsQuery(int Page, int Limit, string? Status) : IRequest<PaginatedResult<ReviewFlagResponse>>;
 
-    public record FlaggedReviewResponse(
+    public record ReviewFlagResponse(
+        Guid Id,
+        Guid ReviewId,
+        Guid ReportedBy,
+        string FlagReason,
+        string Status,
+        DateTime CreatedAt,
+        DateTime UpdatedAt,
+        // Thông tin bổ sung về review bị báo cáo
+        ReviewSummary Review
+    );
+
+    public record ReviewSummary(
         Guid Id,
         Guid ReviewerId,
         string SubjectType,
         Guid SubjectId,
         int Rating,
         string? Comment,
-        DateTime CreatedAt,
-        int FlagCount,
-        List<ReviewReplyResponse> Replies);
+        DateTime CreatedAt
+    );
 
-    public class GetFlaggedReviewsHandler : IRequestHandler<GetFlaggedReviewsQuery, PaginatedResult<FlaggedReviewResponse>>
+    public class GetFlaggedReviewsHandler : IRequestHandler<GetFlaggedReviewsQuery, PaginatedResult<ReviewFlagResponse>>
     {
-        private readonly IReviewRepository _reviewRepository;
         private readonly ReviewDbContext _dbContext;
 
-        public GetFlaggedReviewsHandler(IReviewRepository reviewRepository, ReviewDbContext dbContext)
+        public GetFlaggedReviewsHandler(ReviewDbContext dbContext)
         {
-            _reviewRepository = reviewRepository;
             _dbContext = dbContext;
         }
 
-        public async Task<PaginatedResult<FlaggedReviewResponse>> Handle(GetFlaggedReviewsQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<ReviewFlagResponse>> Handle(GetFlaggedReviewsQuery request, CancellationToken cancellationToken)
         {
-            // Lấy ID của các review bị flag
-            var flaggedReviewIds = await _dbContext.ReviewFlags
-                .Select(rf => rf.ReviewId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
+            // Bắt đầu truy vấn từ ReviewFlags
+            var query = _dbContext.ReviewFlags.AsQueryable();
 
-            // Đếm tổng số review bị flag
-            var totalCount = flaggedReviewIds.Count;
+            // Filter theo status nếu được cung cấp
+            if (!string.IsNullOrEmpty(request.Status))
+            {
+                query = query.Where(rf => rf.Status == request.Status);
+            }
 
-            // Lấy danh sách các review bị flag với phân trang
-            var flaggedReviews = await _dbContext.Reviews
-                .Include(r => r.Replies)
-                .Where(r => flaggedReviewIds.Contains(r.Id))
-                .OrderByDescending(r =>
-                    _dbContext.ReviewFlags.Count(rf => rf.ReviewId == r.Id))
-                .ThenByDescending(r => r.CreatedAt)
+            // Đếm tổng số flag
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            // Lấy danh sách các flag với phân trang
+            var flags = await query
+                .OrderByDescending(rf => rf.CreatedAt)
                 .Skip((request.Page - 1) * request.Limit)
                 .Take(request.Limit)
                 .ToListAsync(cancellationToken);
 
-            // Tạo danh sách kết quả với số lượng flag cho mỗi review
-            var flaggedReviewResponses = new List<FlaggedReviewResponse>();
+            // Lấy thông tin về các review bị báo cáo
+            var reviewIds = flags.Select(f => f.ReviewId).ToList();
+            var reviews = await _dbContext.Reviews
+                .Where(r => reviewIds.Contains(r.Id))
+                .ToDictionaryAsync(r => r.Id, cancellationToken);
 
-            foreach (var review in flaggedReviews)
+            // Tạo response
+            var flagResponses = flags.Select(flag =>
             {
-                // Đếm số lượng flag cho review hiện tại
-                var flagCount = await _dbContext.ReviewFlags
-                    .CountAsync(rf => rf.ReviewId == review.Id, cancellationToken);
+                // Kiểm tra xem review có tồn tại không
+                var hasReview = reviews.TryGetValue(flag.ReviewId, out var review);
 
-                // Tạo đối tượng response
-                var response = new FlaggedReviewResponse(
-                    review.Id,
-                    review.ReviewerId,
-                    review.SubjectType,
-                    review.SubjectId,
-                    review.Rating,
-                    review.Comment,
-                    review.CreatedAt,
-                    flagCount,
-                    review.Replies.Select(reply => new ReviewReplyResponse(
-                        reply.Id,
-                        reply.ResponderId,
-                        reply.ReplyText,
-                        reply.CreatedAt)).ToList()
+                var reviewSummary = hasReview
+                    ? new ReviewSummary(
+                        review!.Id,
+                        review.ReviewerId,
+                        review.SubjectType,
+                        review.SubjectId,
+                        review.Rating,
+                        review.Comment,
+                        review.CreatedAt)
+                    : new ReviewSummary(
+                        Guid.Empty,
+                        Guid.Empty,
+                        "Unknown",
+                        Guid.Empty,
+                        0,
+                        "Review not found or deleted",
+                        DateTime.MinValue);
+
+                return new ReviewFlagResponse(
+                    flag.Id,
+                    flag.ReviewId,
+                    flag.ReportedBy,
+                    flag.FlagReason,
+                    flag.Status,
+                    flag.CreatedAt,
+                    flag.UpdatedAt,
+                    reviewSummary
                 );
+            }).ToList();
 
-                flaggedReviewResponses.Add(response);
-            }
-
-            return new PaginatedResult<FlaggedReviewResponse>(
+            return new PaginatedResult<ReviewFlagResponse>(
                 request.Page,
                 request.Limit,
                 totalCount,
-                flaggedReviewResponses
+                flagResponses
             );
         }
     }

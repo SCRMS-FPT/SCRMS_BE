@@ -12,6 +12,7 @@ using CourtBooking.Application.BookingManagement.Command.UpdateBookingNote;
 using CourtBooking.Application.BookingManagement.Command.UpdateBookingStatus;
 using CourtBooking.Application.BookingManagement.Queries.CalculateBookingPrice;
 using Microsoft.IdentityModel.JsonWebTokens;
+using CourtBooking.Application.BookingManagement.Command.CreateOwnerBooking;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -38,6 +39,9 @@ namespace CourtBooking.API.Endpoints
         string? PromotionName,
         string? DiscountType,
         decimal? DiscountValue);
+
+    public record CreateOwnerBookingRequest(BookingCreateDTO Booking, string Note = "Đặt trực tiếp tại sân");
+    public record CreateOwnerBookingResponse(Guid Id, string Status, string Message);
 
     public class BookingEndpoints : ICarterModule
     {
@@ -83,6 +87,36 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithSummary("Tính toán giá đặt sân")
             .WithDescription("Tính toán giá đặt sân trước khi đặt, bao gồm giá gốc, giá sau giảm giá, và số tiền đặt cọc tối thiểu");
+
+            group.MapPost("/owner-booking", [Authorize(Policy = "CourtOwner")] async (
+                [FromBody] CreateOwnerBookingRequest request,
+                ISender sender,
+                HttpContext httpContext) =>
+            {
+                var ownerIdClaim = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(ownerIdClaim) || !Guid.TryParse(ownerIdClaim, out var ownerId))
+                {
+                    return Results.Unauthorized();
+                }
+
+                // Tạo command với ID của chủ sân
+                var command = new CreateOwnerBookingCommand(ownerId, request.Booking, request.Note);
+                var result = await sender.Send(command);
+
+                if (!result.Success)
+                {
+                    return Results.BadRequest(new { message = result.Message });
+                }
+
+                return Results.Created($"/api/bookings/{result.Id}",
+                    new CreateOwnerBookingResponse(result.Id, result.Status, result.Message));
+            })
+            .WithName("CreateOwnerBooking")
+            .Produces<CreateOwnerBookingResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithSummary("Đánh dấu sân đã đặt bởi chủ sân")
+            .WithDescription("Cho phép chủ sân đánh dấu rằng một slot đã được đặt trực tiếp hoặc không khả dụng");
 
             group.MapGet("/", async (
                 HttpContext httpContext,

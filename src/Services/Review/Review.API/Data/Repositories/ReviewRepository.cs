@@ -68,6 +68,17 @@ namespace Reviews.API.Data.Repositories
         {
             await _context.ReviewFlags.AddAsync(flag, cancellationToken);
         }
+        public async Task<ReviewFlag?> GetReviewFlagByIdAsync(Guid flagId, CancellationToken cancellationToken)
+        {
+            return await _context.ReviewFlags
+                .FirstOrDefaultAsync(f => f.Id == flagId, cancellationToken);
+        }
+
+        public Task UpdateReviewFlagAsync(ReviewFlag flag, CancellationToken cancellationToken)
+        {
+            _context.ReviewFlags.Update(flag);
+            return Task.CompletedTask;
+        }
 
         public async Task AddReviewReplyAsync(ReviewReply reply, CancellationToken cancellationToken)
         {

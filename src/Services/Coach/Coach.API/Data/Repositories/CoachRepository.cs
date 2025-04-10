@@ -24,7 +24,8 @@ namespace Coach.API.Data.Repositories
 
         public async Task<Models.Coach?> GetCoachByIdAsync(Guid coachId, CancellationToken cancellationToken)
         {
-            return await _context.Coaches.FirstOrDefaultAsync(c => c.UserId == coachId, cancellationToken);
+            return await _context.Coaches
+                .FirstOrDefaultAsync(c => c.UserId == coachId && c.Status == "active", cancellationToken);
         }
 
         public async Task UpdateCoachAsync(Models.Coach coach, CancellationToken cancellationToken)
@@ -40,7 +41,19 @@ namespace Coach.API.Data.Repositories
 
         public async Task<List<Models.Coach>> GetAllCoachesAsync(CancellationToken cancellationToken)
         {
-            return await _context.Coaches.ToListAsync(cancellationToken);
+            return await _context.Coaches
+                .Where(c => c.Status == "active")
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task SetCoachStatusAsync(Guid coachId, string status, CancellationToken cancellationToken)
+        {
+            var coach = await _context.Coaches.FindAsync(new object[] { coachId }, cancellationToken);
+            if (coach == null)
+                throw new KeyNotFoundException($"Coach with ID {coachId} not found");
+
+            coach.Status = status;
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

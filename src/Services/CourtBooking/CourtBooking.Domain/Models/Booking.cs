@@ -90,7 +90,19 @@ namespace CourtBooking.Domain.Models
             Status = newStatus;
             LastModified = DateTime.UtcNow;
         }
+        public void MarkAsCompleted()
+        {
+            Status = BookingStatus.Completed;
+            LastModified = DateTime.UtcNow;
 
+            // Đặt số tiền đã thanh toán bằng tổng số tiền của booking
+            decimal totalAmount = BookingDetails.Sum(bd => bd.TotalPrice);
+            RemainingBalance = 0;
+            TotalPaid = totalAmount; // Đặt số tiền đã thanh toán bằng tổng số tiền
+
+            // Đặt lại các trường khác liên quan đến thanh toán nếu cần thiết
+            InitialDeposit = totalAmount;
+        }
         public BookingDetail AddBookingDetailWithPromotion(CourtId courtId, TimeSpan startTime, TimeSpan endTime,
             List<CourtSchedule> schedules, decimal minDepositPercentage, string discountType, decimal discountValue)
         {
