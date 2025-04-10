@@ -27,6 +27,11 @@ namespace Identity.Test.Fakes
             return await _context.ServicePackages.ToListAsync();
         }
 
+        public IQueryable<ServicePackage> GetServicePackagesQueryable()
+        {
+            return _context.ServicePackages.AsQueryable();
+        }
+
         public async Task AddServicePackageAsync(ServicePackage package)
         {
             _context.ServicePackages.Add(package);
