@@ -111,7 +111,7 @@ namespace Matching.Test.Features
             _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             // Act
-            var result = await _handler.Handle(new RespondToSwipeCommand(swipeAction.Id, "accepted", userId), CancellationToken.None);
+            var result = await _handler.Handle(new RespondToSwipeCommand(swipeAction.Id, "accept", userId), CancellationToken.None);
 
             // Assert
             Assert.False(result.IsMatch);

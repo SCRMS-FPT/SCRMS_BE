@@ -17,17 +17,6 @@ namespace Matching.Test.Features
             _handler = new GetMatchesHandler(_matchRepoMock.Object);
         }
 
-        //[Fact]
-        //public async Task Handle_ReturnsEmptyList_WhenNoMatches()
-        //{
-        //    _matchRepoMock.Setup(m => m.GetMatchesByUserIdAsync(It.IsAny<Guid>(), 1, 10, It.IsAny<CancellationToken>()))
-        //        .ReturnsAsync(new List<Match>());
-
-        //    var result = await _handler.Handle(new GetMatchesQuery(1, 10, Guid.NewGuid()), CancellationToken.None);
-
-        //    Assert.Empty(result);
-        //}
-
         [Fact]
         public async Task Handle_ReturnsCorrectMatches_WhenUserIsInitiator()
         {
