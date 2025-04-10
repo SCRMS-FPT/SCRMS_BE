@@ -40,7 +40,7 @@ namespace Identity.Test.Application.Identity.Queries
             };
             _userRepositoryMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
-            
+
             // Setup GetRolesAsync to return a non-null collection (empty list if no roles)
             _userRepositoryMock.Setup(x => x.GetRolesAsync(user))
                 .ReturnsAsync(new List<string>());
@@ -75,7 +75,7 @@ namespace Identity.Test.Application.Identity.Queries
             // Assert
             await act.Should().ThrowAsync<DomainException>().WithMessage("User not found");
         }
-        
+
         [Fact]
         public async Task Handle_ShouldIncludeRoles_WhenUserHasRoles()
         {
@@ -91,12 +91,12 @@ namespace Identity.Test.Application.Identity.Queries
                 Gender = Gender.Female,
                 CreatedAt = DateTime.UtcNow
             };
-            
+
             var roles = new List<string> { "Admin", "User" };
-            
+
             _userRepositoryMock.Setup(x => x.GetUserByIdAsync(user.Id))
                 .ReturnsAsync(user);
-                
+
             _userRepositoryMock.Setup(x => x.GetRolesAsync(user))
                 .ReturnsAsync(roles);
 

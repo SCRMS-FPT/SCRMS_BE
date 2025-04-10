@@ -15,7 +15,7 @@ namespace Identity.Application.Identity.Commands.Register
         private readonly IHttpClientFactory? _httpClientFactory;
 
         public RegisterUserHandler(
-            IUserRepository userRepository, 
+            IUserRepository userRepository,
             IOptions<EndpointSettings> endpointSettings,
             IHttpClientFactory? httpClientFactory = null)
         {
@@ -77,7 +77,7 @@ namespace Identity.Application.Identity.Commands.Register
 
             return new RegisterUserResult(user.Id);
         }
-        
+
         /// <summary>
         /// Generate the token to encrypt the data for sending
         /// </summary>
