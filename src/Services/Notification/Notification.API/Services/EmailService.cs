@@ -17,8 +17,8 @@ namespace Notification.API.Services
         public EmailService(IConfiguration config)
         {
             _config = config;
-            _smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD")
-                ?? throw new Exception("SMTP_PASSWORD environment variable not set.");
+            _smtpPassword = _config["Smtp:Password"]
+                ?? throw new Exception("SMTP password not configured in appsettings.");
         }
 
         public async Task<bool> SendEmailAsync(string to, string subject, string body, Boolean isHtml)

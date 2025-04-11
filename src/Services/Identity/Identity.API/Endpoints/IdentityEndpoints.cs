@@ -227,7 +227,10 @@ namespace Identity.API.Endpoints
         DateTime BirthDate,
         string Gender,
         string Password);
-    public record RegisterWithGoogle(string Token);
+    public record RegisterWithGoogle(string Token,
+        string Gender,
+        string Phone,
+        DateTime BirthDate);
     public record ResetPasswordRequest(string Email);
     public record AssignRolesRequest(Guid UserId, List<string> Roles);
     public class UpdateProfileRequest
