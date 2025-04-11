@@ -19,10 +19,11 @@ namespace Reviews.Test.Features
         public async Task Handle_ReviewDoesNotExist_ThrowsException()
         {
             // Arrange
-            var reviewId = Guid.NewGuid();
-            var userId = Guid.NewGuid();
-            var command = new DeleteReviewCommand(reviewId, userId);
-            _mockReviewRepository.Setup(r => r.GetReviewByIdAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync((Review)null);
+            var ReviewId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"); 
+            var UserId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");  
+
+            var command = new DeleteReviewCommand(ReviewId, UserId);
+            _mockReviewRepository.Setup(r => r.GetReviewByIdAsync(ReviewId, It.IsAny<CancellationToken>())).ReturnsAsync((Review)null);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _handler.Handle(command, CancellationToken.None));
@@ -35,12 +36,12 @@ namespace Reviews.Test.Features
         public async Task Handle_UserNotAuthorized_ThrowsException()
         {
             // Arrange
-            var reviewId = Guid.NewGuid();
-            var userId = Guid.NewGuid();
-            var reviewerId = Guid.NewGuid(); // Different from userId
-            var review = new Review { Id = reviewId, ReviewerId = reviewerId };
-            var command = new DeleteReviewCommand(reviewId, userId);
-            _mockReviewRepository.Setup(r => r.GetReviewByIdAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(review);
+            var ReviewId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"); 
+            var UserId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");  
+            var ReviewerId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");  
+            var review = new Review { Id = ReviewId, ReviewerId = ReviewerId };
+            var command = new DeleteReviewCommand(ReviewId, UserId);
+            _mockReviewRepository.Setup(r => r.GetReviewByIdAsync(ReviewId, It.IsAny<CancellationToken>())).ReturnsAsync(review);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _handler.Handle(command, CancellationToken.None));

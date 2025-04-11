@@ -23,3 +23,4 @@ LICENSE
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
+/src/Services/Notification/Notification.API/appsettings.json
