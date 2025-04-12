@@ -51,8 +51,16 @@ namespace Identity.Application.Identity.Commands.SigninWithGoogle
             {
                 throw new DomainException("User not existed.");
             }
-            user.EmailConfirmed = true;
-            await _userRepository.UpdateUserAsync(user);
+            if (user.IsDeleted)
+            {
+                throw new DomainException("User have been removed.");
+            }
+            if (!user.EmailConfirmed)
+            {
+
+                user.EmailConfirmed = true;
+                await _userRepository.UpdateUserAsync(user);
+            }
 
             _logger.LogInformation("User {Email} logged in successfully via Google.", user.Email);
 
