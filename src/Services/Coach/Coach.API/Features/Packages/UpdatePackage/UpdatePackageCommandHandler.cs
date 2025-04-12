@@ -38,7 +38,7 @@ namespace Coach.API.Features.Packages.UpdatePackage
         }
     }
 
-    internal class UpdatePackageCommandHandler : ICommandHandler<UpdatePackageCommand, UpdatePackageResult>
+    public class UpdatePackageCommandHandler : ICommandHandler<UpdatePackageCommand, UpdatePackageResult>
     {
         private readonly ICoachPackageRepository _packageRepository;
         private readonly CoachDbContext _context;

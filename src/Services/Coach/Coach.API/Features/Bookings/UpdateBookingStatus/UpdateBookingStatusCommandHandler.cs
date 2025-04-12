@@ -2,8 +2,7 @@
 using Coach.API.Data;
 using Coach.API.Data.Repositories;
 using Coach.API.Features.Schedules.UpdateSchedule;
-using global::Coach.API.Data.Repositories;
-using global::Coach.API.Data;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coach.API.Features.Bookings.UpdateBookingStatus
@@ -43,10 +42,17 @@ namespace Coach.API.Features.Bookings.UpdateBookingStatus
                 throw new NotFoundException("Booking not found");
 
             if (booking.CoachId != command.CoachBookingId)
-                throw new ValidationException("Booking coach is not you");
+                throw new BadRequestException("Booking coach is not you");
 
             if (command.Status != "confirmed" && command.Status != "cancelled")
-                throw new ValidationException("Invalid booking status");
+                throw new BadRequestException("Invalid booking status");
+
+            // Add validation for invalid status transitions
+            if ((booking.Status == "cancelled" || booking.Status == "completed") &&
+                (command.Status == "confirmed" || command.Status == "cancelled"))
+            {
+                throw new BadRequestException("Invalid booking status transition");
+            }
 
             booking.Status = command.Status;
             await _bookingRepository.UpdateCoachBookingAsync(booking, cancellationToken);

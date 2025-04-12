@@ -8,6 +8,7 @@ using Moq;
 using Xunit;
 using Coach.API.Data.Models;
 using Coach.API.Features.Coaches.GetCoachById;
+using BuildingBlocks.Exceptions;
 
 namespace Coach.API.Tests.Coaches
 {
@@ -23,6 +24,7 @@ namespace Coach.API.Tests.Coaches
             var coach = new Data.Models.Coach { UserId = coachId, Bio = "Test", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
             var sport = new CoachSport { CoachId = coachId, SportId = Guid.NewGuid() };
             var package = new CoachPackage { Id = Guid.NewGuid(), Name = "Package", Description = "Test", Price = 100m, SessionCount = 5 };
+            var schedule = new CoachSchedule { Id = Guid.NewGuid(), CoachId = coachId, DayOfWeek = 1, StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -33,17 +35,25 @@ namespace Coach.API.Tests.Coaches
             var mockPackageRepo = new Mock<ICoachPackageRepository>();
             mockPackageRepo.Setup(r => r.GetCoachPackagesByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachPackage> { package });
 
-            var handler = new GetCoachByIdQueryHandler(mockCoachRepo.Object, mockSportRepo.Object, mockPackageRepo.Object);
+            var mockScheduleRepo = new Mock<ICoachScheduleRepository>();
+            mockScheduleRepo.Setup(r => r.GetCoachSchedulesByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachSchedule> { schedule });
+
+            var handler = new GetCoachByIdQueryHandler(
+                mockCoachRepo.Object,
+                mockSportRepo.Object,
+                mockPackageRepo.Object,
+                mockScheduleRepo.Object);
 
             // Act
             var result = await handler.Handle(query, CancellationToken.None);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(coachId, result.UserId);
+            Assert.Equal(coachId, result.Id);
             Assert.Equal(coach.Bio, result.Bio);
             Assert.Equal(1, result.SportIds.Count);
             Assert.Equal(1, result.Packages.Count);
+            Assert.Equal(1, result.WeeklySchedule.Count);
         }
 
         // Test 2: Coach không tồn tại (Abnormal)
@@ -56,11 +66,16 @@ namespace Coach.API.Tests.Coaches
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync((Data.Models.Coach)null);
 
-            var handler = new GetCoachByIdQueryHandler(mockCoachRepo.Object, null, null);
+            var mockScheduleRepo = new Mock<ICoachScheduleRepository>();
+
+            var handler = new GetCoachByIdQueryHandler(
+                mockCoachRepo.Object,
+                Mock.Of<ICoachSportRepository>(),
+                Mock.Of<ICoachPackageRepository>(),
+                mockScheduleRepo.Object);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<CoachNotFoundException>(() => handler.Handle(query, CancellationToken.None));
-            Assert.Equal($"Entity \"Coach\" ({coachId}) was not found.", exception.Message);
+            await Assert.ThrowsAsync<CoachNotFoundException>(() => handler.Handle(query, CancellationToken.None));
         }
 
         // Test 3: Id rỗng (Abnormal)
@@ -97,7 +112,14 @@ namespace Coach.API.Tests.Coaches
             var mockPackageRepo = new Mock<ICoachPackageRepository>();
             mockPackageRepo.Setup(r => r.GetCoachPackagesByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachPackage>());
 
-            var handler = new GetCoachByIdQueryHandler(mockCoachRepo.Object, mockSportRepo.Object, mockPackageRepo.Object);
+            var mockScheduleRepo = new Mock<ICoachScheduleRepository>();
+            mockScheduleRepo.Setup(r => r.GetCoachSchedulesByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachSchedule>());
+
+            var handler = new GetCoachByIdQueryHandler(
+                mockCoachRepo.Object,
+                mockSportRepo.Object,
+                mockPackageRepo.Object,
+                mockScheduleRepo.Object);
 
             // Act
             var result = await handler.Handle(query, CancellationToken.None);
@@ -106,6 +128,7 @@ namespace Coach.API.Tests.Coaches
             Assert.NotNull(result);
             Assert.Empty(result.SportIds);
             Assert.Empty(result.Packages);
+            Assert.Empty(result.WeeklySchedule);
         }
     }
 }

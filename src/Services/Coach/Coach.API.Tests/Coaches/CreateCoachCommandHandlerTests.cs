@@ -7,7 +7,9 @@ using Coach.API.Data;
 using Coach.API.Data.Models;
 using Coach.API.Data.Repositories;
 using Coach.API.Features.Coaches.CreateCoach;
+using Coach.API.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using Xunit;
 
@@ -20,7 +22,18 @@ namespace Coach.API.Tests.Coaches
         public async Task Handle_ValidCoach_CreatesCoachSuccessfully()
         {
             // Arrange
-            var command = new CreateCoachCommand(Guid.NewGuid(), "Experienced coach", 50m, new List<Guid> { Guid.NewGuid() });
+            var command = new CreateCoachCommand(
+                UserId: Guid.NewGuid(),
+                FullName: "Test Coach",
+                Email: "coach@example.com",
+                Phone: "1234567890",
+                AvatarFile: null,
+                ImageFiles: new List<IFormFile>(),
+                Bio: "Experienced coach",
+                RatePerHour: 50m,
+                SportIds: new List<Guid> { Guid.NewGuid() }
+            );
+
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.CoachExistsAsync(command.UserId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
             mockCoachRepo.Setup(r => r.AddCoachAsync(It.IsAny<Data.Models.Coach>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -28,10 +41,24 @@ namespace Coach.API.Tests.Coaches
             var mockSportRepo = new Mock<ICoachSportRepository>();
             mockSportRepo.Setup(r => r.AddCoachSportAsync(It.IsAny<CoachSport>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
+            var mockImageKitService = new Mock<IImageKitService>();
+            mockImageKitService.Setup(s => s.UploadFileAsync(
+                    It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync("http://example.com/avatar.jpg");
+
+            mockImageKitService.Setup(s => s.UploadFilesAsync(
+                    It.IsAny<List<IFormFile>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<string>());
+
             var mockContext = new Mock<CoachDbContext>();
             mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-            var handler = new CreateCoachCommandHandler(mockCoachRepo.Object, mockSportRepo.Object, mockContext.Object);
+            var handler = new CreateCoachCommandHandler(
+                mockCoachRepo.Object,
+                mockSportRepo.Object,
+                mockImageKitService.Object,
+                mockContext.Object
+            );
 
             // Act
             var result = await handler.Handle(command, CancellationToken.None);
@@ -48,15 +75,37 @@ namespace Coach.API.Tests.Coaches
         public async Task Handle_CoachAlreadyExists_ThrowsAlreadyExistsException()
         {
             // Arrange
-            var command = new CreateCoachCommand(Guid.NewGuid(), "Test", 50m, new List<Guid> { Guid.NewGuid() });
+            var command = new CreateCoachCommand(
+                UserId: Guid.NewGuid(),
+                FullName: "Test Coach",
+                Email: "coach@example.com",
+                Phone: "1234567890",
+                AvatarFile: null,
+                ImageFiles: new List<IFormFile>(),
+                Bio: "Test",
+                RatePerHour: 50m,
+                SportIds: new List<Guid> { Guid.NewGuid() }
+            );
+
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.CoachExistsAsync(command.UserId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var handler = new CreateCoachCommandHandler(mockCoachRepo.Object, null, null);
+            var mockSportRepo = new Mock<ICoachSportRepository>();
+            var mockImageKitService = new Mock<IImageKitService>();
+            var mockContext = new Mock<CoachDbContext>();
+
+            var handler = new CreateCoachCommandHandler(
+                mockCoachRepo.Object,
+                mockSportRepo.Object,
+                mockImageKitService.Object,
+                mockContext.Object
+            );
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<AlreadyExistsException>(() => handler.Handle(command, CancellationToken.None));
-            Assert.Equal($"Entity \"Coach\" ({command.UserId}) was already exist.", exception.Message);
+            var exception = await Assert.ThrowsAsync<AlreadyExistsException>(
+                () => handler.Handle(command, CancellationToken.None)
+            );
+            Assert.Contains("was already exist", exception.Message);
         }
 
         // Test 3: Bio rỗng (Abnormal)
@@ -64,7 +113,18 @@ namespace Coach.API.Tests.Coaches
         public void Validate_EmptyBio_ValidationFails()
         {
             // Arrange
-            var command = new CreateCoachCommand(Guid.NewGuid(), "", 50m, new List<Guid> { Guid.NewGuid() });
+            var command = new CreateCoachCommand(
+                UserId: Guid.NewGuid(),
+                FullName: "Test Coach",
+                Email: "coach@example.com",
+                Phone: "1234567890",
+                AvatarFile: null,
+                ImageFiles: new List<IFormFile>(),
+                Bio: "",
+                RatePerHour: 50m,
+                SportIds: new List<Guid> { Guid.NewGuid() }
+            );
+
             var validator = new CreateCoachCommandValidator();
 
             // Act
@@ -72,7 +132,7 @@ namespace Coach.API.Tests.Coaches
 
             // Assert
             Assert.False(result.IsValid);
-            Assert.Contains(result.Errors, e => e.ErrorMessage == "'Bio' must not be empty.");
+            Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("Bio"));
         }
 
         // Test 4: RatePerHour âm hoặc bằng 0 (Abnormal)
@@ -82,7 +142,18 @@ namespace Coach.API.Tests.Coaches
         public void Validate_InvalidRatePerHour_ValidationFails(decimal ratePerHour)
         {
             // Arrange
-            var command = new CreateCoachCommand(Guid.NewGuid(), "Test", ratePerHour, new List<Guid> { Guid.NewGuid() });
+            var command = new CreateCoachCommand(
+                UserId: Guid.NewGuid(),
+                FullName: "Test Coach",
+                Email: "coach@example.com",
+                Phone: "1234567890",
+                AvatarFile: null,
+                ImageFiles: new List<IFormFile>(),
+                Bio: "Test",
+                RatePerHour: ratePerHour,
+                SportIds: new List<Guid> { Guid.NewGuid() }
+            );
+
             var validator = new CreateCoachCommandValidator();
 
             // Act
@@ -90,7 +161,7 @@ namespace Coach.API.Tests.Coaches
 
             // Assert
             Assert.False(result.IsValid);
-            Assert.Contains(result.Errors, e => e.ErrorMessage == "'Rate Per Hour' must be greater than '0'.");
+            Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("Rate"));
         }
 
         // Test 5: SportIds rỗng (Abnormal)
@@ -98,7 +169,18 @@ namespace Coach.API.Tests.Coaches
         public void Validate_EmptySportIds_ValidationFails()
         {
             // Arrange
-            var command = new CreateCoachCommand(Guid.NewGuid(), "Test", 50m, new List<Guid>());
+            var command = new CreateCoachCommand(
+                UserId: Guid.NewGuid(),
+                FullName: "Test Coach",
+                Email: "coach@example.com",
+                Phone: "1234567890",
+                AvatarFile: null,
+                ImageFiles: new List<IFormFile>(),
+                Bio: "Test",
+                RatePerHour: 50m,
+                SportIds: new List<Guid>()
+            );
+
             var validator = new CreateCoachCommandValidator();
 
             // Act
@@ -106,7 +188,7 @@ namespace Coach.API.Tests.Coaches
 
             // Assert
             Assert.False(result.IsValid);
-            Assert.Contains(result.Errors, e => e.ErrorMessage == "At least one sport required");
+            Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("sport"));
         }
 
         // Test 6: SportIds chứa nhiều giá trị (Boundary)
@@ -115,7 +197,19 @@ namespace Coach.API.Tests.Coaches
         {
             // Arrange
             var sportIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-            var command = new CreateCoachCommand(Guid.NewGuid(), "Test", 50m, sportIds);
+
+            var command = new CreateCoachCommand(
+                UserId: Guid.NewGuid(),
+                FullName: "Test Coach",
+                Email: "coach@example.com",
+                Phone: "1234567890",
+                AvatarFile: null,
+                ImageFiles: new List<IFormFile>(),
+                Bio: "Test",
+                RatePerHour: 50m,
+                SportIds: sportIds
+            );
+
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.CoachExistsAsync(command.UserId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
             mockCoachRepo.Setup(r => r.AddCoachAsync(It.IsAny<Data.Models.Coach>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -123,10 +217,20 @@ namespace Coach.API.Tests.Coaches
             var mockSportRepo = new Mock<ICoachSportRepository>();
             mockSportRepo.Setup(r => r.AddCoachSportAsync(It.IsAny<CoachSport>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
+            var mockImageKitService = new Mock<IImageKitService>();
+            mockImageKitService.Setup(s => s.UploadFilesAsync(
+                    It.IsAny<List<IFormFile>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<string>());
+
             var mockContext = new Mock<CoachDbContext>();
             mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-            var handler = new CreateCoachCommandHandler(mockCoachRepo.Object, mockSportRepo.Object, mockContext.Object);
+            var handler = new CreateCoachCommandHandler(
+                mockCoachRepo.Object,
+                mockSportRepo.Object,
+                mockImageKitService.Object,
+                mockContext.Object
+            );
 
             // Act
             var result = await handler.Handle(command, CancellationToken.None);

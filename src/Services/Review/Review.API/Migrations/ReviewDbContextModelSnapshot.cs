@@ -85,6 +85,8 @@ namespace Reviews.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ReviewId");
+
                     b.ToTable("ReviewFlags");
                 });
 
@@ -112,7 +114,38 @@ namespace Reviews.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ReviewId");
+
                     b.ToTable("ReviewReplies");
+                });
+
+            modelBuilder.Entity("Reviews.API.Data.Models.ReviewFlag", b =>
+                {
+                    b.HasOne("Reviews.API.Data.Models.Review", "Review")
+                        .WithMany("Flags")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Reviews.API.Data.Models.ReviewReply", b =>
+                {
+                    b.HasOne("Reviews.API.Data.Models.Review", "Review")
+                        .WithMany("Replies")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Reviews.API.Data.Models.Review", b =>
+                {
+                    b.Navigation("Flags");
+
+                    b.Navigation("Replies");
                 });
 #pragma warning restore 612, 618
         }

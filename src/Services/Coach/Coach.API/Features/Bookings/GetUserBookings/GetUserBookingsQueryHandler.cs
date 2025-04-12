@@ -41,7 +41,7 @@ namespace Coach.API.Features.Bookings.GetUserBookings
         }
     }
 
-    internal class GetUserBookingsQueryHandler : IQueryHandler<GetUserBookingsQuery, PaginatedResult<UserBookingHistoryResult>>
+    public class GetUserBookingsQueryHandler : IQueryHandler<GetUserBookingsQuery, PaginatedResult<UserBookingHistoryResult>>
     {
         private readonly ICoachBookingRepository _bookingRepository;
         private readonly ICoachRepository _coachRepository;

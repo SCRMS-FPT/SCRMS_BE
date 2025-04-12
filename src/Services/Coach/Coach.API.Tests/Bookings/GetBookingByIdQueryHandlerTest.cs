@@ -46,7 +46,6 @@ namespace Coach.API.Tests.Bookings
             var exception = await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(new GetBookingByIdQuery(bookingId), CancellationToken.None));
             Assert.Equal("Booking not found", exception.Message);
         }
-
         [Fact]
         public async Task Handle_ValidUpdate_UpdatesStatus()
         {

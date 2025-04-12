@@ -25,7 +25,8 @@ namespace Coach.API.Features.Schedules.UpdateSchedule
         }
     }
 
-    internal class UpdateScheduleCommandHandler : ICommandHandler<UpdateScheduleCommand, UpdateScheduleResult>
+    // Changed from internal to public for testing
+    public class UpdateScheduleCommandHandler : ICommandHandler<UpdateScheduleCommand, UpdateScheduleResult>
     {
         private readonly ICoachScheduleRepository _scheduleRepository;
         private readonly CoachDbContext _context;

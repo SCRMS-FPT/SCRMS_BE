@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using BuildingBlocks.Exceptions;
 using FluentValidation;
 using Coach.API.Data.Models;
+using Moq;
+using Xunit;
 
 namespace Coach.API.Tests.Bookings
 {
@@ -52,7 +54,7 @@ namespace Coach.API.Tests.Bookings
         }
 
         [Fact]
-        public async Task Handle_WrongCoach_ThrowsValidationException()
+        public async Task Handle_WrongCoach_ThrowsBadRequestException()
         {
             // Arrange
             var bookingId = Guid.NewGuid();
@@ -64,8 +66,8 @@ namespace Coach.API.Tests.Bookings
             var handler = new UpdateBookingStatusCommandHandler(mockBookingRepo.Object, null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ValidationException>(() => handler.Handle(command, CancellationToken.None));
-            Assert.Contains("Booking coach is not you", exception.Message);
+            var exception = await Assert.ThrowsAsync<BadRequestException>(() => handler.Handle(command, CancellationToken.None));
+            Assert.Equal("Booking coach is not you", exception.Message);
         }
 
         [Fact]

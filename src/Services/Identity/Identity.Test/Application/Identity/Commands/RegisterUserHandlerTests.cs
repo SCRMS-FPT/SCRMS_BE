@@ -28,7 +28,6 @@ namespace Identity.Test.Application.Identity.Commands
             // Setup endpoint settings for email verification
             _endpointSettings = new EndpointSettings
             {
-                SendEmail = "http://notification-service/api/email/send",
                 Verification = "http://frontend/verify?token=",
                 VerificationKey = "test-verification-key"
             };
