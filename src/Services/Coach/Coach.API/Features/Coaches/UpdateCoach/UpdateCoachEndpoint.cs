@@ -8,7 +8,7 @@ namespace Coach.API.Features.Coaches.UpdateCoach
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/coaches/{coachId:guid}", async (
+            app.MapPut("/api/coach/{coachId:guid}", async (
             [FromForm] UpdateCoachRequest request,
             [FromRoute] Guid coachId,
             [FromServices] ISender sender,

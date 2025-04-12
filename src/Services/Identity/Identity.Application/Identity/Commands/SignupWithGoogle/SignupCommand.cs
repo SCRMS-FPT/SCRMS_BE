@@ -2,7 +2,10 @@
 
 namespace Identity.Application.Identity.Commands.SignupWithGoogle
 {
-    public record SignupCommand(string Token) : ICommand<SignupResult>;
+    public record SignupCommand(string Token,
+        string Gender,
+        string Phone,
+        DateTime BirthDate) : ICommand<SignupResult>;
 
     public record SignupResult(Guid Id);
 

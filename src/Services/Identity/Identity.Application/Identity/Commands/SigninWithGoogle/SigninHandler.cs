@@ -2,6 +2,7 @@
 using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -32,60 +33,64 @@ namespace Identity.Application.Identity.Commands.SigninWithGoogle
 
         public async Task<SigninResult> Handle(SigninCommand command, CancellationToken cancellationToken)
         {
-            try
+
+            var payload = await GoogleJsonWebSignature.ValidateAsync(command.Token, new GoogleJsonWebSignature.ValidationSettings
             {
-                var payload = await GoogleJsonWebSignature.ValidateAsync(command.Token, new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { _googleSettings.Id }
-                });
+                Audience = new[] { _googleSettings.Id }
+            });
 
-                if (payload == null)
-                {
-                    throw new UnauthorizedAccessException("Invalid Google token.");
-                }
-
-                var user = await _userRepository.GetUserByEmailAsync(payload.Email);
-
-                if (user == null)
-                {
-                    throw new DomainException("Invalid credentials");
-                }
-
-                //if (!user.EmailConfirmed)
-                //{
-                //    throw new DomainException("This account doesn't connect to an gmail.");
-                //}
-
-                _logger.LogInformation("User {Email} logged in successfully via Google.", user.Email);
-
-                var token = await GenerateJwtToken(user);
-                var roles = await _userRepository.GetRolesAsync(user);
-
-                var userDto = new UserDto(
-                    user.Id,
-                    user.FirstName,
-                    user.LastName,
-                    user.Email,
-                    user.PhoneNumber,
-                    user.BirthDate,
-                    user.Gender.ToString(),
-                    user.SelfIntroduction,
-                    user.CreatedAt,
-                    roles.ToList(),
-                    user.GetImageUrlsList()
-                );
-                return new SigninResult(
-                    Token: token,
-                    UserId: user.Id,
-                    User: userDto
-                );
-
-            }
-            catch (Exception ex)
+            if (payload == null)
             {
-                _logger.LogError(ex, "Error during Google sign-in: {Message}", ex.Message);
-                throw new DomainException("Google sign-in failed.");
+                throw new DomainException("Invalid Google token.");
             }
+
+            var user = await _userRepository.GetUserByEmailAsync(payload.Email);
+
+            // Register the account 
+            if (user == null)
+            {
+                throw new DomainException("User not existed.");
+            }
+            user.EmailConfirmed = true;
+            await _userRepository.UpdateUserAsync(user);
+
+            _logger.LogInformation("User {Email} logged in successfully via Google.", user.Email);
+
+            var token = await GenerateJwtToken(user);
+            var roles = await _userRepository.GetRolesAsync(user);
+
+            // Link to google 
+            var existingLogins = await _userRepository.GetLoginsAsync(user);
+            if (!existingLogins.Any(l => l.LoginProvider == "Google"))
+            {
+                var loginInfo = new UserLoginInfo("Google", payload.Subject, "Google");
+                var addLoginResult = await _userRepository.AddLoginAsync(user, loginInfo);
+                if (!addLoginResult.Succeeded)
+                {
+                    _logger.LogWarning("Failed to link Google login for user {Email}.", user.Email);
+
+                }
+            }
+
+            var userDto = new UserDto(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.PhoneNumber,
+                user.BirthDate,
+                user.Gender.ToString(),
+                user.SelfIntroduction,
+                user.CreatedAt,
+                roles.ToList(),
+                user.GetImageUrlsList()
+            );
+            return new SigninResult(
+                Token: token,
+                UserId: user.Id,
+                User: userDto
+            );
+
         }
 
         private async Task<string> GenerateJwtToken(User user)
