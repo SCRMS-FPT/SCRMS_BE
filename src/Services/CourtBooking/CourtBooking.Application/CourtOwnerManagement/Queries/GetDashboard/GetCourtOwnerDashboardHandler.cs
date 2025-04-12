@@ -162,13 +162,13 @@ namespace CourtBooking.Application.CourtOwnerManagement.Queries.GetDashboard
 
             // Get all court ids referenced in today's bookings
             var relevantCourtIds = todayBookings
-                .SelectMany(b => b.BookingDetails.Select(d => d.CourtId.Value))
+                .SelectMany(b => b.BookingDetails.Select(d => d.CourtId))
                 .Distinct()
                 .ToList();
 
             // Get courts info
             var courtsInfo = await _context.Courts
-                .Where(c => relevantCourtIds.Contains(c.Id.Value))
+                .Where(c => relevantCourtIds.Contains(c.Id))
                 .Select(c => new
                 {
                     CourtId = c.Id.Value,
@@ -178,9 +178,9 @@ namespace CourtBooking.Application.CourtOwnerManagement.Queries.GetDashboard
                 .ToListAsync(cancellationToken);
 
             // Get sport center names
-            var sportCenterIds = courtsInfo.Select(c => c.SportCenterId).Distinct().ToList();
+            var sportCenterIds = courtsInfo.Select(c => SportCenterId.Of(c.SportCenterId)).Distinct().ToList();
             var sportCenters = await _context.SportCenters
-                .Where(sc => sportCenterIds.Contains(sc.Id.Value))
+                .Where(sc => sportCenterIds.Contains(sc.Id))
                 .Select(sc => new { SportCenterId = sc.Id.Value, SportCenterName = sc.Name })
                 .ToDictionaryAsync(sc => sc.SportCenterId, sc => sc.SportCenterName, cancellationToken);
 
@@ -217,5 +217,6 @@ namespace CourtBooking.Application.CourtOwnerManagement.Queries.GetDashboard
 
             return result.OrderBy(b => TimeSpan.Parse(b.StartTime)).ToList();
         }
+
     }
 }
