@@ -14,13 +14,13 @@ namespace Coach.API.Data
         {
         }
 
-        public DbSet<Models.Coach> Coaches => Set<Models.Coach>();
-        public DbSet<CoachSchedule> CoachSchedules => Set<CoachSchedule>();
-        public DbSet<CoachBooking> CoachBookings => Set<CoachBooking>();
-        public DbSet<CoachSport> CoachSports => Set<CoachSport>();
-        public DbSet<CoachPackage> CoachPackages => Set<CoachPackage>();
-        public DbSet<CoachPackagePurchase> CoachPackagePurchases { get; set; }
-        public DbSet<CoachPromotion> CoachPromotions { get; set; }
+        public virtual DbSet<Models.Coach> Coaches => Set<Models.Coach>();
+        public virtual DbSet<CoachSchedule> CoachSchedules => Set<CoachSchedule>();
+        public virtual DbSet<CoachBooking> CoachBookings => Set<CoachBooking>();
+        public virtual DbSet<CoachSport> CoachSports => Set<CoachSport>();
+        public virtual DbSet<CoachPackage> CoachPackages => Set<CoachPackage>();
+        public virtual DbSet<CoachPackagePurchase> CoachPackagePurchases { get; set; }
+        public virtual DbSet<CoachPromotion> CoachPromotions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -144,7 +144,7 @@ namespace Coach.API.Features.Coaches.GetCoaches
                     weeklySchedules));
             }
 
-            // Return paginated result
+            // Return paginated result - use the correct property names
             return new PaginatedResult<CoachResponse>(
                 request.PageIndex,
                 request.PageSize,

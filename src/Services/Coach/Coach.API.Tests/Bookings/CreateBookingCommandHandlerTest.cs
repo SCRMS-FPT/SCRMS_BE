@@ -21,9 +21,11 @@ namespace Coach.API.Tests.Bookings
         public async Task Handle_ValidBooking_CreatesBooking()
         {
             // Arrange
-            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
+            var today = DateTime.Today;
+            var dayOfWeek = (int)today.DayOfWeek;
+            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
             var coach = new Data.Models.Coach { UserId = command.CoachId, RatePerHour = 50 };
-            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var schedule = new CoachSchedule { DayOfWeek = dayOfWeek, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -89,9 +91,11 @@ namespace Coach.API.Tests.Bookings
         public async Task Handle_TimeOutsideSchedule_ThrowsException()
         {
             // Arrange
-            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(18)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(19)), null);
+            var today = DateTime.Today;
+            var dayOfWeek = (int)today.DayOfWeek;
+            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(18)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(19)), null);
             var coach = new Data.Models.Coach { UserId = command.CoachId };
-            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var schedule = new CoachSchedule { DayOfWeek = dayOfWeek, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -111,9 +115,11 @@ namespace Coach.API.Tests.Bookings
         public async Task Handle_OverlappingBooking_ThrowsException()
         {
             // Arrange
-            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
+            var today = DateTime.Today;
+            var dayOfWeek = (int)today.DayOfWeek;
+            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), null);
             var coach = new Data.Models.Coach { UserId = command.CoachId };
-            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var schedule = new CoachSchedule { DayOfWeek = dayOfWeek, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -136,10 +142,12 @@ namespace Coach.API.Tests.Bookings
         public async Task Handle_PackageNotFound_ThrowsException()
         {
             // Arrange
+            var today = DateTime.Today;
+            var dayOfWeek = (int)today.DayOfWeek;
             var packageId = Guid.NewGuid();
-            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), packageId);
+            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(11)), packageId);
             var coach = new Data.Models.Coach { UserId = command.CoachId };
-            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var schedule = new CoachSchedule { DayOfWeek = dayOfWeek, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);
@@ -165,9 +173,11 @@ namespace Coach.API.Tests.Bookings
         public async Task Handle_BoundaryTime_CreatesBooking()
         {
             // Arrange
-            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), null);
+            var today = DateTime.Today;
+            var dayOfWeek = (int)today.DayOfWeek;
+            var command = new CreateBookingCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateOnly.FromDateTime(today), TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)), null);
             var coach = new Data.Models.Coach { UserId = command.CoachId, RatePerHour = 50 };
-            var schedule = new CoachSchedule { DayOfWeek = (int)command.BookingDate.DayOfWeek + 1, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
+            var schedule = new CoachSchedule { DayOfWeek = dayOfWeek, StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)), EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(17)) };
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(repo => repo.GetCoachByIdAsync(command.CoachId, It.IsAny<CancellationToken>())).ReturnsAsync(coach);

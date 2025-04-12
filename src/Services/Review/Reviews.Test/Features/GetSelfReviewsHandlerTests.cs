@@ -26,6 +26,7 @@ namespace Reviews.Test.Features
                 new Review { Id = Guid.NewGuid(), SubjectId = coachId }
             };
             _mockReviewRepository.Setup(r => r.GetReviewsByCoachIdAsync(coachId, 1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(reviews);
+            _mockReviewRepository.Setup(r => r.CountReviewsByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(2);
             var query = new GetSelfReviewsQuery(coachId, 1, 10);
 
             // Act
@@ -43,6 +44,7 @@ namespace Reviews.Test.Features
             var reviewId = Guid.NewGuid();
             var reviews = new List<Review> { new Review { Id = reviewId, SubjectId = coachId } };
             _mockReviewRepository.Setup(r => r.GetReviewsByCoachIdAsync(coachId, 1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(reviews);
+            _mockReviewRepository.Setup(r => r.CountReviewsByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(1);
             var query = new GetSelfReviewsQuery(coachId, 1, 10);
 
             // Act
@@ -60,6 +62,7 @@ namespace Reviews.Test.Features
             var page = 1;
             var limit = 10;
             _mockReviewRepository.Setup(r => r.GetReviewsByCoachIdAsync(coachId, page, limit, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Review>());
+            _mockReviewRepository.Setup(r => r.CountReviewsByCoachIdAsync(coachId, It.IsAny<CancellationToken>())).ReturnsAsync(0);
             var query = new GetSelfReviewsQuery(coachId, page, limit);
 
             // Act
@@ -67,6 +70,9 @@ namespace Reviews.Test.Features
 
             // Assert
             Assert.Empty(result.Data);
+            Assert.Equal(0, result.Count);
+            Assert.Equal(page, result.PageIndex);
+            Assert.Equal(limit, result.PageSize);
         }
     }
 }

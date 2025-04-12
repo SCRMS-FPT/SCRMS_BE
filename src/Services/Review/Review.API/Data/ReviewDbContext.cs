@@ -17,10 +17,19 @@ namespace Reviews.API.Data
             modelBuilder.Entity<Review>()
                 .HasIndex(r => new { r.SubjectType, r.SubjectId });
 
+            // Quan hệ Review - ReviewReply
             modelBuilder.Entity<Review>()
                 .HasMany(r => r.Replies)
-                .WithOne()
-                .HasForeignKey("ReviewId");
+                .WithOne(rr => rr.Review)
+                .HasForeignKey(rr => rr.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Quan hệ Review - ReviewFlag
+            modelBuilder.Entity<Review>()
+                .HasMany(r => r.Flags)
+                .WithOne(rf => rf.Review)
+                .HasForeignKey(rf => rf.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

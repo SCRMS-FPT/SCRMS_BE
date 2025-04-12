@@ -30,7 +30,8 @@ namespace Coach.API.Features.Schedules.CreateSchedule
         }
     }
 
-    internal class CreateCoachScheduleCommandHandler : ICommandHandler<CreateCoachScheduleCommand, CreateCoachScheduleResult>
+    // Changed from internal to public for testing
+    public class CreateCoachScheduleCommandHandler : ICommandHandler<CreateCoachScheduleCommand, CreateCoachScheduleResult>
     {
         private readonly ICoachRepository _coachRepository;
         private readonly ICoachScheduleRepository _scheduleRepository;

@@ -9,5 +9,7 @@
         public DateTime SentAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public DateTime? ReadAt { get; set; }
+
+        public ChatSession Session { get; set; }
     }
 }

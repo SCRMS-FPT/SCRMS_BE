@@ -25,6 +25,7 @@ namespace Reviews.Test.Features
             };
             var query = new GetReviewRepliesQuery(reviewId, 1, 2);
             _mockReviewRepository.Setup(r => r.GetReviewRepliesAsync(reviewId, 1, 2, It.IsAny<CancellationToken>())).ReturnsAsync(replies);
+            _mockReviewRepository.Setup(r => r.CountReviewRepliesAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             // Act
             var response = await _handler.Handle(query, CancellationToken.None);
@@ -45,6 +46,7 @@ namespace Reviews.Test.Features
             };
             var query = new GetReviewRepliesQuery(reviewId, 1, 2);
             _mockReviewRepository.Setup(r => r.GetReviewRepliesAsync(reviewId, 1, 2, It.IsAny<CancellationToken>())).ReturnsAsync(replies);
+            _mockReviewRepository.Setup(r => r.CountReviewRepliesAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
             // Act
             var response = await _handler.Handle(query, CancellationToken.None);
@@ -65,6 +67,7 @@ namespace Reviews.Test.Features
             };
             var query = new GetReviewRepliesQuery(reviewId, 1, 2);
             _mockReviewRepository.Setup(r => r.GetReviewRepliesAsync(reviewId, 1, 2, It.IsAny<CancellationToken>())).ReturnsAsync(replies);
+            _mockReviewRepository.Setup(r => r.CountReviewRepliesAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
             // Act
             var response = await _handler.Handle(query, CancellationToken.None);
@@ -86,6 +89,7 @@ namespace Reviews.Test.Features
             var paginatedReplies = replies.Skip(1).Take(1).ToList();
             var query = new GetReviewRepliesQuery(reviewId, 2, 1);
             _mockReviewRepository.Setup(r => r.GetReviewRepliesAsync(reviewId, 2, 1, It.IsAny<CancellationToken>())).ReturnsAsync(paginatedReplies);
+            _mockReviewRepository.Setup(r => r.CountReviewRepliesAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
             // Act
             var response = await _handler.Handle(query, CancellationToken.None);
@@ -99,20 +103,40 @@ namespace Reviews.Test.Features
         {
             // Arrange
             var reviewId = Guid.NewGuid();
+            var replyId1 = Guid.NewGuid();
+            var replyId2 = Guid.NewGuid();
             var replies = new List<ReviewReply>
             {
-                new ReviewReply { Id = Guid.NewGuid(), ReviewId = reviewId },
-                new ReviewReply { Id = Guid.NewGuid(), ReviewId = reviewId }
+                new ReviewReply { Id = replyId1, ReviewId = reviewId },
+                new ReviewReply { Id = replyId2, ReviewId = reviewId }
             };
             var paginatedReplies = replies.Skip(1).Take(1).ToList();
             var query = new GetReviewRepliesQuery(reviewId, 2, 1);
             _mockReviewRepository.Setup(r => r.GetReviewRepliesAsync(reviewId, 2, 1, It.IsAny<CancellationToken>())).ReturnsAsync(paginatedReplies);
+            _mockReviewRepository.Setup(r => r.CountReviewRepliesAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
             // Act
             var response = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Equal(paginatedReplies[0].Id, response.Data.First().Id);
+            Assert.Equal(replyId2, response.Data.First().Id);
+        }
+
+        [Fact]
+        public async Task Handle_EmptyReplies_ReturnsEmptyList()
+        {
+            // Arrange
+            var reviewId = Guid.NewGuid();
+            var query = new GetReviewRepliesQuery(reviewId, 1, 10);
+            _mockReviewRepository.Setup(r => r.GetReviewRepliesAsync(reviewId, 1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ReviewReply>());
+            _mockReviewRepository.Setup(r => r.CountReviewRepliesAsync(reviewId, It.IsAny<CancellationToken>())).ReturnsAsync(0);
+
+            // Act
+            var response = await _handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.Empty(response.Data);
+            Assert.Equal(0, response.Count);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Coach.API.Features.Schedules.GetCoachSchedules
         string EndTime,
         string Status);
 
-    internal class GetCoachSchedulesQueryHandler : IQueryHandler<GetCoachSchedulesQuery, CoachSchedulesResponse>
+    public class GetCoachSchedulesQueryHandler : IQueryHandler<GetCoachSchedulesQuery, CoachSchedulesResponse>
     {
         private readonly ICoachScheduleRepository _scheduleRepository;
         private readonly ICoachBookingRepository _bookingRepository;
@@ -44,9 +44,8 @@ namespace Coach.API.Features.Schedules.GetCoachSchedules
             var weeklySchedules = await _scheduleRepository.GetCoachSchedulesByCoachIdAsync(query.CoachId, cancellationToken);
 
             // Lấy các booking trong khoảng thời gian
-            var bookings = await _bookingRepository.GetCoachBookingsByCoachIdQueryable(query.CoachId)
-                .Where(b => b.BookingDate >= query.StartDate && b.BookingDate <= query.EndDate)
-                .ToListAsync(cancellationToken);
+            var allBookings = await _bookingRepository.GetCoachBookingsByCoachIdAsync(query.CoachId, cancellationToken);
+            var bookings = allBookings.Where(b => b.BookingDate >= query.StartDate && b.BookingDate <= query.EndDate).ToList();
 
             var allSlots = new List<ScheduleSlotResponse>();
 

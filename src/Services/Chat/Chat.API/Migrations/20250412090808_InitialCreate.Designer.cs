@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Chat.API.Migrations
 {
     [DbContext(typeof(ChatDbContext))]
-    [Migration("20250304035615_InitialCreate")]
+    [Migration("20250412090808_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -28,7 +28,6 @@ namespace Chat.API.Migrations
             modelBuilder.Entity("Chat.API.Data.Models.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ChatSessionId")
@@ -78,6 +77,22 @@ namespace Chat.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ChatSessions");
+                });
+
+            modelBuilder.Entity("Chat.API.Data.Models.ChatMessage", b =>
+                {
+                    b.HasOne("Chat.API.Data.Models.ChatSession", "Session")
+                        .WithMany("Messages")
+                        .HasForeignKey("Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Chat.API.Data.Models.ChatSession", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

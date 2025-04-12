@@ -18,7 +18,8 @@ namespace Coach.API.Features.Schedules.DeleteSchedule
         }
     }
 
-    internal class DeleteScheduleCommandHandler : ICommandHandler<DeleteScheduleCommand, DeleteScheduleResult>
+    // Changed from internal to public for testing
+    public class DeleteScheduleCommandHandler : ICommandHandler<DeleteScheduleCommand, DeleteScheduleResult>
     {
         private readonly ICoachScheduleRepository _scheduleRepository;
         private readonly ICoachBookingRepository _bookingRepository;

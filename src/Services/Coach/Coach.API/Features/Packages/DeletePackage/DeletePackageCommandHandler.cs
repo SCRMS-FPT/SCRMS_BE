@@ -15,7 +15,7 @@ namespace Coach.API.Features.Packages.DeletePackage
         Guid CoachId
     ) : ICommand<DeletePackageResult>;
 
-    internal class DeletePackageCommandHandler : ICommandHandler<DeletePackageCommand, DeletePackageResult>
+    public class DeletePackageCommandHandler : ICommandHandler<DeletePackageCommand, DeletePackageResult>
     {
         private readonly ICoachPackageRepository _packageRepository;
         private readonly CoachDbContext _context;

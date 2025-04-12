@@ -30,7 +30,7 @@ namespace Identity.API.Endpoints
                 var query = new GetUsersQuery(searchTerm, role, pagination);
                 var result = await sender.Send(query);
                 return Results.Ok(result);
-            });
+            }).RequireAuthorization("Admin");
 
             userManagementGroup.MapGet("/{id}/full", async (Guid id, ISender sender) =>
             {
