@@ -135,14 +135,16 @@ namespace CourtBooking.API.Endpoints
             {
                 // Lấy UserId từ JWT claim
                 var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
+                var roleClaim = httpContext.User.FindFirst(ClaimTypes.Role);
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 {
                     return Results.Problem("Không thể xác định người dùng", statusCode: StatusCodes.Status401Unauthorized);
                 }
-
+                var role = roleClaim?.Value ?? "User";
                 // Kiểm tra xem người dùng có phải là chủ sở hữu của sân này không
                 var isOwner = await courtRepository.IsOwnedByUserAsync(id, userId);
-                if (!isOwner)
+                if (!isOwner || role != "Admin")
                 {
                     return Results.Problem("Bạn không có quyền xóa sân này", statusCode: StatusCodes.Status403Forbidden);
                 }
@@ -167,17 +169,17 @@ namespace CourtBooking.API.Endpoints
                 [FromQuery] DateTime startDate,
                 [FromQuery] DateTime endDate,
                 ISender sender) =>
-            {
-                var query = new GetCourtAvailabilityQuery(id, startDate, endDate);
-                var result = await sender.Send(query);
-                return Results.Ok(result);
-            })
-            .WithName("GetCourtAvailability")
-            .Produces<GetCourtAvailabilityResult>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .WithSummary("Lấy lịch khả dụng của sân")
-            .WithDescription("Lấy thông tin về thời gian khả dụng của sân trong khoảng thời gian từ startDate đến endDate, bao gồm trạng thái đặt sân");
+                {
+                    var query = new GetCourtAvailabilityQuery(id, startDate, endDate);
+                    var result = await sender.Send(query);
+                    return Results.Ok(result);
+                })
+                .WithName("GetCourtAvailability")
+                .Produces<GetCourtAvailabilityResult>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status400BadRequest)
+                .ProducesProblem(StatusCodes.Status404NotFound)
+                .WithSummary("Lấy lịch khả dụng của sân")
+                .WithDescription("Lấy thông tin về thời gian khả dụng của sân trong khoảng thời gian từ startDate đến endDate, bao gồm trạng thái đặt sân");
         }
     }
 }
