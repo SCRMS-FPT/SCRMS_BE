@@ -31,6 +31,10 @@ namespace Identity.Application.Identity.Commands.Login
             {
                 throw new DomainException("Invalid credentials");
             }
+            if (user.IsDeleted)
+            {
+                throw new DomainException("Invalid credentials");
+            }
 
             var token = await GenerateJwtToken(user);
             var roles = await _userRepository.GetRolesAsync(user);

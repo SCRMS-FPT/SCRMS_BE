@@ -11,10 +11,10 @@ namespace Payment.API.Data.Extensions
             var context = scope.ServiceProvider.GetRequiredService<PaymentDbContext>();
 
             var isDatabaseCreated = await context.Database.CanConnectAsync();
-            if (!isDatabaseCreated)
-            {
+            //if (!isDatabaseCreated)
+            //{
                 await context.Database.MigrateAsync();
-            }
+            //}
         }
     }
 }

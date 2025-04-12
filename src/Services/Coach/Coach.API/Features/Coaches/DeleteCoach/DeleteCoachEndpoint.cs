@@ -6,7 +6,7 @@ namespace Coach.API.Features.Coaches.DeleteCoach
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/coaches/{coachId:guid}", async (
+            app.MapDelete("/coaches/{coachId:guid}", async (
                 Guid coachId,
                 [FromServices] ISender sender,
                 HttpContext httpContext) =>
