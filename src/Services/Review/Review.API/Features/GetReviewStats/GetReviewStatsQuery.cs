@@ -6,6 +6,16 @@ namespace Reviews.API.Features.GetReviewStats
     {
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+
+        public GetReviewStatsQuery()
+        {
+        }
+
+        public GetReviewStatsQuery(DateTime? startDate, DateTime? endDate)
+        {
+            StartDate = startDate;
+            EndDate = endDate;
+        }
     }
 
     public class DateRangeDto
@@ -20,4 +30,4 @@ namespace Reviews.API.Features.GetReviewStats
         public int ReportedReviews { get; set; }
         public DateRangeDto DateRange { get; set; } = new DateRangeDto();
     }
-} 
+}

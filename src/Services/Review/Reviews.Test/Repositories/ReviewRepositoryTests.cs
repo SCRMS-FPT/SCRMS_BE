@@ -266,6 +266,7 @@ namespace Reviews.Test.Repositories
         [Fact]
         public async Task AddReviewFlagAsync_AddsFlagToDatabase()
         {
+            // Arrange
             var flag = new ReviewFlag
             {
                 Id = Guid.NewGuid(),
@@ -276,28 +277,122 @@ namespace Reviews.Test.Repositories
             };
             var cancellationToken = CancellationToken.None;
 
+            // Act
             await Repository.AddReviewFlagAsync(flag, cancellationToken);
             await Repository.SaveChangesAsync(cancellationToken);
 
-            Context.ReviewFlags.Should().ContainSingle(f => f.Id == flag.Id);
+            // Assert
+            var savedFlag = await Context.ReviewFlags.FindAsync(flag.Id);
+            savedFlag.Should().NotBeNull();
+            savedFlag.FlagReason.Should().Be("Inappropriate content");
+            savedFlag.Status.Should().Be("Pending");
+        }
+
+        [Fact]
+        public async Task GetReviewFlagByIdAsync_ReturnsFlagWhenExists()
+        {
+            // Arrange
+            var flagId = Guid.NewGuid();
+            var flag = new ReviewFlag
+            {
+                Id = flagId,
+                ReviewId = Guid.NewGuid(),
+                ReportedBy = Guid.NewGuid(),
+                FlagReason = "Offensive language",
+                Status = "Pending"
+            };
+            Context.ReviewFlags.Add(flag);
+            await Context.SaveChangesAsync();
+
+            // Act
+            var result = await Repository.GetReviewFlagByIdAsync(flagId, CancellationToken.None);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Id.Should().Be(flagId);
+        }
+
+        [Fact]
+        public async Task GetReviewFlagByIdAsync_ReturnsNullWhenNotExists()
+        {
+            // Arrange
+            var flagId = Guid.NewGuid();
+
+            // Act
+            var result = await Repository.GetReviewFlagByIdAsync(flagId, CancellationToken.None);
+
+            // Assert
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task UpdateReviewFlagAsync_UpdatesFlagInDatabase()
+        {
+            // Arrange
+            var flagId = Guid.NewGuid();
+            var flag = new ReviewFlag
+            {
+                Id = flagId,
+                ReviewId = Guid.NewGuid(),
+                ReportedBy = Guid.NewGuid(),
+                FlagReason = "Inappropriate content",
+                Status = "Pending"
+            };
+            Context.ReviewFlags.Add(flag);
+            await Context.SaveChangesAsync();
+
+            // Update the flag
+            flag.Status = "Resolved";
+
+            // Act
+            await Repository.UpdateReviewFlagAsync(flag, CancellationToken.None);
+            await Repository.SaveChangesAsync(CancellationToken.None);
+
+            // Assert
+            var updatedFlag = await Context.ReviewFlags.FindAsync(flagId);
+            updatedFlag.Status.Should().Be("Resolved");
         }
 
         [Fact]
         public async Task AddReviewReplyAsync_AddsReplyToDatabase()
         {
+            // Arrange
             var reply = new ReviewReply
             {
                 Id = Guid.NewGuid(),
                 ReviewId = Guid.NewGuid(),
                 ResponderId = Guid.NewGuid(),
-                ReplyText = "Test reply",
+                ReplyText = "This is a test reply"
             };
-            var cancellationToken = CancellationToken.None;
 
-            await Repository.AddReviewReplyAsync(reply, cancellationToken);
-            await Repository.SaveChangesAsync(cancellationToken);
+            // Act
+            await Repository.AddReviewReplyAsync(reply, CancellationToken.None);
+            await Repository.SaveChangesAsync(CancellationToken.None);
 
-            Context.ReviewReplies.Should().ContainSingle(r => r.Id == reply.Id);
+            // Assert
+            var savedReply = await Context.ReviewReplies.FindAsync(reply.Id);
+            savedReply.Should().NotBeNull();
+            savedReply.ReplyText.Should().Be("This is a test reply");
+        }
+
+        [Fact]
+        public async Task CountReviewsBySubjectAsync_ReturnsCorrectCount()
+        {
+            // Arrange
+            var subjectType = "court";
+            var subjectId = Guid.NewGuid();
+            Context.Reviews.AddRange(
+                new Review { Id = Guid.NewGuid(), SubjectType = subjectType, SubjectId = subjectId },
+                new Review { Id = Guid.NewGuid(), SubjectType = subjectType, SubjectId = subjectId },
+                new Review { Id = Guid.NewGuid(), SubjectType = subjectType, SubjectId = subjectId }
+            );
+            await Context.SaveChangesAsync();
+
+            // Act
+            var result = await Repository.CountReviewsBySubjectAsync(subjectType, subjectId, CancellationToken.None);
+
+            // Assert
+            result.Should().Be(3);
         }
     }
 }
