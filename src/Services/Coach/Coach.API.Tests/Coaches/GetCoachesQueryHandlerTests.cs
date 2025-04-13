@@ -228,5 +228,51 @@ namespace Coach.API.Tests.Coaches
             Assert.Empty(responses[0].SportIds);
             Assert.Empty(responses[0].Packages);
         }
+
+        // Test 4: Kiểm tra không trả về coach đang gọi API (Normal)
+        [Fact]
+        public async Task Handle_CurrentUserIsCoach_ExcludesCurrentCoach()
+        {
+            // Arrange
+            var coach1Id = Guid.NewGuid();
+            var coach2Id = Guid.NewGuid();
+            var coach3Id = Guid.NewGuid();
+            
+            var coach1 = new Data.Models.Coach { UserId = coach1Id, FullName = "Coach 1", Bio = "Bio 1", RatePerHour = 50m, CreatedAt = DateTime.UtcNow };
+            var coach2 = new Data.Models.Coach { UserId = coach2Id, FullName = "Coach 2", Bio = "Bio 2", RatePerHour = 60m, CreatedAt = DateTime.UtcNow };
+            var coach3 = new Data.Models.Coach { UserId = coach3Id, FullName = "Coach 3", Bio = "Bio 3", RatePerHour = 70m, CreatedAt = DateTime.UtcNow };
+            
+            var coaches = new List<Data.Models.Coach> { coach1, coach2, coach3 };
+
+            var mockCoachRepo = new Mock<ICoachRepository>();
+            mockCoachRepo.Setup(r => r.GetAllCoachesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(coaches);
+
+            var mockSportRepo = new Mock<ICoachSportRepository>();
+            mockSportRepo.Setup(r => r.GetCoachSportsByCoachIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachSport>());
+
+            var mockPackageRepo = new Mock<ICoachPackageRepository>();
+            mockPackageRepo.Setup(r => r.GetCoachPackagesByCoachIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachPackage>());
+
+            var mockScheduleRepo = new Mock<ICoachScheduleRepository>();
+            mockScheduleRepo.Setup(r => r.GetCoachSchedulesByCoachIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<CoachSchedule>());
+
+            var handler = new GetCoachesQueryHandler(
+                mockCoachRepo.Object, 
+                mockSportRepo.Object, 
+                mockPackageRepo.Object, 
+                mockScheduleRepo.Object);
+
+            // Act - Truyền coach2Id làm CurrentUserId
+            var result = await handler.Handle(new GetCoachesQuery(CurrentUserId: coach2Id), CancellationToken.None);
+
+            // Assert
+            Assert.Equal(2, result.Count); // Tổng số coach vẫn là 3, nhưng chỉ trả về 2
+            Assert.Equal(2, result.Data.Count());
+            
+            // Kiểm tra coach2 không có trong kết quả
+            Assert.DoesNotContain(result.Data, c => c.Id == coach2Id);
+            Assert.Contains(result.Data, c => c.Id == coach1Id);
+            Assert.Contains(result.Data, c => c.Id == coach3Id);
+        }
     }
 }

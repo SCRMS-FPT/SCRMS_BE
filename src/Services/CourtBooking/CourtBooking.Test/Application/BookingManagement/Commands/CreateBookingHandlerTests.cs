@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using BuildingBlocks.Messaging.Outbox;
 
 namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
 {
@@ -19,6 +20,8 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
         private readonly Mock<IBookingRepository> _mockBookingRepository;
         private readonly Mock<ICourtScheduleRepository> _mockCourtScheduleRepository;
         private readonly Mock<ICourtRepository> _mockCourtRepository;
+        private readonly Mock<ICourtPromotionRepository> _mockCourtPromotionRepository;
+        private readonly Mock<IOutboxService> _mockOutboxService;
         private readonly CreateBookingHandler _handler;
 
         public CreateBookingHandlerTests()
@@ -26,11 +29,15 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             _mockBookingRepository = new Mock<IBookingRepository>();
             _mockCourtScheduleRepository = new Mock<ICourtScheduleRepository>();
             _mockCourtRepository = new Mock<ICourtRepository>();
+            _mockCourtPromotionRepository = new Mock<ICourtPromotionRepository>();
+            _mockOutboxService = new Mock<IOutboxService>();
 
             _handler = new CreateBookingHandler(
                 _mockBookingRepository.Object,
                 _mockCourtScheduleRepository.Object,
-                _mockCourtRepository.Object
+                _mockCourtRepository.Object,
+                _mockCourtPromotionRepository.Object,
+                _mockOutboxService.Object
             );
         }
 
@@ -44,17 +51,17 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var startTime = TimeSpan.FromHours(10);
             var endTime = TimeSpan.FromHours(12);
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 50m,
                 BookingDetails: new List<BookingDetailCreateDTO>
                 {
                     new BookingDetailCreateDTO(courtId, startTime, endTime)
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             SetupMocks(courtId, bookingDate, startTime, endTime);
 
@@ -85,10 +92,8 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var bookingDate = DateTime.Today.AddDays(1);
             var depositAmount = 100m;
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: depositAmount,
                 BookingDetails: new List<BookingDetailCreateDTO>
@@ -99,7 +104,9 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
                         TimeSpan.FromHours(12)
                     )
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             SetupMocks(courtId, bookingDate, TimeSpan.FromHours(10), TimeSpan.FromHours(12));
 
@@ -124,10 +131,8 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var userId = Guid.NewGuid();
             var bookingDate = DateTime.Today.AddDays(1);
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 50m,
                 BookingDetails: new List<BookingDetailCreateDTO>
@@ -138,7 +143,9 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
                         TimeSpan.FromHours(12)
                     )
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(
                 It.Is<CourtId>(id => id.Value == courtId),
@@ -159,10 +166,8 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var bookingDate = DateTime.Today.AddDays(1);
             var dayOfWeek = (int)bookingDate.DayOfWeek + 1;
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 50m,
                 BookingDetails: new List<BookingDetailCreateDTO>
@@ -173,7 +178,9 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
                         TimeSpan.FromHours(12)
                     )
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             // Setup mock court
             var mockCourt = SetupMockCourt(courtId, 50m);
@@ -212,17 +219,17 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var startTime = TimeSpan.FromHours(10);
             var endTime = TimeSpan.FromHours(12);
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 50m,
                 BookingDetails: new List<BookingDetailCreateDTO>
                 {
                     new BookingDetailCreateDTO(courtId, startTime, endTime)
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             // Setup mock court and schedules
             SetupMocks(courtId, bookingDate, startTime, endTime);
@@ -254,17 +261,17 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var totalPrice = 200m;
             var tooLowDeposit = (totalPrice * minDepositPercentage / 100) - 1; // Thấp hơn 1 đơn vị so với yêu cầu
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: totalPrice,
                 Note: "Test booking",
                 DepositAmount: tooLowDeposit,
                 BookingDetails: new List<BookingDetailCreateDTO>
                 {
                     new BookingDetailCreateDTO(courtId, startTime, endTime)
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             // Setup mock với minDepositPercentage = 50%
             SetupMocks(courtId, bookingDate, startTime, endTime, minDepositPercentage);
@@ -285,17 +292,17 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var endTime = TimeSpan.FromHours(12);
             var minDepositPercentage = 50m; // 50% đặt cọc tối thiểu
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 0, // Không đặt cọc
                 BookingDetails: new List<BookingDetailCreateDTO>
                 {
                     new BookingDetailCreateDTO(courtId, startTime, endTime)
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             // Setup mock
             SetupMocks(courtId, bookingDate, startTime, endTime, minDepositPercentage);
@@ -316,17 +323,17 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             var endTime = TimeSpan.FromHours(12);
             var minDepositPercentage = 0m; // Không yêu cầu đặt cọc
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 0, // Không đặt cọc
                 BookingDetails: new List<BookingDetailCreateDTO>
                 {
                     new BookingDetailCreateDTO(courtId, startTime, endTime)
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             // Setup mock
             SetupMocks(courtId, bookingDate, startTime, endTime, minDepositPercentage);
@@ -357,10 +364,8 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             // Đặt cọc tối thiểu: 100*30% + 150*50% = 30 + 75 = 105
             var depositAmount = 105m;
 
-            var command = new CreateBookingCommand(new BookingCreateDTO(
-                UserId: userId,
+            var bookingDTO = new BookingCreateDTO(
                 BookingDate: bookingDate,
-                TotalPrice: 250m,
                 Note: "Test booking",
                 DepositAmount: depositAmount,
                 BookingDetails: new List<BookingDetailCreateDTO>
@@ -368,25 +373,15 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
                     new BookingDetailCreateDTO(courtId1, TimeSpan.FromHours(10), TimeSpan.FromHours(11)),
                     new BookingDetailCreateDTO(courtId2, TimeSpan.FromHours(11), TimeSpan.FromHours(12))
                 }
-            ));
+            );
+
+            var command = new CreateBookingCommand(userId, bookingDTO);
 
             // Setup mock court 1
-            var mockCourt1 = new Court();
-            typeof(Court).GetProperty("Id").SetValue(mockCourt1, CourtId.Of(courtId1));
-            typeof(Court).GetProperty("MinDepositPercentage").SetValue(mockCourt1, 30m);
-            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(
-                It.Is<CourtId>(id => id.Value == courtId1),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mockCourt1);
+            var mockCourt1 = SetupMockCourt(courtId1, 30m);
 
             // Setup mock court 2
-            var mockCourt2 = new Court();
-            typeof(Court).GetProperty("Id").SetValue(mockCourt2, CourtId.Of(courtId2));
-            typeof(Court).GetProperty("MinDepositPercentage").SetValue(mockCourt2, 50m);
-            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(
-                It.Is<CourtId>(id => id.Value == courtId2),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mockCourt2);
+            var mockCourt2 = SetupMockCourt(courtId2, 50m);
 
             // Setup mock schedules cho hai sân
             SetupMockSchedules(courtId1, bookingDate);
@@ -413,55 +408,44 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
 
         private void SetupMocks(Guid courtId, DateTime bookingDate, TimeSpan startTime, TimeSpan endTime, decimal minDepositPercentage = 0)
         {
-            // Setup mock court
             var mockCourt = SetupMockCourt(courtId, minDepositPercentage);
-
-            // Setup mock schedules
             SetupMockSchedules(courtId, bookingDate);
 
-            // Setup không có booking trước đó
             _mockBookingRepository.Setup(r => r.GetBookingsInDateRangeForCourtAsync(
-                courtId,
-                bookingDate,
-                bookingDate,
-                It.IsAny<CancellationToken>()))
+                courtId, bookingDate, bookingDate, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Booking>());
         }
 
         private Court SetupMockCourt(Guid courtId, decimal minDepositPercentage)
         {
-            var mockCourt = new Court();
-            typeof(Court).GetProperty("Id").SetValue(mockCourt, CourtId.Of(courtId));
-            typeof(Court).GetProperty("MinDepositPercentage").SetValue(mockCourt, minDepositPercentage);
+            var court = Court.Create(CourtId.Of(courtId), CourtName.Of("Test Court"), SportCenterId.Of(Guid.NewGuid()),
+                SportId.Of(Guid.NewGuid()), TimeSpan.FromHours(1), "Description", "{}",
+                CourtType.Indoor, minDepositPercentage);
 
-            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(
-                It.Is<CourtId>(id => id.Value == courtId),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mockCourt);
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.Is<CourtId>(id => id.Value == courtId), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
 
-            return mockCourt;
+            return court;
         }
 
         private void SetupMockSchedules(Guid courtId, DateTime bookingDate)
         {
-            var dayOfWeek = (int)bookingDate.DayOfWeek + 1; // Chuyển đổi sang định dạng 1-7
-
-            var mockSchedules = new List<CourtSchedule>
+            var dayOfWeek = (int)bookingDate.DayOfWeek + 1; // Convert to 1-7 for consistency
+            var schedules = new List<CourtSchedule>
             {
                 CourtSchedule.Create(
                     CourtScheduleId.Of(Guid.NewGuid()),
                     CourtId.Of(courtId),
                     new DayOfWeekValue(new int[] { dayOfWeek }),
                     TimeSpan.FromHours(8),
-                    TimeSpan.FromHours(20),
+                    TimeSpan.FromHours(22),
                     100m
                 )
             };
 
             _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
-                It.Is<CourtId>(id => id.Value == courtId),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mockSchedules);
+                It.Is<CourtId>(id => id.Value == courtId), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(schedules);
         }
 
         private Booking CreateExistingBooking(Guid courtId, DateTime bookingDate, TimeSpan startTime, TimeSpan endTime)
@@ -473,26 +457,19 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
                 "Existing booking"
             );
 
-            // Tạo schedules mock cho BookingDetail
-            var schedule = CourtSchedule.Create(
-                CourtScheduleId.Of(Guid.NewGuid()),
+            // Manually set up booking detail with reflection
+            var detail = BookingDetail.Create(
+                booking.Id,
                 CourtId.Of(courtId),
-                new DayOfWeekValue(new int[] { 1, 2, 3, 4, 5, 6, 7 }),
-                TimeSpan.FromHours(8),
-                TimeSpan.FromHours(20),
-                100m
+                startTime,
+                endTime,
+                new List<CourtSchedule>()
             );
 
-            // Thêm chi tiết booking
-            typeof(Booking).GetMethod("AddBookingDetail").Invoke(
-                booking,
-                new object[] {
-                    CourtId.Of(courtId),
-                    startTime,
-                    endTime,
-                    new List<CourtSchedule> { schedule }
-                }
-            );
+            // Add booking detail to booking
+            var bookingDetailsField = typeof(Booking).GetField("_bookingDetails",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            bookingDetailsField?.SetValue(booking, new List<BookingDetail> { detail });
 
             return booking;
         }

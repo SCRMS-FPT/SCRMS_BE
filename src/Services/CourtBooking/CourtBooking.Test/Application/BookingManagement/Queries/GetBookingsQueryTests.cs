@@ -26,6 +26,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             var query = new GetBookingsQuery(
                 userId,
                 role,
+                "User",
                 filterUserId,
                 courtId,
                 sportsCenterId,
@@ -39,6 +40,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             // Assert
             Assert.Equal(userId, query.UserId);
             Assert.Equal(role, query.Role);
+            Assert.Equal("User", query.ViewAs);
             Assert.Equal(filterUserId, query.FilterUserId);
             Assert.Equal(courtId, query.CourtId);
             Assert.Equal(sportsCenterId, query.SportsCenterId);
@@ -68,6 +70,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             var query = new GetBookingsQuery(
                 userId,
                 role,
+                null,
                 filterUserId,
                 courtId,
                 sportsCenterId,
@@ -81,6 +84,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             // Assert
             Assert.Equal(userId, query.UserId);
             Assert.Equal(role, query.Role);
+            Assert.Null(query.ViewAs);
             Assert.Null(query.FilterUserId);
             Assert.Null(query.CourtId);
             Assert.Null(query.SportsCenterId);
@@ -104,6 +108,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             var query = new GetBookingsQuery(
                 userId,
                 role,
+                "Admin",
                 null,
                 null,
                 null,
@@ -117,6 +122,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             // Assert
             Assert.Equal(userId, query.UserId);
             Assert.Equal(role, query.Role);
+            Assert.Equal("Admin", query.ViewAs);
         }
 
         [Theory]
@@ -133,6 +139,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             var query = new GetBookingsQuery(
                 userId,
                 role,
+                "User",
                 null,
                 null,
                 null,

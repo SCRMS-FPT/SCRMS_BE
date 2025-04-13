@@ -15,10 +15,10 @@ namespace Identity.Infrastructure.Data.Extensions
             var context = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<IdentityDbContext>>();
             var isDatabaseCreated = await context.Database.CanConnectAsync();
-            //if (!isDatabaseCreated)
-            //{
+            if (!isDatabaseCreated)
+            {
                 await context.Database.MigrateAsync();
-            //}
+            }
 
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();

@@ -8,6 +8,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -171,6 +172,187 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                     s.DayOfWeek.Days.Contains(5)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+        }
+
+        [Fact]
+        public async Task Handle_Should_CreateCourtSchedule_When_InputIsValid()
+        {
+            // Arrange
+            var courtId = Guid.NewGuid();
+            var dayOfWeek = new[] { 1, 2, 3 }; // Monday, Tuesday, Wednesday
+            var startTime = TimeSpan.FromHours(8);
+            var endTime = TimeSpan.FromHours(18);
+            var priceSlot = 150.0m;
+
+            var command = new CreateCourtScheduleCommand(
+                courtId,
+                dayOfWeek,
+                startTime,
+                endTime,
+                priceSlot
+            );
+
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(Guid.NewGuid()),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromHours(1),
+                "Main court",
+                "Indoor",
+                CourtType.Indoor,
+                30
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            CourtSchedule addedSchedule = null;
+            _mockCourtScheduleRepository.Setup(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()))
+                .Callback<CourtSchedule, CancellationToken>((schedule, _) => addedSchedule = schedule)
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Assert
+            Assert.NotEqual(Guid.Empty, result.Id);
+            _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            // Verify schedule properties
+            Assert.NotNull(addedSchedule);
+            Assert.Equal(courtId, addedSchedule.CourtId.Value);
+            Assert.Equal(dayOfWeek, addedSchedule.DayOfWeek.Days);
+            Assert.Equal(startTime, addedSchedule.StartTime);
+            Assert.Equal(endTime, addedSchedule.EndTime);
+            Assert.Equal(priceSlot, addedSchedule.PriceSlot);
+        }
+
+        [Fact]
+        public async Task Handle_Should_ThrowArgumentException_When_StartTimeGreaterThanEndTime()
+        {
+            // Arrange
+            var courtId = Guid.NewGuid();
+            var dayOfWeek = new[] { 1, 2, 3 };
+            var startTime = TimeSpan.FromHours(18); // Greater than end time
+            var endTime = TimeSpan.FromHours(8);
+            var priceSlot = 150.0m;
+
+            var command = new CreateCourtScheduleCommand(
+                courtId,
+                dayOfWeek,
+                startTime,
+                endTime,
+                priceSlot
+            );
+
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(Guid.NewGuid()),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromHours(1),
+                "Main court",
+                "Indoor",
+                CourtType.Indoor,
+                30
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _handler.Handle(command, CancellationToken.None));
+            
+            Assert.Contains("must be less than end time", exception.Message);
+            _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Handle_Should_ThrowArgumentException_When_DayOfWeekIsInvalid()
+        {
+            // Arrange
+            var courtId = Guid.NewGuid();
+            var dayOfWeek = new[] { 0, 8 }; // Invalid days (valid is 1-7)
+            var startTime = TimeSpan.FromHours(8);
+            var endTime = TimeSpan.FromHours(18);
+            var priceSlot = 150.0m;
+
+            var command = new CreateCourtScheduleCommand(
+                courtId,
+                dayOfWeek,
+                startTime,
+                endTime,
+                priceSlot
+            );
+
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(Guid.NewGuid()),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromHours(1),
+                "Main court",
+                "Indoor",
+                CourtType.Indoor,
+                30
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _handler.Handle(command, CancellationToken.None));
+            
+            Assert.Contains("Day of week must be between 1 and 7", exception.Message);
+            _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Handle_Should_ThrowArgumentException_When_PriceIsNegative()
+        {
+            // Arrange
+            var courtId = Guid.NewGuid();
+            var dayOfWeek = new[] { 1, 2, 3 };
+            var startTime = TimeSpan.FromHours(8);
+            var endTime = TimeSpan.FromHours(18);
+            var priceSlot = -50.0m; // Negative price
+
+            var command = new CreateCourtScheduleCommand(
+                courtId,
+                dayOfWeek,
+                startTime,
+                endTime,
+                priceSlot
+            );
+
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(Guid.NewGuid()),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromHours(1),
+                "Main court",
+                "Indoor",
+                CourtType.Indoor,
+                30
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _handler.Handle(command, CancellationToken.None));
+            
+            Assert.Contains("Price cannot be negative", exception.Message);
+            _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

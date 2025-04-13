@@ -232,8 +232,11 @@ namespace CourtBooking.Test.API.Endpoints
                 CourtStatus.Open,            // Status
                 CourtType.Indoor,            // CourtType
                 50m,                         // MinDepositPercentage
+                24,                          // CancellationWindowHours
+                100m,                        // RefundPercentage
                 "Tennis",                    // SportName
                 "Sport Center 1",            // SportCenterName
+                null,                        // Promotions
                 DateTime.UtcNow,             // CreatedAt
                 null                         // LastModified
             );
@@ -317,8 +320,11 @@ namespace CourtBooking.Test.API.Endpoints
                 CourtStatus.Open,            // Status
                 CourtType.Indoor,            // CourtType
                 50m,                         // MinDepositPercentage
+                24,                          // CancellationWindowHours
+                100m,                        // RefundPercentage
                 "Tennis",                    // SportName
                 "Sport Center 1",            // SportCenterName
+                null,                        // Promotions
                 DateTime.UtcNow,             // CreatedAt
                 null                         // LastModified
             );

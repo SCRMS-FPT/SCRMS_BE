@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BuildingBlocks.Pagination;
+using System.Security.Claims;
+
 namespace Coach.API.Features.Coaches.GetCoaches
 {
     public class GetCoachesEndpoint : ICarterModule
@@ -7,6 +9,7 @@ namespace Coach.API.Features.Coaches.GetCoaches
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapGet("/coaches", async (
+                ClaimsPrincipal user,
                 [FromQuery] string? name,
                 [FromQuery] Guid? sportId,
                 [FromQuery] decimal? minPrice,
@@ -15,7 +18,11 @@ namespace Coach.API.Features.Coaches.GetCoaches
                 [FromQuery] int pageIndex = 0,
                 [FromQuery] int pageSize = 10) =>
             {
-                var query = new GetCoachesQuery(name, sportId, minPrice, maxPrice, pageIndex, pageSize);
+                // Lấy user ID từ claim
+                var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid? currentUserId = string.IsNullOrEmpty(userId) ? null : Guid.Parse(userId);
+
+                var query = new GetCoachesQuery(name, sportId, minPrice, maxPrice, pageIndex, pageSize, currentUserId);
                 var result = await sender.Send(query);
                 return Results.Ok(result);
             })

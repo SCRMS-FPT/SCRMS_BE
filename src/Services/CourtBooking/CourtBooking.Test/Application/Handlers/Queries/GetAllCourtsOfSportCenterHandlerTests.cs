@@ -20,15 +20,18 @@ namespace CourtBooking.Test.Application.Handlers.Queries
     {
         private readonly Mock<ICourtRepository> _mockCourtRepository;
         private readonly Mock<ISportRepository> _mockSportRepository;
+        private readonly Mock<ICourtPromotionRepository> _mockPromotionRepository;
         private readonly GetAllCourtsOfSportCenterHandler _handler;
 
         public GetAllCourtsOfSportCenterHandlerTests()
         {
             _mockCourtRepository = new Mock<ICourtRepository>();
             _mockSportRepository = new Mock<ISportRepository>();
+            _mockPromotionRepository = new Mock<ICourtPromotionRepository>();
             _handler = new GetAllCourtsOfSportCenterHandler(
                 _mockCourtRepository.Object,
-                _mockSportRepository.Object);
+                _mockSportRepository.Object,
+                _mockPromotionRepository.Object);
         }
 
         [Fact]
@@ -44,6 +47,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             _mockSportRepository.Setup(r => r.GetAllSportsAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport>());
+
+            _mockPromotionRepository.Setup(r => r.GetPromotionsByCourtIdAsync(
+                    It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<CourtPromotion>());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -90,6 +97,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             _mockSportRepository.Setup(r => r.GetAllSportsAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport> { sport });
 
+            _mockPromotionRepository.Setup(r => r.GetPromotionsByCourtIdAsync(
+                    It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<CourtPromotion>());
+
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
 
@@ -133,6 +144,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             _mockSportRepository.Setup(r => r.GetAllSportsAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport>()); // Empty sports list
+
+            _mockPromotionRepository.Setup(r => r.GetPromotionsByCourtIdAsync(
+                    It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<CourtPromotion>());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -190,6 +205,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             _mockSportRepository.Setup(r => r.GetAllSportsAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport> { sport });
+
+            _mockPromotionRepository.Setup(r => r.GetPromotionsByCourtIdAsync(
+                    It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<CourtPromotion>());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);

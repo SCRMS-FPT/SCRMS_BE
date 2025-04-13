@@ -11,10 +11,10 @@ namespace Coach.API.Data.Extensions
             var context = scope.ServiceProvider.GetRequiredService<CoachDbContext>();
 
             var isDatabaseCreated = await context.Database.CanConnectAsync();
-            //if (!isDatabaseCreated)
-            //{
+            if (!isDatabaseCreated)
+            {
                 await context.Database.MigrateAsync();
-            //}
+            }
         }
     }
 }

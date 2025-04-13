@@ -17,6 +17,26 @@ namespace Coach.API.Tests.Promotion
 {
     public class CreateMyPromotionEndpointTests
     {
+        private readonly Mock<ISender> _mockSender;
+        private readonly CreateMyPromotionEndpoint _endpoint;
+        private readonly Mock<HttpContext> _mockHttpContext;
+        private readonly Mock<ClaimsPrincipal> _mockUser;
+        private readonly TestEndpointRouteBuilder _endpointRouteBuilder;
+
+        public CreateMyPromotionEndpointTests()
+        {
+            _mockSender = new Mock<ISender>();
+            _endpoint = new CreateMyPromotionEndpoint();
+            _mockHttpContext = new Mock<HttpContext>();
+            _mockUser = new Mock<ClaimsPrincipal>();
+            _endpointRouteBuilder = new TestEndpointRouteBuilder();
+
+            _mockHttpContext.Setup(x => x.User).Returns(_mockUser.Object);
+
+            // Add routes in constructor
+            _endpoint.AddRoutes(_endpointRouteBuilder);
+        }
+
         // Test 1: Valid JWT token and promotion data
         [Fact]
         public async Task CreateMyPromotion_ValidToken_ReturnsOk()
@@ -32,38 +52,21 @@ namespace Coach.API.Tests.Promotion
                 ValidTo: DateOnly.FromDateTime(DateTime.Today.AddDays(30))
             );
 
-            var mockSender = new Mock<ISender>();
-            mockSender.Setup(s => s.Send(It.IsAny<CreateCoachPromotionCommand>(), It.IsAny<CancellationToken>()))
+            var route = _endpointRouteBuilder.GetRouteByPattern("/coaches/me/promotions");
+
+            _mockSender.Setup(s => s.Send(It.IsAny<CreateCoachPromotionCommand>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new CreateCoachPromotionResult(Guid.NewGuid()));
 
-            var httpContext = new DefaultHttpContext();
-            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString())
-            }));
+            // Set up HttpContext with valid user claim
+            var claim = new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString());
+            _mockUser.Setup(u => u.FindFirst(JwtRegisteredClaimNames.Sub)).Returns(claim);
 
             // Act
-            var endpoint = new CreateMyPromotionEndpoint();
-            var mockEndpointRouteBuilder = new Mock<IEndpointRouteBuilder>();
-
-            Func<CreateMyPromotionRequest, ISender, HttpContext, Task<IResult>> capturedHandler = null;
-
-            mockEndpointRouteBuilder
-                .Setup(erb => erb.MapPost(It.IsAny<string>(), It.IsAny<Delegate>()))
-                .Callback<string, Delegate>((pattern, handler) =>
-                {
-                    capturedHandler = (Func<CreateMyPromotionRequest, ISender, HttpContext, Task<IResult>>)handler;
-                })
-                .Returns(Mock.Of<RouteHandlerBuilder>());
-
-            endpoint.AddRoutes(mockEndpointRouteBuilder.Object);
-
-            // Call the handler directly
-            var result = await capturedHandler(request, mockSender.Object, httpContext);
+            var result = await route.InvokeAsync(_mockHttpContext.Object, request, _mockSender.Object);
 
             // Assert
             Assert.IsType<Ok<CreateCoachPromotionResult>>(result);
-            mockSender.Verify(s => s.Send(
+            _mockSender.Verify(s => s.Send(
                 It.Is<CreateCoachPromotionCommand>(cmd =>
                     cmd.CoachId == coachId &&
                     cmd.Description == request.Description),
@@ -85,31 +88,18 @@ namespace Coach.API.Tests.Promotion
                 ValidTo: DateOnly.FromDateTime(DateTime.Today.AddDays(30))
             );
 
-            var mockSender = new Mock<ISender>();
-            var httpContext = new DefaultHttpContext(); // No claims
+            var route = _endpointRouteBuilder.GetRouteByPattern("/coaches/me/promotions");
+
+            // Set up HttpContext with no valid user claim
+            _mockUser.Setup(u => u.FindFirst(JwtRegisteredClaimNames.Sub)).Returns((Claim)null);
+            _mockUser.Setup(u => u.FindFirst(ClaimTypes.NameIdentifier)).Returns((Claim)null);
 
             // Act
-            var endpoint = new CreateMyPromotionEndpoint();
-            var mockEndpointRouteBuilder = new Mock<IEndpointRouteBuilder>();
-
-            Func<CreateMyPromotionRequest, ISender, HttpContext, Task<IResult>> capturedHandler = null;
-
-            mockEndpointRouteBuilder
-                .Setup(erb => erb.MapPost(It.IsAny<string>(), It.IsAny<Delegate>()))
-                .Callback<string, Delegate>((pattern, handler) =>
-                {
-                    capturedHandler = (Func<CreateMyPromotionRequest, ISender, HttpContext, Task<IResult>>)handler;
-                })
-                .Returns(Mock.Of<RouteHandlerBuilder>());
-
-            endpoint.AddRoutes(mockEndpointRouteBuilder.Object);
-
-            // Call the handler directly
-            var result = await capturedHandler(request, mockSender.Object, httpContext);
+            var result = await route.InvokeAsync(_mockHttpContext.Object, request, _mockSender.Object);
 
             // Assert
             Assert.IsType<UnauthorizedHttpResult>(result);
-            mockSender.Verify(s => s.Send(It.IsAny<CreateCoachPromotionCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockSender.Verify(s => s.Send(It.IsAny<CreateCoachPromotionCommand>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

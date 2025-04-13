@@ -201,7 +201,15 @@ namespace Identity.API.Endpoints
                 var command = new AssignRolesToUserCommand(request.UserId, request.Roles);
                 await sender.Send(command);
                 return Results.NoContent();
-            });
+            }).RequireAuthorization("Admin");
+
+            // Thêm endpoint xóa role của user dành cho Admin
+            identityAdminGroup.MapPost("/remove-roles", async (RemoveRolesRequest request, ISender sender) =>
+            {
+                var command = new RemoveRolesFromUserCommand(request.UserId, request.Roles);
+                await sender.Send(command);
+                return Results.Ok(new { Message = "Roles removed successfully" });
+            }).RequireAuthorization("Admin");
 
             var dashboardGroup = app.MapGroup("/api/admin/dashboard/stats")
                                     .WithTags("Admin Dashboard");
@@ -233,6 +241,7 @@ namespace Identity.API.Endpoints
         DateTime BirthDate);
     public record ResetPasswordRequest(string Email);
     public record AssignRolesRequest(Guid UserId, List<string> Roles);
+    public record RemoveRolesRequest(Guid UserId, List<string> Roles);
     public class UpdateProfileRequest
     {
         public string FirstName { get; set; } = string.Empty;

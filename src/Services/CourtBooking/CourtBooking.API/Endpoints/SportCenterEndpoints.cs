@@ -95,10 +95,43 @@ namespace CourtBooking.API.Endpoints
                 [FromQuery] DateTime? BookingDate,
                 [FromQuery] TimeSpan? StartTime,
                 [FromQuery] TimeSpan? EndTime,
+                HttpContext httpContext,
                 ISender sender) =>
             {
                 var paginationRequest = new PaginationRequest((page ?? 1) - 1, limit ?? 10);
-                var query = new GetSportCentersQuery(paginationRequest, city, name, SportId, BookingDate, StartTime, EndTime);
+                
+                // Kiểm tra role của người dùng
+                Guid? excludeOwnerId = null;
+                var user = httpContext.User;
+                
+                // Nếu người dùng đã đăng nhập
+                if (user.Identity?.IsAuthenticated == true)
+                {
+                    // Kiểm tra xem người dùng có role CourtOwner không
+                    if (user.IsInRole("CourtOwner"))
+                    {
+                        // Trích xuất userId từ claims
+                        var userIdClaim = user.FindFirst(JwtRegisteredClaimNames.Sub) ?? 
+                                         user.FindFirst(ClaimTypes.NameIdentifier);
+                        
+                        if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var ownerId))
+                        {
+                            // Nếu là CourtOwner, loại bỏ các sportcenter của họ
+                            excludeOwnerId = ownerId;
+                        }
+                    }
+                }
+                
+                var query = new GetSportCentersQuery(
+                    paginationRequest, 
+                    city, 
+                    name, 
+                    SportId, 
+                    BookingDate, 
+                    StartTime, 
+                    EndTime, 
+                    excludeOwnerId);
+                    
                 var result = await sender.Send(query);
                 var response = result.Adapt<GetSportCentersResponse>();
                 return Results.Ok(response);

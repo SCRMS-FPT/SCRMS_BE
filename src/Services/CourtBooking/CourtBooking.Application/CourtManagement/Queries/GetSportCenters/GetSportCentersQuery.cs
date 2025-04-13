@@ -11,7 +11,8 @@ public record GetSportCentersQuery(
     Guid? SportId = null,
     DateTime? BookingDate = null,
     TimeSpan? StartTime = null,
-    TimeSpan? EndTime = null
+    TimeSpan? EndTime = null,
+    Guid? ExcludeOwnerId = null
 ) : IQuery<GetSportCentersResult>;
 
 public record GetSportCentersResult(PaginatedResult<SportCenterListDTO> SportCenters);
