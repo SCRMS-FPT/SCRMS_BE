@@ -16,7 +16,7 @@ namespace Coach.API.Features.Coaches.UpdateMyProfile
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                 ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-
+                var form = await httpContext.Request.ReadFormAsync();
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachId))
                     return Results.Unauthorized();
 
@@ -27,7 +27,7 @@ namespace Coach.API.Features.Coaches.UpdateMyProfile
                     Email: request.Email,
                     Phone: request.Phone,
                     NewAvatarFile: request.NewAvatar,
-                    NewImageFiles: request.NewImages ?? new List<IFormFile>(),
+                    NewImageFiles: request.NewImages ?? form.Files.GetFiles("newImages").ToList() ?? new List<IFormFile>(),
                     ExistingImageUrls: request.ExistingImageUrls ?? new List<string>(),
                     ImagesToDelete: request.ImagesToDelete ?? new List<string>(),
                     Bio: request.Bio,

@@ -15,7 +15,7 @@ namespace Coach.API.Features.Coaches.CreateCoach
             {
                 var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
                                 ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-
+                var form = await httpContext.Request.ReadFormAsync();
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Results.Unauthorized();
 
@@ -25,7 +25,7 @@ namespace Coach.API.Features.Coaches.CreateCoach
                     Email: request.Email,
                     Phone: request.Phone,
                     AvatarFile: request.Avatar,
-                    ImageFiles: request.Images ?? new List<IFormFile>(),
+                    ImageFiles: request.Images ?? form.Files.GetFiles("Images").ToList() ?? new List<IFormFile>(),
                     Bio: request.Bio,
                     RatePerHour: request.RatePerHour,
                     SportIds: new List<Guid> { request.SportId }
