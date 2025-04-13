@@ -24,6 +24,12 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
         // Start with basic query
         var sportCentersQuery = _context.SportCenters.AsQueryable();
 
+        // Exclude sport centers owned by the specified owner (if user is CourtOwner)
+        if (query.ExcludeOwnerId.HasValue)
+        {
+            sportCentersQuery = sportCentersQuery.Where(sc => sc.OwnerId != OwnerId.Of(query.ExcludeOwnerId.Value));
+        }
+
         // Apply basic filters
         if (!string.IsNullOrEmpty(query.City))
         {

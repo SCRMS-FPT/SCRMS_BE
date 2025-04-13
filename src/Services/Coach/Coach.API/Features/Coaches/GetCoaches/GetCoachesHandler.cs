@@ -14,8 +14,9 @@ namespace Coach.API.Features.Coaches.GetCoaches
         Guid? SportId = null,
         decimal? MinPrice = null,
         decimal? MaxPrice = null,
-    int PageIndex = 0,
-    int PageSize = 10
+        int PageIndex = 0,
+        int PageSize = 10,
+        Guid? CurrentUserId = null
     ) : IQuery<PaginatedResult<CoachResponse>>, IRequest<PaginatedResult<CoachResponse>>;
     public record CoachWeeklyScheduleResponse(
     int DayOfWeek,         // 1=Sunday to 7=Saturday
@@ -71,6 +72,12 @@ namespace Coach.API.Features.Coaches.GetCoaches
             // Get all coaches first (we will filter in memory)
             var coaches = await _coachRepository.GetAllCoachesAsync(cancellationToken);
             // Coaches đã được lọc theo status = "active" trong repository
+
+            // Loại bỏ coach hiện tại nếu người dùng hiện tại là coach
+            if (request.CurrentUserId.HasValue)
+            {
+                coaches = coaches.Where(c => c.UserId != request.CurrentUserId.Value).ToList();
+            }
 
             // Apply name filter if provided
             if (!string.IsNullOrWhiteSpace(request.Name))

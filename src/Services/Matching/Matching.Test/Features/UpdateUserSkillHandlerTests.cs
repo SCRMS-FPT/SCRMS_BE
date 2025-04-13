@@ -4,6 +4,10 @@ using Matching.API.Data.Repositories;
 using Matching.API.Features.Skills.UpdateUserSkill;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace Matching.Test.Features
 {
@@ -29,7 +33,7 @@ namespace Matching.Test.Features
             // Arrange
             var userId = Guid.NewGuid();
             var sportId = Guid.NewGuid();
-            _skillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>())).ReturnsAsync((UserSkill)null);
+            _skillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>())).ReturnsAsync((UserSkill?)null);
             _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             // Act
@@ -61,6 +65,59 @@ namespace Matching.Test.Features
             _skillRepoMock.Verify(m => m.UpdateUserSkillAsync(skill, It.IsAny<CancellationToken>()), Times.Once());
             _skillRepoMock.Verify(m => m.AddUserSkillAsync(It.IsAny<UserSkill>(), It.IsAny<CancellationToken>()), Times.Never());
             _contextMock.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Handle_UpdatesExistingSkill_WithSameSkillLevel()
+        {
+            // Arrange - Boundary case: updating skill with same value
+            var userId = Guid.NewGuid();
+            var sportId = Guid.NewGuid();
+            var skill = new UserSkill { UserId = userId, SportId = sportId, SkillLevel = "beginner" };
+            _skillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>())).ReturnsAsync(skill);
+            _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+            // Act
+            await _handler.Handle(new UpdateUserSkillCommand(userId, sportId, "beginner"), CancellationToken.None);
+
+            // Assert
+            Assert.Equal("beginner", skill.SkillLevel);
+            _skillRepoMock.Verify(m => m.UpdateUserSkillAsync(skill, It.IsAny<CancellationToken>()), Times.Once());
+            _skillRepoMock.Verify(m => m.AddUserSkillAsync(It.IsAny<UserSkill>(), It.IsAny<CancellationToken>()), Times.Never());
+            _contextMock.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Handle_AddsNewSkill_WithDifferentCase()
+        {
+            // Arrange - Test case sensitivity of skill level
+            var userId = Guid.NewGuid();
+            var sportId = Guid.NewGuid();
+            _skillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>())).ReturnsAsync((UserSkill?)null);
+            _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+            // Act
+            await _handler.Handle(new UpdateUserSkillCommand(userId, sportId, "BeGiNnEr"), CancellationToken.None);
+
+            // Assert
+            _skillRepoMock.Verify(m => m.AddUserSkillAsync(It.Is<UserSkill>(us =>
+                us.UserId == userId &&
+                us.SportId == sportId &&
+                us.SkillLevel == "BeGiNnEr"), It.IsAny<CancellationToken>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Handle_SaveChangesFailure_ShouldPropagateException()
+        {
+            // Arrange - Exception handling test
+            var userId = Guid.NewGuid();
+            var sportId = Guid.NewGuid();
+            _skillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>())).ReturnsAsync((UserSkill?)null);
+            _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new DbUpdateException("Test exception"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<DbUpdateException>(() =>
+                _handler.Handle(new UpdateUserSkillCommand(userId, sportId, "intermediate"), CancellationToken.None));
         }
     }
 }

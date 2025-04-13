@@ -37,7 +37,7 @@ namespace Matching.Test.Features
             var userId = Guid.NewGuid();
             var sportId = Guid.NewGuid();
             var command = new CreateUserSkillCommand(userId, sportId, "Intermediate");
-            
+
             _userSkillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((UserSkill?)null); // Fixed: Added ? to make it nullable
             _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -47,11 +47,11 @@ namespace Matching.Test.Features
 
             // Assert
             _userSkillRepoMock.Verify(m => m.AddUserSkillAsync(
-                It.Is<UserSkill>(s => 
-                    s.UserId == userId && 
-                    s.SportId == sportId && 
+                It.Is<UserSkill>(s =>
+                    s.UserId == userId &&
+                    s.SportId == sportId &&
                     s.SkillLevel == "Intermediate"),
-                It.IsAny<CancellationToken>()), 
+                It.IsAny<CancellationToken>()),
                 Times.Once());
             _contextMock.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
         }
@@ -63,21 +63,21 @@ namespace Matching.Test.Features
             var userId = Guid.NewGuid();
             var sportId = Guid.NewGuid();
             var command = new CreateUserSkillCommand(userId, sportId, "Beginner");
-            
+
             var existingSkill = new UserSkill
             {
                 UserId = userId,
                 SportId = sportId,
                 SkillLevel = "Advanced"
             };
-            
+
             _userSkillRepoMock.Setup(m => m.GetByUserIdAndSportIdAsync(userId, sportId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(existingSkill);
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 await _handler.Handle(command, CancellationToken.None));
-            
+
             _userSkillRepoMock.Verify(m => m.AddUserSkillAsync(It.IsAny<UserSkill>(), It.IsAny<CancellationToken>()), Times.Never());
         }
 
