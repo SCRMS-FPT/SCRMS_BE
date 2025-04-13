@@ -137,32 +137,4 @@ namespace Chat.API.Test.Endpoint
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
     }
-
-    // TestAuthHandler được cập nhật để trả về thất bại nếu không có header "Authorization"
-    public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
-    {
-        public static ClaimsPrincipal FakeUser { get; set; }
-
-        public TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-                               ILoggerFactory logger,
-                               UrlEncoder encoder,
-                               ISystemClock clock)
-            : base(options, logger, encoder, clock)
-        { }
-
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-        {
-            if (!Request.Headers.ContainsKey("Authorization"))
-            {
-                return Task.FromResult(AuthenticateResult.Fail("No Authorization Header"));
-            }
-
-            if (FakeUser != null)
-            {
-                var ticket = new AuthenticationTicket(FakeUser, Scheme.Name);
-                return Task.FromResult(AuthenticateResult.Success(ticket));
-            }
-            return Task.FromResult(AuthenticateResult.Fail("No user set"));
-        }
-    }
 }
