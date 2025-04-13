@@ -2,9 +2,11 @@
 using Chat.API.Features.SendMessage;
 using Chat.API.Data.Models;
 using Chat.API.Data.Repositories;
+using Chat.API.Hubs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -33,6 +35,16 @@ namespace Chat.API.Test.Endpoint
                     messageRepoMock.Setup(r => r.AddChatMessageAsync(It.IsAny<ChatMessage>()))
                         .Returns(Task.CompletedTask);
                     services.AddSingleton(messageRepoMock.Object);
+
+                    // Mock SignalR hub context
+                    var hubContextMock = new Mock<IHubContext<ChatHub>>();
+                    var hubClientsMock = new Mock<IHubClients>();
+                    var clientProxyMock = new Mock<IClientProxy>();
+
+                    hubContextMock.Setup(h => h.Clients).Returns(hubClientsMock.Object);
+                    hubClientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(clientProxyMock.Object);
+                    services.AddSingleton(hubContextMock.Object);
+
                     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SendMessageHandler).Assembly));
                     services.AddCarter();
                     services.AddRouting();

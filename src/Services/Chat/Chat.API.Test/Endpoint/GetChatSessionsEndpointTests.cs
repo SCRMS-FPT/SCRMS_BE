@@ -1,4 +1,5 @@
 ﻿using Carter;
+using Chat.API.Data.Repositories;
 using Chat.API.Features.GetChatSessions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -22,21 +23,22 @@ namespace Chat.API.Test.Endpoint
     {
         private readonly TestServer _server;
         private readonly HttpClient _client;
+        private readonly Mock<IChatSessionRepository> _sessionRepoMock;
 
         public GetChatSessionsEndpointTests()
         {
+            _sessionRepoMock = new Mock<IChatSessionRepository>();
+
             var builder = new WebHostBuilder()
                 .ConfigureServices(services =>
                 {
-                    var sessionRepoMock = new Mock<IChatSessionRepository>();
-                    sessionRepoMock.Setup(r => r.GetChatSessionByUserIdAsync(It.IsAny<Guid>()))
+                    _sessionRepoMock.Setup(r => r.GetChatSessionByUserIdAsync(It.IsAny<Guid>()))
                                    .ReturnsAsync(new List<ChatSessionResponse>());
-                    services.AddSingleton(sessionRepoMock.Object);
+                    services.AddSingleton(_sessionRepoMock.Object);
                     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetChatSessionsHandler).Assembly));
-                    services.AddCarter();
                     services.AddRouting();
                     services.AddAuthentication("Test")
-                        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
+                        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
                     services.AddAuthorization();
                 })
                 .Configure(app =>
@@ -46,7 +48,9 @@ namespace Chat.API.Test.Endpoint
                     app.UseAuthorization();
                     app.UseEndpoints(endpoints =>
                     {
-                        endpoints.MapCarter();
+                        // Register only the specific endpoint we want to test
+                        var chatSessionsEndpoint = new GetChatSessionsEndpoint();
+                        chatSessionsEndpoint.AddRoutes(endpoints);
                     });
                 });
 
@@ -58,31 +62,37 @@ namespace Chat.API.Test.Endpoint
         public async Task GetChatSessions_ReturnsOk_WhenValidRequest()
         {
             // Arrange
+            var userId = Guid.NewGuid();
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test", "Bearer token");
-            // Thiết lập FakeUser với một giá trị GUID hợp lệ cho NameIdentifier.
             TestAuthHandler.FakeUser = new ClaimsPrincipal(
-                new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()) }, "Test"));
+                new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }, "Test"));
 
-            // Act: Truyền rõ query string để model binding hoạt động (page=1, limit=10)
+            _sessionRepoMock.Setup(r => r.GetChatSessionByUserIdAsync(userId))
+                .ReturnsAsync(new List<ChatSessionResponse>());
+
+            // Act
             var response = await _client.GetAsync("/api/chats?page=1&limit=10");
 
-            // Assert: Dự kiến trả về OK
+            // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var result = JsonSerializer.Deserialize<List<ChatSessionResponse>>(await response.Content.ReadAsStringAsync());
+            var result = JsonSerializer.Deserialize<List<ChatSessionResponse>>(
+                await response.Content.ReadAsStringAsync(),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
             Assert.Empty(result);
         }
 
         [Fact]
         public async Task GetChatSessions_ReturnsUnauthorized_WhenNoToken()
         {
-            // Arrange: Không thiết lập FakeUser và header Authorization
+            // Arrange
             TestAuthHandler.FakeUser = null;
             _client.DefaultRequestHeaders.Authorization = null;
 
-            // Act: Gọi API với query string rõ ràng
+            // Act
             var response = await _client.GetAsync("/api/chats?page=1&limit=10");
 
-            // Assert: Dự kiến trả về Unauthorized (401)
+            // Assert
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
@@ -90,14 +100,15 @@ namespace Chat.API.Test.Endpoint
         public async Task GetChatSessions_ReturnsBadRequest_WhenLimitIsZero()
         {
             // Arrange
+            var userId = Guid.NewGuid();
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test", "Bearer token");
             TestAuthHandler.FakeUser = new ClaimsPrincipal(
-                new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()) }, "Test"));
+                new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }, "Test"));
 
-            // Act: Truyền limit=0 (với page=1) để kích hoạt validation trả về BadRequest
+            // Act
             var response = await _client.GetAsync("/api/chats?page=1&limit=0");
 
-            // Assert: Dự kiến trả về BadRequest (400)
+            // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
     }
