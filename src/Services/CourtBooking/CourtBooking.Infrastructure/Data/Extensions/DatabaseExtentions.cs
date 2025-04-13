@@ -25,10 +25,10 @@ public static class DatabaseExtentions
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
 
         var isDatabaseCreated = await context.Database.CanConnectAsync();
-        if (!isDatabaseCreated)
-        {
+        //if (!isDatabaseCreated)
+        //{
             await context.Database.MigrateAsync();
-        }
+        //}
         await SeedAsync(context, logger);
     }
 

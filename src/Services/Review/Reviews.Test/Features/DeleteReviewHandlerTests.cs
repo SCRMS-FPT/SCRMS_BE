@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Reviews.API.Data.Models;
 using Reviews.API.Data.Repositories;
 using Reviews.API.Features.DeleteReview;

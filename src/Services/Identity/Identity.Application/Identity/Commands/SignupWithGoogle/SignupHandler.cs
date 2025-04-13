@@ -2,6 +2,7 @@
 using Google.Apis.Auth;
 using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -14,9 +15,9 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
         private readonly GoogleSettings _googleSettings;
         private readonly EndpointSettings _emailSettings;
         private readonly ILogger<SignupHandler> _logger;
-        private readonly IPublisher _publisher;
+        private readonly IPublishEndpoint _publisher;
 
-        public SignupHandler(IUserRepository userRepository, IOptions<GoogleSettings> googleSettings, IOptions<EndpointSettings> emailSettings, ILogger<SignupHandler> logger, IPublisher publisher)
+        public SignupHandler(IUserRepository userRepository, IOptions<GoogleSettings> googleSettings, IOptions<EndpointSettings> emailSettings, ILogger<SignupHandler> logger, IPublishEndpoint publisher)
         {
             _userRepository = userRepository;
             _googleSettings = googleSettings.Value;
@@ -64,10 +65,10 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
                     LastName = payload.FamilyName,
                     Email = payload.Email,
                     UserName = payload.Email.Split('@')[0].Replace(".", "").Replace("-", "").Replace("_", "").ToLower(),
-                    PhoneNumber = null,
-                    BirthDate = new DateTime(),
+                    PhoneNumber = command.Phone,
+                    BirthDate = command.BirthDate,
                     EmailConfirmed = true,
-                    Gender = Enum.TryParse<Gender>("Other", out var gender) ? gender : Gender.Other,
+                    Gender = Enum.TryParse<Gender>(command.Gender, out var gender) ? gender : Gender.Other,
                     CreatedAt = DateTime.UtcNow
                 };
 
