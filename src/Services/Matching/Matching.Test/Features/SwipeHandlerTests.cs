@@ -6,6 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Match = Matching.API.Data.Models.Match;
 using MassTransit;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+using BuildingBlocks.Messaging.Events;
 
 namespace Matching.Test.Features
 {
@@ -56,7 +61,7 @@ namespace Matching.Test.Features
             // Arrange
             var swiperId = Guid.NewGuid();
             var swipedUserId = Guid.NewGuid();
-            _swipeRepoMock.Setup(m => m.GetBySwiperAndSwipedAsync(swipedUserId, swiperId, It.IsAny<CancellationToken>())).ReturnsAsync((SwipeAction)null);
+            _swipeRepoMock.Setup(m => m.GetBySwiperAndSwipedAsync(swipedUserId, swiperId, It.IsAny<CancellationToken>())).ReturnsAsync((SwipeAction?)null);
             _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             // Act
@@ -100,7 +105,7 @@ namespace Matching.Test.Features
             // Arrange
             var swiperId = Guid.NewGuid();
             var swipedUserId = Guid.NewGuid();
-            _swipeRepoMock.Setup(m => m.GetBySwiperAndSwipedAsync(swipedUserId, swiperId, It.IsAny<CancellationToken>())).ReturnsAsync((SwipeAction)null);
+            _swipeRepoMock.Setup(m => m.GetBySwiperAndSwipedAsync(swipedUserId, swiperId, It.IsAny<CancellationToken>())).ReturnsAsync((SwipeAction?)null);
             _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             // Act
@@ -109,6 +114,72 @@ namespace Matching.Test.Features
             // Assert
             Assert.False(result.IsMatch);
             _swipeRepoMock.Verify(m => m.AddSwipeActionAsync(It.Is<SwipeAction>(sa => sa.Decision == "pending"), It.IsAny<CancellationToken>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Handle_SwipeActionOnSameUser_ShouldCreateSwipe()
+        {
+            // Arrange - Testing boundary case where user swipes on themselves
+            var userId = Guid.NewGuid();
+            _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+            // Act
+            var result = await _handler.Handle(new SwipeCommand(userId, "accepted", userId), CancellationToken.None);
+
+            // Assert
+            Assert.False(result.IsMatch);
+            _swipeRepoMock.Verify(m => m.AddSwipeActionAsync(It.Is<SwipeAction>(sa =>
+                sa.SwiperId == userId &&
+                sa.SwipedUserId == userId &&
+                sa.Decision == "pending"), It.IsAny<CancellationToken>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Handle_AcceptedWithRejectedReverseSwipe_NoMatch()
+        {
+            // Arrange
+            var swiperId = Guid.NewGuid();
+            var swipedUserId = Guid.NewGuid();
+            // The reverse swipe exists but is rejected
+            var reverseSwipe = new SwipeAction
+            {
+                SwiperId = swipedUserId,
+                SwipedUserId = swiperId,
+                Decision = "rejected"
+            };
+            _swipeRepoMock.Setup(m => m.GetBySwiperAndSwipedAsync(swipedUserId, swiperId, It.IsAny<CancellationToken>())).ReturnsAsync(reverseSwipe);
+            _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+            // Act
+            var result = await _handler.Handle(new SwipeCommand(swipedUserId, "accepted", swiperId), CancellationToken.None);
+
+            // Assert
+            Assert.False(result.IsMatch);
+            _swipeRepoMock.Verify(m => m.AddSwipeActionAsync(It.Is<SwipeAction>(sa => sa.Decision == "accepted"), It.IsAny<CancellationToken>()), Times.Once());
+            _matchRepoMock.Verify(m => m.AddMatchAsync(It.IsAny<Match>(), It.IsAny<CancellationToken>()), Times.Never());
+        }
+
+        [Fact]
+        public async Task Handle_VerifiesEventPublication_OnMatch()
+        {
+            // Arrange
+            var swiperId = Guid.NewGuid();
+            var swipedUserId = Guid.NewGuid();
+            var reverseSwipe = new SwipeAction { SwiperId = swipedUserId, SwipedUserId = swiperId, Decision = "pending" };
+            _swipeRepoMock.Setup(m => m.GetBySwiperAndSwipedAsync(swipedUserId, swiperId, It.IsAny<CancellationToken>())).ReturnsAsync(reverseSwipe);
+            _contextMock.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+            // Act
+            var result = await _handler.Handle(new SwipeCommand(swipedUserId, "accepted", swiperId), CancellationToken.None);
+
+            // Assert
+            Assert.True(result.IsMatch);
+            _publishEndpointMock.Verify(p => p.Publish(
+                It.Is<MatchCreatedEvent>(e =>
+                    e.InitiatorId == swipedUserId &&
+                    e.MatchedUserId == swiperId),
+                It.IsAny<CancellationToken>()),
+                Times.Once());
         }
     }
 }

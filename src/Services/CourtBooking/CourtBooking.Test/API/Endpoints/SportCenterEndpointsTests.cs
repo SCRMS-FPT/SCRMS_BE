@@ -609,33 +609,39 @@ namespace CourtBooking.Test.API.Endpoints
             {
                 new CourtDTO(
                     Guid.NewGuid(),              // Id
-                    "Sân Tennis 1",              // CourtName
+                    "Test Court 1",               // CourtName
                     Guid.NewGuid(),              // SportId
                     sportCenterId,               // SportCenterId
-                    "Mô tả sân Tennis 1",        // Description
-                    null,                        // Facilities
-                    TimeSpan.FromMinutes(60),    // SlotDuration
-                    CourtStatus.Open,       // Status - thay 'Active' thành enum thực tế của hệ thống
+                    "Test Description",          // Description
+                    new List<FacilityDTO>(),     // Facilities
+                    TimeSpan.FromHours(1),       // SlotDuration
+                    CourtStatus.Open,            // Status
                     CourtType.Indoor,            // CourtType
                     50m,                         // MinDepositPercentage
+                    24,                          // CancellationWindowHours
+                    100m,                        // RefundPercentage
                     "Tennis",                    // SportName
-                    "Sport Center 1",            // SportCenterName
+                    "Sport Center Test",         // SportCenterName
+                    null,                        // Promotions
                     DateTime.UtcNow,             // CreatedAt
                     null                         // LastModified
                 ),
                 new CourtDTO(
                     Guid.NewGuid(),              // Id
-                    "Sân Tennis 2",              // CourtName
+                    "Test Court 2",               // CourtName
                     Guid.NewGuid(),              // SportId
                     sportCenterId,               // SportCenterId
-                    "Mô tả sân Tennis 2",        // Description
-                    null,                        // Facilities
-                    TimeSpan.FromMinutes(60),    // SlotDuration
-                    CourtStatus.Open,       // Status - thay 'Active' thành enum thực tế
+                    "Test Description 2",         // Description
+                    new List<FacilityDTO>(),     // Facilities
+                    TimeSpan.FromHours(1),       // SlotDuration
+                    CourtStatus.Open,            // Status
                     CourtType.Outdoor,           // CourtType
                     50m,                         // MinDepositPercentage
-                    "Tennis",                    // SportName
-                    "Sport Center 1",            // SportCenterName
+                    24,                          // CancellationWindowHours
+                    100m,                        // RefundPercentage
+                    "Basketball",                // SportName
+                    "Sport Center Test",         // SportCenterName
+                    null,                        // Promotions
                     DateTime.UtcNow,             // CreatedAt
                     null                         // LastModified
                 )
@@ -655,8 +661,8 @@ namespace CourtBooking.Test.API.Endpoints
             Assert.IsType<Ok<GetAllCourtsOfSportCenterResponse>>(result);
             var okResult = (Ok<GetAllCourtsOfSportCenterResponse>)result;
             Assert.Equal(2, okResult.Value.Courts.Count);
-            Assert.Equal("Sân Tennis 1", okResult.Value.Courts[0].CourtName);
-            Assert.Equal("Sân Tennis 2", okResult.Value.Courts[1].CourtName);
+            Assert.Equal("Test Court 1", okResult.Value.Courts[0].CourtName);
+            Assert.Equal("Test Court 2", okResult.Value.Courts[1].CourtName);
         }
 
         [Fact]

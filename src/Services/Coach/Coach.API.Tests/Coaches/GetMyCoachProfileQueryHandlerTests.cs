@@ -1,4 +1,5 @@
 using Coach.API.Data.Models;
+using Coach.API.Data;
 using Coach.API.Data.Repositories;
 using Coach.API.Exceptions;
 using Coach.API.Features.Coaches.GetCoaches;
@@ -12,6 +13,10 @@ using Xunit;
 
 namespace Coach.API.Tests.Coaches
 {
+    // Define the WeeklySchedule class to match the CoachResponse expected type
+    public class WeeklySchedule : List<CoachWeeklyScheduleResponse>
+    { }
+
     public class GetMyCoachProfileQueryHandlerTests
     {
         private readonly Mock<ICoachRepository> _mockCoachRepository;
@@ -39,8 +44,8 @@ namespace Coach.API.Tests.Coaches
             // Arrange
             var coachId = Guid.NewGuid();
             var query = new GetMyCoachProfileQuery(coachId);
-            
-            var coach = new CoachData
+
+            var coach = new Data.Models.Coach
             {
                 UserId = coachId,
                 FullName = "Test Coach",
@@ -66,7 +71,13 @@ namespace Coach.API.Tests.Coaches
 
             var schedules = new List<CoachSchedule>
             {
-                new CoachSchedule { Id = Guid.NewGuid(), CoachId = coachId, DayOfWeek = DayOfWeek.Monday, StartTime = TimeSpan.FromHours(9), EndTime = TimeSpan.FromHours(12) }
+                new CoachSchedule {
+                    Id = Guid.NewGuid(),
+                    CoachId = coachId,
+                    DayOfWeek = 2, // Monday (0 = Sunday, 1 = Monday theo enum DayOfWeek nhưng 1 = Sunday, 2 = Monday theo model)
+                    StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)),
+                    EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(12))
+                }
             };
 
             _mockCoachRepository.Setup(x => x.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
@@ -94,7 +105,10 @@ namespace Coach.API.Tests.Coaches
             Assert.Equal(2, result.SportIds.Count);
             Assert.Equal(1, result.Packages.Count);
             Assert.NotNull(result.WeeklySchedule);
-            Assert.Single(result.WeeklySchedule.Monday);
+
+            // Check Monday schedule
+            var mondaySchedule = result.WeeklySchedule.FirstOrDefault(s => s.DayName == "Monday");
+            Assert.NotNull(mondaySchedule);
         }
 
         [Fact]
@@ -105,7 +119,7 @@ namespace Coach.API.Tests.Coaches
             var query = new GetMyCoachProfileQuery(coachId);
 
             _mockCoachRepository.Setup(x => x.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((CoachData)null);
+                .ReturnsAsync((Data.Models.Coach)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<CoachNotFoundException>(() => _handler.Handle(query, CancellationToken.None));
@@ -117,8 +131,8 @@ namespace Coach.API.Tests.Coaches
             // Arrange
             var coachId = Guid.NewGuid();
             var query = new GetMyCoachProfileQuery(coachId);
-            
-            var coach = new CoachData
+
+            var coach = new Data.Models.Coach
             {
                 UserId = coachId,
                 FullName = "Test Coach",
@@ -155,8 +169,8 @@ namespace Coach.API.Tests.Coaches
             // Arrange
             var coachId = Guid.NewGuid();
             var query = new GetMyCoachProfileQuery(coachId);
-            
-            var coach = new CoachData
+
+            var coach = new Data.Models.Coach
             {
                 UserId = coachId,
                 FullName = "Test Coach",
@@ -193,8 +207,8 @@ namespace Coach.API.Tests.Coaches
             // Arrange
             var coachId = Guid.NewGuid();
             var query = new GetMyCoachProfileQuery(coachId);
-            
-            var coach = new CoachData
+
+            var coach = new Data.Models.Coach
             {
                 UserId = coachId,
                 FullName = "Test Coach",
@@ -225,4 +239,4 @@ namespace Coach.API.Tests.Coaches
             Assert.Empty(result.ImageUrls);
         }
     }
-} 
+}

@@ -38,16 +38,20 @@ namespace Payment.API.Tests.Features
         }
 
         [Fact]
-        public async Task Handle_ShouldThrowException_WhenWalletNotFound()
+        public async Task Handle_ShouldReturnNewWalletWithZeroBalance_WhenWalletNotFound()
         {
             // Arrange
             var userId = Guid.NewGuid();
             _userWalletRepoMock.Setup(r => r.GetUserWalletByUserIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync((UserWallet)null);
             var query = new GetWalletBalanceQuery(userId);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _handler.Handle(query, CancellationToken.None));
-            Assert.Equal("Wallet not found", exception.Message);
+            // Act
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(0m, result.Balance);
+            Assert.Equal(userId, result.UserId);
         }
     }
 }

@@ -61,6 +61,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: userId,
                 Role: "User",
+                ViewAs: "User",
                 FilterUserId: null,
                 CourtId: null,
                 SportsCenterId: null,
@@ -97,6 +98,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: userId,
                 Role: "Admin",
+                ViewAs: "Admin",
                 FilterUserId: null,
                 CourtId: null,
                 SportsCenterId: null,
@@ -133,6 +135,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: adminId,
                 Role: "Admin",
+                ViewAs: "Admin",
                 FilterUserId: targetUserId,
                 CourtId: null,
                 SportsCenterId: null,
@@ -169,6 +172,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: userId,
                 Role: "User",
+                ViewAs: "User",
                 FilterUserId: null,
                 CourtId: null,
                 SportsCenterId: null,
@@ -208,6 +212,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: userId,
                 Role: "User",
+                ViewAs: "User",
                 FilterUserId: null,
                 CourtId: null,
                 SportsCenterId: null,
@@ -247,6 +252,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: ownerId,
                 Role: "CourtOwner",
+                ViewAs: "CourtOwner",
                 FilterUserId: null,
                 CourtId: null,
                 SportsCenterId: null,
@@ -297,6 +303,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             var query = new GetBookingsQuery(
                 UserId: userId,
                 Role: "User",
+                ViewAs: "User",
                 FilterUserId: null,
                 CourtId: null,
                 SportsCenterId: null,

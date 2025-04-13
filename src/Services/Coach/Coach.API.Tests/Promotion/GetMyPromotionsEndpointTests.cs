@@ -4,26 +4,61 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
-using Coach.API.Features.Promotion.GetAllPromotion;
+using Microsoft.Extensions.Primitives;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Coach.API.Features.Promotion.GetMyPromotions;
+using Coach.API.Features.Promotion.GetAllPromotion;
 using Moq;
 using Xunit;
+using MediatR;
 
 namespace Coach.API.Tests.Promotion
 {
     public class GetMyPromotionsEndpointTests
     {
-        // Test 1: Valid JWT token
+        private readonly Mock<ISender> _mockSender;
+        private readonly GetMyPromotionsEndpoint _endpoint;
+        private readonly Mock<HttpContext> _mockHttpContext;
+        private readonly Mock<ClaimsPrincipal> _mockUser;
+        private readonly TestEndpointRouteBuilder _endpointRouteBuilder;
+
+        public GetMyPromotionsEndpointTests()
+        {
+            _mockSender = new Mock<ISender>();
+            _endpoint = new GetMyPromotionsEndpoint();
+            _mockHttpContext = new Mock<HttpContext>();
+            _mockUser = new Mock<ClaimsPrincipal>();
+            _endpointRouteBuilder = new TestEndpointRouteBuilder();
+
+            _mockHttpContext.Setup(x => x.User).Returns(_mockUser.Object);
+
+            // Add routes in constructor
+            _endpoint.AddRoutes(_endpointRouteBuilder);
+        }
+
         [Fact]
         public async Task GetMyPromotions_ValidToken_ReturnsOk()
         {
             // Arrange
             var coachId = Guid.NewGuid();
+            var route = _endpointRouteBuilder.GetRouteByPattern("/api/promotions");
 
+            // Create a request with query parameters
+            var httpRequest = new Mock<HttpRequest>();
+            var queryCollection = new QueryCollection(new Dictionary<string, StringValues>
+            {
+                { "Page", new StringValues("1") },
+                { "RecordPerPage", new StringValues("10") }
+            });
+            httpRequest.Setup(x => x.Query).Returns(queryCollection);
+            _mockHttpContext.Setup(x => x.Request).Returns(httpRequest.Object);
+
+            // Set up HttpContext with valid user claim
+            var claim = new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString());
+            _mockUser.Setup(u => u.FindFirst(JwtRegisteredClaimNames.Sub)).Returns(claim);
+
+            // Create a list of promotion records using the actual PromotionRecord type from the API
             var promotions = new List<PromotionRecord>
             {
                 new PromotionRecord(
@@ -34,143 +69,96 @@ namespace Coach.API.Tests.Promotion
                     ValidFrom: DateOnly.FromDateTime(DateTime.Today),
                     ValidTo: DateOnly.FromDateTime(DateTime.Today.AddDays(30)),
                     PackageId: Guid.NewGuid(),
-                    PackageName: "Premium Package",
-                    CreatedAt: DateTime.Now,
-                    UpdatedAt: DateTime.Now
-                ),
-                new PromotionRecord(
-                    Id: Guid.NewGuid(),
-                    Description: "Winter Special",
-                    DiscountType: "Fixed",
-                    DiscountValue: 50.0m,
-                    ValidFrom: DateOnly.FromDateTime(DateTime.Today),
-                    ValidTo: DateOnly.FromDateTime(DateTime.Today.AddDays(60)),
-                    PackageId: null,
-                    PackageName: null,
-                    CreatedAt: DateTime.Now,
-                    UpdatedAt: DateTime.Now
+                    PackageName: "Package Name",
+                    CreatedAt: DateTime.UtcNow,
+                    UpdatedAt: DateTime.UtcNow
                 )
             };
 
-            var mockSender = new Mock<ISender>();
-            mockSender.Setup(s => s.Send(It.IsAny<GetAllPromotionQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(promotions);
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString())
-            }));
+            // Setup the mock to return the correct type
+            _mockSender
+                .Setup(x => x.Send(It.IsAny<GetAllPromotionQuery>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(promotions));
 
             // Act
-            var endpoint = new GetMyPromotionsEndpoint();
-            var mockEndpointRouteBuilder = new Mock<IEndpointRouteBuilder>();
-
-            Func<ISender, HttpContext, int, int, Task<IResult>> capturedHandler = null;
-
-            mockEndpointRouteBuilder
-                .Setup(erb => erb.MapGet(It.IsAny<string>(), It.IsAny<Delegate>()))
-                .Callback<string, Delegate>((pattern, handler) =>
-                {
-                    capturedHandler = (Func<ISender, HttpContext, int, int, Task<IResult>>)handler;
-                })
-                .Returns(Mock.Of<RouteHandlerBuilder>());
-
-            endpoint.AddRoutes(mockEndpointRouteBuilder.Object);
-
-            // Call the handler directly
-            var result = await capturedHandler(mockSender.Object, httpContext, 1, 10);
+            var result = await route.InvokeAsync(_mockHttpContext.Object, _mockSender.Object) as IResult;
 
             // Assert
-            Assert.IsType<Ok<List<PromotionRecord>>>(result);
-            mockSender.Verify(s => s.Send(
+            var okResult = Assert.IsType<Ok<List<PromotionRecord>>>(result);
+            var response = okResult.Value;
+
+            Assert.NotNull(response);
+            Assert.Single(response);
+
+            // Check that sender was called with right query
+            _mockSender.Verify(x => x.Send(
                 It.Is<GetAllPromotionQuery>(q =>
                     q.CoachId == coachId &&
                     q.Page == 1 &&
                     q.RecordPerPage == 10),
-                It.IsAny<CancellationToken>()),
-                Times.Once);
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        // Test 2: Invalid JWT token
         [Fact]
         public async Task GetMyPromotions_InvalidToken_ReturnsUnauthorized()
         {
             // Arrange
-            var mockSender = new Mock<ISender>();
-            var httpContext = new DefaultHttpContext(); // No claims
+            var route = _endpointRouteBuilder.GetRouteByPattern("/api/promotions");
+
+            // Set up HttpContext with no user claim
+            _mockUser.Setup(u => u.FindFirst(JwtRegisteredClaimNames.Sub)).Returns((Claim)null);
+            _mockUser.Setup(u => u.FindFirst(ClaimTypes.NameIdentifier)).Returns((Claim)null);
 
             // Act
-            var endpoint = new GetMyPromotionsEndpoint();
-            var mockEndpointRouteBuilder = new Mock<IEndpointRouteBuilder>();
-
-            Func<ISender, HttpContext, int, int, Task<IResult>> capturedHandler = null;
-
-            mockEndpointRouteBuilder
-                .Setup(erb => erb.MapGet(It.IsAny<string>(), It.IsAny<Delegate>()))
-                .Callback<string, Delegate>((pattern, handler) =>
-                {
-                    capturedHandler = (Func<ISender, HttpContext, int, int, Task<IResult>>)handler;
-                })
-                .Returns(Mock.Of<RouteHandlerBuilder>());
-
-            endpoint.AddRoutes(mockEndpointRouteBuilder.Object);
-
-            // Call the handler directly
-            var result = await capturedHandler(mockSender.Object, httpContext, 1, 10);
+            var result = await route.InvokeAsync(_mockHttpContext.Object, _mockSender.Object) as IResult;
 
             // Assert
             Assert.IsType<UnauthorizedHttpResult>(result);
-            mockSender.Verify(s => s.Send(It.IsAny<GetAllPromotionQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockSender.Verify(s => s.Send(It.IsAny<GetAllPromotionQuery>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
-        // Test 3: Custom pagination parameters
         [Fact]
         public async Task GetMyPromotions_CustomPagination_UsesCorrectParameters()
         {
             // Arrange
             var coachId = Guid.NewGuid();
-            const int page = 2;
-            const int recordsPerPage = 20;
+            var route = _endpointRouteBuilder.GetRouteByPattern("/api/promotions");
 
-            var mockSender = new Mock<ISender>();
-            mockSender.Setup(s => s.Send(It.IsAny<GetAllPromotionQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<PromotionRecord>());
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            // Create a request with custom pagination parameters
+            var httpRequest = new Mock<HttpRequest>();
+            var queryCollection = new QueryCollection(new Dictionary<string, StringValues>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString())
-            }));
+                { "Page", new StringValues("2") },
+                { "RecordPerPage", new StringValues("5") }
+            });
+            httpRequest.Setup(x => x.Query).Returns(queryCollection);
+            _mockHttpContext.Setup(x => x.Request).Returns(httpRequest.Object);
+
+            // Set up HttpContext with valid user claim
+            var claim = new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString());
+            _mockUser.Setup(u => u.FindFirst(JwtRegisteredClaimNames.Sub)).Returns(claim);
+
+            // Empty list of promotions
+            var promotions = new List<PromotionRecord>();
+
+            // Setup the mock to return the correct type
+            _mockSender
+                .Setup(x => x.Send(It.IsAny<GetAllPromotionQuery>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(promotions));
 
             // Act
-            var endpoint = new GetMyPromotionsEndpoint();
-            var mockEndpointRouteBuilder = new Mock<IEndpointRouteBuilder>();
-
-            Func<ISender, HttpContext, int, int, Task<IResult>> capturedHandler = null;
-
-            mockEndpointRouteBuilder
-                .Setup(erb => erb.MapGet(It.IsAny<string>(), It.IsAny<Delegate>()))
-                .Callback<string, Delegate>((pattern, handler) =>
-                {
-                    capturedHandler = (Func<ISender, HttpContext, int, int, Task<IResult>>)handler;
-                })
-                .Returns(Mock.Of<RouteHandlerBuilder>());
-
-            endpoint.AddRoutes(mockEndpointRouteBuilder.Object);
-
-            // Call the handler directly
-            var result = await capturedHandler(mockSender.Object, httpContext, page, recordsPerPage);
+            var result = await route.InvokeAsync(_mockHttpContext.Object, _mockSender.Object) as IResult;
 
             // Assert
             Assert.IsType<Ok<List<PromotionRecord>>>(result);
-            mockSender.Verify(s => s.Send(
+
+            // Check that sender was called with correct pagination parameters
+            _mockSender.Verify(x => x.Send(
                 It.Is<GetAllPromotionQuery>(q =>
                     q.CoachId == coachId &&
-                    q.Page == page &&
-                    q.RecordPerPage == recordsPerPage),
-                It.IsAny<CancellationToken>()),
-                Times.Once);
+                    q.Page == 2 &&
+                    q.RecordPerPage == 5),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

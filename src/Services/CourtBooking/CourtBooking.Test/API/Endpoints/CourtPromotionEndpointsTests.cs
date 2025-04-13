@@ -35,9 +35,9 @@ namespace CourtBooking.Test.API.Endpoints
             var promotionId = Guid.NewGuid();
             var now = DateTime.Now;
 
-            var promotions = new List<CourtPromotionDto>
+            var promotions = new List<CourtPromotionDTO>
             {
-                new CourtPromotionDto(
+                new CourtPromotionDTO(
                     Id: promotionId,
                     CourtId: courtId,
                     Description: "Black Friday",
@@ -57,8 +57,8 @@ namespace CourtBooking.Test.API.Endpoints
             var result = await InvokeGetCourtPromotionsDelegate(courtId, _mockHttpContext.Object);
 
             // Assert
-            Assert.IsType<Ok<List<CourtPromotionDto>>>(result);
-            var okResult = (Ok<List<CourtPromotionDto>>)result;
+            Assert.IsType<Ok<List<CourtPromotionDTO>>>(result);
+            var okResult = (Ok<List<CourtPromotionDTO>>)result;
             Assert.Single(okResult.Value);
             Assert.Equal(courtId, okResult.Value[0].CourtId);
         }
@@ -90,7 +90,7 @@ namespace CourtBooking.Test.API.Endpoints
                 now.AddDays(7)
             );
 
-            var promotionDto = new CourtPromotionDto(
+            var promotionDTO = new CourtPromotionDTO(
                 Id: promotionId,
                 CourtId: courtId,
                 Description: request.Name,
@@ -103,14 +103,14 @@ namespace CourtBooking.Test.API.Endpoints
             );
 
             _mockSender.Setup(x => x.Send(It.IsAny<CreateCourtPromotionCommand>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(promotionDto);
+                .ReturnsAsync(promotionDTO);
 
             // Act
             var result = await InvokeCreateCourtPromotionDelegate(courtId, request, _mockHttpContext.Object);
 
             // Assert
-            Assert.IsType<Created<CourtPromotionDto>>(result);
-            var created = (Created<CourtPromotionDto>)result;
+            Assert.IsType<Created<CourtPromotionDTO>>(result);
+            var created = (Created<CourtPromotionDTO>)result;
             Assert.Equal($"/api/courts/{courtId}/promotions/{promotionId}", created.Location);
             Assert.Equal(promotionId, created.Value.Id);
 
@@ -184,7 +184,7 @@ namespace CourtBooking.Test.API.Endpoints
                 now.AddDays(7)
             );
 
-            var updatedPromotionDto = new CourtPromotionDto(
+            var updatedPromotionDTO = new CourtPromotionDTO(
                 Id: promotionId,
                 CourtId: courtId,
                 Description: request.Name,
@@ -197,14 +197,14 @@ namespace CourtBooking.Test.API.Endpoints
             );
 
             _mockSender.Setup(x => x.Send(It.IsAny<UpdateCourtPromotionCommand>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(updatedPromotionDto);
+                .ReturnsAsync(updatedPromotionDTO);
 
             // Act
             var result = await InvokeUpdateCourtPromotionDelegate(courtId, promotionId, request, _mockHttpContext.Object);
 
             // Assert
-            Assert.IsType<Ok<CourtPromotionDto>>(result);
-            var okResult = (Ok<CourtPromotionDto>)result;
+            Assert.IsType<Ok<CourtPromotionDTO>>(result);
+            var okResult = (Ok<CourtPromotionDTO>)result;
             Assert.Equal(promotionId, okResult.Value.Id);
 
             _mockSender.Verify(x => x.Send(

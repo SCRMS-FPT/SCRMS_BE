@@ -35,11 +35,19 @@ namespace Identity.Application.Identity.Commands.UserManagement
             await _userRepository.UpdateUserAsync(user);
             var roles = await _userRepository.GetRolesAsync(user);
 
-            var userDto = user.Adapt<UserDto>() with
-            {
-                Roles = roles.ToList(),
-                ImageUrls = user.GetImageUrlsList()
-            };
+            var userDto = new UserDto(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.PhoneNumber,
+                user.BirthDate,
+                user.Gender.ToString(),
+                user.SelfIntroduction,
+                user.CreatedAt,
+                roles.ToList(),
+                user.GetImageUrlsList()
+            );
             return userDto;
         }
     }

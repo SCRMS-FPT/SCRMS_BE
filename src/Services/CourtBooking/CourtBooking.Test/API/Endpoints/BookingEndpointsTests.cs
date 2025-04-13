@@ -47,9 +47,7 @@ namespace CourtBooking.Test.API.Endpoints
         {
             // Arrange
             var request = new CreateBookingRequest(new BookingCreateDTO(
-                UserId: Guid.Empty, // Sẽ được thay thế bởi UserId từ claims
                 BookingDate: DateTime.Today.AddDays(1),
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 50m,
                 BookingDetails: new List<BookingDetailCreateDTO>
@@ -64,7 +62,7 @@ namespace CourtBooking.Test.API.Endpoints
 
             var resultId = Guid.NewGuid();
             _mockSender.Setup(s => s.Send(It.IsAny<CreateBookingCommand>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new CreateBookingResult(resultId));
+                .ReturnsAsync(new CreateBookingResult(resultId, "Confirmed"));
 
             // Act
             var result = await BookingEndpoints.CreateBooking(request, _mockSender.Object, _httpContext.User);
@@ -82,9 +80,7 @@ namespace CourtBooking.Test.API.Endpoints
         {
             // Arrange
             var request = new CreateBookingRequest(new BookingCreateDTO(
-                UserId: Guid.Empty,
                 BookingDate: DateTime.Today.AddDays(1),
-                TotalPrice: 200m,
                 Note: "Test booking",
                 DepositAmount: 50m,
                 BookingDetails: new List<BookingDetailCreateDTO>
@@ -292,9 +288,9 @@ namespace CourtBooking.Test.API.Endpoints
                     return Results.Unauthorized();
                 }
 
-                var command = new CreateBookingCommand(request.Booking with { UserId = Guid.Parse(userId) });
+                var command = new CreateBookingCommand(Guid.Parse(userId), request.Booking);
                 var result = await sender.Send(command);
-                var response = new CreateBookingResponse(result.Id);
+                var response = new CreateBookingResponse(result.Id, result.Status);
                 return Results.Created($"/api/bookings/{response.Id}", response);
             }
 
@@ -322,6 +318,7 @@ namespace CourtBooking.Test.API.Endpoints
                 var query = new GetBookingsQuery(
                     UserId: userId,
                     Role: role,
+                    ViewAs: null,
                     FilterUserId: user_id,
                     CourtId: court_id,
                     SportsCenterId: sports_center_id,

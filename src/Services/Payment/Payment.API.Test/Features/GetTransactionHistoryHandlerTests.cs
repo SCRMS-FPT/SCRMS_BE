@@ -4,9 +4,11 @@ using Payment.API.Data.Repositories;
 using Payment.API.Features.GetTransactionHistory;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using BuildingBlocks.Pagination;
 
 namespace Payment.API.Tests.Features
 {
@@ -31,14 +33,19 @@ namespace Payment.API.Tests.Features
                 new WalletTransaction { Id = Guid.NewGuid(), UserId = userId, Amount = 50m, TransactionType = "deposit", CreatedAt = DateTime.UtcNow }
             };
             _walletTransactionRepoMock.Setup(r => r.GetTransactionsByUserIdAsync(userId, 1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(transactions);
+            _walletTransactionRepoMock.Setup(r => r.GetTransactionCountByUserIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(1);
             var query = new GetTransactionHistoryQuery(userId, 1, 10);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Single(result);
-            Assert.Equal(50m, result[0].Amount);
+            var dataList = result.Data.ToList();
+            Assert.Single(dataList);
+            Assert.Equal(50m, dataList[0].Amount);
+            Assert.Equal(1, result.Count);
+            Assert.Equal(1, result.PageIndex);
+            Assert.Equal(10, result.PageSize);
         }
 
         [Fact]
@@ -47,13 +54,15 @@ namespace Payment.API.Tests.Features
             // Arrange
             var userId = Guid.NewGuid();
             _walletTransactionRepoMock.Setup(r => r.GetTransactionsByUserIdAsync(userId, 1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(new List<WalletTransaction>());
+            _walletTransactionRepoMock.Setup(r => r.GetTransactionCountByUserIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(0);
             var query = new GetTransactionHistoryQuery(userId, 1, 10);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            Assert.Empty(result);
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.Count);
         }
     }
 }
