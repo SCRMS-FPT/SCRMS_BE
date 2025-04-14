@@ -21,7 +21,6 @@ namespace CourtBooking.Test.Application.Handlers.Queries
         public GetCourtSchedulesByCourtIdHandlerTests()
         {
             _mockScheduleRepository = new Mock<ICourtScheduleRepository>();
-            // Fix the constructor to include all required dependencies
             _mockCourtRepository = new Mock<ICourtRepository>();
             _handler = new GetCourtSchedulesByCourtIdHandler(
                 _mockCourtRepository.Object,
@@ -36,7 +35,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             var courtId = Guid.NewGuid();
             var query = new GetCourtSchedulesByCourtIdQuery(courtId);
 
-            _mockScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule>());
 
@@ -44,11 +43,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            // Fix the assertions for Handle_Should_ReturnEmptyList_When_NoSchedulesExist
             Assert.Empty(result.CourtSchedules);
 
-            _mockScheduleRepository.Verify(r => r.GetSchedulesByCourt(
-                CourtId.Of(courtId), It.IsAny<CancellationToken>()), Times.Once);
+            _mockScheduleRepository.Verify(r => r.GetSchedulesByCourtIdAsync(
+                It.Is<CourtId>(id => id.Value == courtId), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -68,7 +66,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 30
             );
 
-            _mockScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -76,7 +74,6 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            // Fix the assertions for Handle_Should_ReturnSchedulesList_When_SchedulesExist
             Assert.Single(result.CourtSchedules);
             var scheduleDto = result.CourtSchedules[0];
             Assert.Equal(scheduleId, scheduleDto.Id);
@@ -87,8 +84,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.Equal(30, scheduleDto.PriceSlot);
             Assert.Equal(0, scheduleDto.Status);
 
-            _mockScheduleRepository.Verify(r => r.GetSchedulesByCourt(
-                CourtId.Of(courtId), It.IsAny<CancellationToken>()), Times.Once);
+            _mockScheduleRepository.Verify(r => r.GetSchedulesByCourtIdAsync(
+                It.Is<CourtId>(id => id.Value == courtId), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -119,7 +116,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             // Set to maintenance
             maintenanceSchedule.Update(maintenanceSchedule.DayOfWeek, maintenanceSchedule.StartTime, maintenanceSchedule.EndTime, maintenanceSchedule.PriceSlot, CourtScheduleStatus.Maintenance);
 
-            _mockScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { activeSchedule, maintenanceSchedule });
 
@@ -127,10 +124,9 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            // Fix the assertions for Handle_Should_MapScheduleStatus_When_SchedulesExist
             Assert.Equal(2, result.CourtSchedules.Count);
-            Assert.Equal(0, result.CourtSchedules[0].Status);
-            Assert.Equal(2, result.CourtSchedules[1].Status);
+            Assert.Equal((int)CourtScheduleStatus.Available, result.CourtSchedules[0].Status);
+            Assert.Equal((int)CourtScheduleStatus.Maintenance, result.CourtSchedules[1].Status);
         }
     }
 }

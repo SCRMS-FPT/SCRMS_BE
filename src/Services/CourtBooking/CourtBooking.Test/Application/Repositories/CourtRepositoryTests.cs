@@ -1,10 +1,12 @@
 using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
+using CourtBooking.Domain.Enums;
 using CourtBooking.Infrastructure.Data;
 using CourtBooking.Infrastructure.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -35,13 +37,13 @@ namespace CourtBooking.Test.Application.Repositories
 
             var court = Court.Create(
                 courtId,
+                CourtName.Of("Tennis Court 1"),
                 sportCenterId,
                 sportId,
-                CourtName.Create("Tennis Court 1"),
+                TimeSpan.FromHours(1),
                 "Main Court",
-                100.0m,
                 "Indoor",
-                24,
+                CourtType.Indoor,
                 50
             );
 
@@ -49,7 +51,7 @@ namespace CourtBooking.Test.Application.Repositories
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.GetCourtByIdAsync(courtId);
+            var result = await _repository.GetCourtByIdAsync(courtId, CancellationToken.None);
 
             // Assert
             Assert.NotNull(result);
@@ -64,7 +66,7 @@ namespace CourtBooking.Test.Application.Repositories
             var nonExistingId = CourtId.Of(Guid.NewGuid());
 
             // Act
-            var result = await _repository.GetCourtByIdAsync(nonExistingId);
+            var result = await _repository.GetCourtByIdAsync(nonExistingId, CancellationToken.None);
 
             // Assert
             Assert.Null(result);
@@ -77,28 +79,28 @@ namespace CourtBooking.Test.Application.Repositories
             var courtId = CourtId.Of(Guid.NewGuid());
             var sportCenterId = SportCenterId.Of(Guid.NewGuid());
             var sportId = SportId.Of(Guid.NewGuid());
-            var ownerId = Guid.NewGuid();
+            var ownerId = OwnerId.Of(Guid.NewGuid());
 
             var sportCenter = SportCenter.Create(
                 sportCenterId,
+                ownerId,
                 "Sport Center 1",
                 "123456789",
-                "Description",
-                new Location("Address", "City", "Province", "Country", "10000"),
+                new Location("Address", "City", "Country", "10000"),
                 new GeoLocation(10.0, 20.0),
-                ownerId,
-                new SportCenterImages()
+                new SportCenterImages("main.jpg", new System.Collections.Generic.List<string>()),
+                "Description"
             );
 
             var court = Court.Create(
                 courtId,
+                CourtName.Of("Tennis Court 1"),
                 sportCenterId,
                 sportId,
-                CourtName.Create("Tennis Court 1"),
+                TimeSpan.FromHours(1),
                 "Main Court",
-                100.0m,
                 "Indoor",
-                24,
+                CourtType.Indoor,
                 50
             );
 
@@ -107,7 +109,7 @@ namespace CourtBooking.Test.Application.Repositories
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.IsOwnedByUserAsync(courtId.Value, ownerId);
+            var result = await _repository.IsOwnedByUserAsync(courtId.Value, ownerId.Value, CancellationToken.None);
 
             // Assert
             Assert.True(result);
@@ -120,29 +122,29 @@ namespace CourtBooking.Test.Application.Repositories
             var courtId = CourtId.Of(Guid.NewGuid());
             var sportCenterId = SportCenterId.Of(Guid.NewGuid());
             var sportId = SportId.Of(Guid.NewGuid());
-            var ownerId = Guid.NewGuid();
+            var ownerId = OwnerId.Of(Guid.NewGuid());
             var otherUserId = Guid.NewGuid();
 
             var sportCenter = SportCenter.Create(
                 sportCenterId,
+                ownerId,
                 "Sport Center 1",
                 "123456789",
-                "Description",
-                new Location("Address", "City", "Province", "Country", "10000"),
+                new Location("Address", "City", "Country", "10000"),
                 new GeoLocation(10.0, 20.0),
-                ownerId,
-                new SportCenterImages()
+                new SportCenterImages("main.jpg", new System.Collections.Generic.List<string>()),
+                "Description"
             );
 
             var court = Court.Create(
                 courtId,
+                CourtName.Of("Tennis Court 1"),
                 sportCenterId,
                 sportId,
-                CourtName.Create("Tennis Court 1"),
+                TimeSpan.FromHours(1),
                 "Main Court",
-                100.0m,
                 "Indoor",
-                24,
+                CourtType.Indoor,
                 50
             );
 
@@ -151,7 +153,7 @@ namespace CourtBooking.Test.Application.Repositories
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.IsOwnedByUserAsync(courtId.Value, otherUserId);
+            var result = await _repository.IsOwnedByUserAsync(courtId.Value, otherUserId, CancellationToken.None);
 
             // Assert
             Assert.False(result);

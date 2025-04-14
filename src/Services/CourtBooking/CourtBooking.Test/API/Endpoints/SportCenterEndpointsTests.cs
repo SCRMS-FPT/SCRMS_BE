@@ -41,28 +41,22 @@ namespace CourtBooking.Test.API.Endpoints
         {
             // Arrange
             var now = DateTime.UtcNow;
+            var sportCenterId = Guid.NewGuid();
             var sportCenters = new List<SportCenterListDTO>
             {
                 new SportCenterListDTO(
-                    Guid.NewGuid(),  // Id
-                    Guid.NewGuid(),  // OwnerId
-                    "Sport Center 1", // Name
-                    "0987654321",    // PhoneNumber
-                    "Đường 123",     // AddressLine
-                    "Hà Nội",        // City
-                    "Quận 1",        // District
-                    "Phường 1",      // Commune
-                    21.02,           // Latitude
-                    105.83,          // Longitude
-                    "avatar.jpg",    // Avatar
-                    new List<string> { "image1.jpg" }, // ImageUrls
-                    "Mô tả 1",       // Description
-                    now,             // CreatedAt
-                    null             // LastModified
+                    sportCenterId,                // Id
+                    "Sport Center 1",             // Name
+                    "0987654321",                 // PhoneNumber
+                    new List<string> { "Tennis", "Football" }, // SportNames
+                    "123 Street, District 1, City", // Address
+                    "A great sport center",       // Description
+                    "avatar.jpg",                 // Avatar
+                    new List<string> { "image1.jpg" }, // ImageUrl
+                    new List<CourtListDTO>()      // Courts
                 )
             };
 
-            // Sử dụng constructor đúng cho PaginatedResult
             var paginatedResult = new PaginatedResult<SportCenterListDTO>(
                 0,                   // pageIndex
                 10,                  // pageSize
@@ -86,14 +80,14 @@ namespace CourtBooking.Test.API.Endpoints
         }
 
         [Theory]
-        [InlineData(0, 10)] // Số trang không hợp lệ
-        [InlineData(1, 0)]  // Kích thước trang không hợp lệ
-        [InlineData(1, 101)] // Kích thước trang vượt quá max
+        [InlineData(0, 10)] // Invalid page
+        [InlineData(1, 0)]  // Invalid page size
+        [InlineData(1, 101)] // Page size exceeds max
         public async Task GetSportCenters_Should_HandleInvalidPagination(int page, int limit)
         {
             // Arrange
             _mockSender.Setup(x => x.Send(It.IsAny<GetSportCentersQuery>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new ValidationException("Tham số phân trang không hợp lệ"));
+                .ThrowsAsync(new ValidationException("Invalid pagination parameters"));
 
             // Act
             var result = await InvokeGetSportCentersDelegate(page, limit, null, null);
@@ -106,30 +100,23 @@ namespace CourtBooking.Test.API.Endpoints
         public async Task GetSportCenters_Should_FilterByCity()
         {
             // Arrange
-            var now = DateTime.UtcNow;
-            var city = "Hà Nội";
+            var city = "Hanoi";
+            var sportCenterId = Guid.NewGuid();
             var sportCenters = new List<SportCenterListDTO>
             {
                 new SportCenterListDTO(
-                    Guid.NewGuid(),  // Id
-                    Guid.NewGuid(),  // OwnerId
-                    "Sport Center Hà Nội", // Name
-                    "0987654321",    // PhoneNumber
-                    "Đường 123",     // AddressLine
-                    city,            // City
-                    "Quận 1",        // District
-                    "Phường 1",      // Commune
-                    21.02,           // Latitude
-                    105.83,          // Longitude
-                    "avatar.jpg",    // Avatar
-                    new List<string> { "image1.jpg" }, // ImageUrls
-                    "Mô tả",         // Description
-                    now,             // CreatedAt
-                    null             // LastModified
+                    sportCenterId,                // Id
+                    "Sport Center Hanoi",         // Name
+                    "0987654321",                 // PhoneNumber
+                    new List<string> { "Tennis" }, // SportNames
+                    $"123 Street, District 1, {city}", // Address includes city
+                    "A sport center in Hanoi",    // Description
+                    "avatar.jpg",                 // Avatar
+                    new List<string> { "image1.jpg" }, // ImageUrl
+                    new List<CourtListDTO>()      // Courts
                 )
             };
 
-            // Sử dụng constructor đúng cho PaginatedResult
             var paginatedResult = new PaginatedResult<SportCenterListDTO>(
                 0,                   // pageIndex
                 10,                  // pageSize
@@ -148,37 +135,30 @@ namespace CourtBooking.Test.API.Endpoints
             // Assert
             Assert.IsType<Ok<GetSportCentersResponse>>(result);
             var okResult = (Ok<GetSportCentersResponse>)result;
-            Assert.Equal(city, okResult.Value.SportCenters.Data.First().City);
+            Assert.Contains(city, okResult.Value.SportCenters.Data.First().Address);
         }
 
         [Fact]
         public async Task GetSportCenters_Should_FilterByName()
         {
             // Arrange
-            var now = DateTime.UtcNow;
             var name = "Center";
+            var sportCenterId = Guid.NewGuid();
             var sportCenters = new List<SportCenterListDTO>
             {
                 new SportCenterListDTO(
-                    Guid.NewGuid(),  // Id
-                    Guid.NewGuid(),  // OwnerId
-                    $"Sport {name}", // Name
-                    "0987654321",    // PhoneNumber
-                    "Đường 123",     // AddressLine
-                    "Hà Nội",        // City
-                    "Quận 1",        // District
-                    "Phường 1",      // Commune
-                    21.02,           // Latitude
-                    105.83,          // Longitude
-                    "avatar.jpg",    // Avatar
-                    new List<string> { "image1.jpg" }, // ImageUrls
-                    "Mô tả",         // Description
-                    now,             // CreatedAt
-                    null             // LastModified
+                    sportCenterId,                // Id
+                    $"Sport {name}",              // Name includes the search term
+                    "0987654321",                 // PhoneNumber
+                    new List<string> { "Tennis" }, // SportNames
+                    "123 Street, District 1, City", // Address
+                    "A great sport center",       // Description
+                    "avatar.jpg",                 // Avatar
+                    new List<string> { "image1.jpg" }, // ImageUrl
+                    new List<CourtListDTO>()      // Courts
                 )
             };
 
-            // Sử dụng constructor đúng cho PaginatedResult
             var paginatedResult = new PaginatedResult<SportCenterListDTO>(
                 0,                   // pageIndex
                 10,                  // pageSize
@@ -208,24 +188,23 @@ namespace CourtBooking.Test.API.Endpoints
         public async Task GetSportCenterById_Should_ReturnOk_When_Exists()
         {
             // Arrange
-            var now = DateTime.UtcNow;
             var sportCenterId = Guid.NewGuid();
-            var sportCenterDetail = new SportCenterListDTO(
-                sportCenterId,       // Id
-                Guid.NewGuid(),      // OwnerId
-                "Sport Center 1",    // Name
-                "0987654321",        // PhoneNumber
-                "Đường 123",         // AddressLine
-                "Hà Nội",            // City
-                "Quận 1",            // District
-                "Phường 1",          // Commune
-                21.02,               // Latitude
-                105.83,              // Longitude
-                "avatar.jpg",        // Avatar
+            var sportCenterDetail = new SportCenterDetailDTO(
+                sportCenterId,                // Id
+                Guid.NewGuid(),               // OwnerId
+                "Sport Center 1",             // Name
+                "0987654321",                 // PhoneNumber
+                "123 Street",                 // AddressLine
+                "Hanoi",                      // City
+                "District 1",                 // District
+                "Ward 1",                     // Commune
+                21.02,                        // Latitude
+                105.83,                       // Longitude
+                "avatar.jpg",                 // Avatar
                 new List<string> { "image1.jpg" }, // ImageUrls
-                "Mô tả 1",           // Description
-                now,                 // CreatedAt
-                null                 // LastModified
+                "Description",                // Description
+                DateTime.UtcNow,              // CreatedAt
+                null                          // LastModified
             );
 
             _mockSender.Setup(x => x.Send(
@@ -239,8 +218,8 @@ namespace CourtBooking.Test.API.Endpoints
             var result = await InvokeGetSportCenterByIdDelegate(sportCenterId, _mockHttpContext.Object);
 
             // Assert
-            Assert.IsType<Ok<SportCenterListDTO>>(result);
-            var okResult = (Ok<SportCenterListDTO>)result;
+            Assert.IsType<Ok<SportCenterDetailDTO>>(result);
+            var okResult = (Ok<SportCenterDetailDTO>)result;
             Assert.Equal(sportCenterId, okResult.Value.Id);
             Assert.Equal("Sport Center 1", okResult.Value.Name);
         }
@@ -437,7 +416,7 @@ namespace CourtBooking.Test.API.Endpoints
                 "Mô tả cập nhật"               // Description
             );
 
-            var updatedSportCenter = new SportCenterListDTO(
+            var sportCenterDetail = new SportCenterDetailDTO(
                 sportCenterId,          // Id
                 userId,                 // OwnerId
                 "Updated Sport Center", // Name
@@ -456,7 +435,7 @@ namespace CourtBooking.Test.API.Endpoints
             );
 
             _mockSender.Setup(x => x.Send(It.IsAny<UpdateSportCenterCommand>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new UpdateSportCenterResult(updatedSportCenter));
+                .ReturnsAsync(new UpdateSportCenterResult(sportCenterDetail));
 
             // Act
             var result = await InvokeUpdateSportCenterDelegate(sportCenterId, updateCommand, _mockHttpContext.Object);
@@ -753,7 +732,7 @@ namespace CourtBooking.Test.API.Endpoints
                         var paginationRequest = new PaginationRequest(p - 1, l);
                         var query = new GetSportCentersQuery(paginationRequest, c, n);
                         var result = await sender.Send(query);
-                        
+
                         // Tạo GetSportCentersResponse với SportCenterListDTO
                         var response = new GetSportCentersResponse(result.SportCenters);
                         return Results.Ok(response);
@@ -816,19 +795,19 @@ namespace CourtBooking.Test.API.Endpoints
                 async (cmd, ctx, sender) =>
         {
             try
-                {
-                    var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier);
-                    var roleClaim = ctx.User.FindFirst(ClaimTypes.Role);
+            {
+                var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier);
+                var roleClaim = ctx.User.FindFirst(ClaimTypes.Role);
 
-                    if (userIdClaim == null || roleClaim == null)
-                        return Results.Unauthorized();
+                if (userIdClaim == null || roleClaim == null)
+                    return Results.Unauthorized();
 
-                    var role = roleClaim.Value;
-                    if (role != "Admin" && role != "SportCenterOwner")
-                        return Results.Forbid();
+                var role = roleClaim.Value;
+                if (role != "Admin" && role != "SportCenterOwner")
+                    return Results.Forbid();
 
                 var result = await sender.Send(cmd);
-                    var response = new CreateSportCenterResponse(result.Id);
+                var response = new CreateSportCenterResponse(result.Id);
                 return Results.Created($"/api/sportcenters/{response.Id}", response);
             }
             catch (ValidationException ex)
@@ -858,12 +837,12 @@ namespace CourtBooking.Test.API.Endpoints
                 async (centerId, cmd, ctx, sender) =>
         {
             try
-                {
-                    var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier);
-                    var roleClaim = ctx.User.FindFirst(ClaimTypes.Role);
+            {
+                var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier);
+                var roleClaim = ctx.User.FindFirst(ClaimTypes.Role);
 
-                    if (userIdClaim == null || roleClaim == null)
-                        return Results.Unauthorized();
+                if (userIdClaim == null || roleClaim == null)
+                    return Results.Unauthorized();
 
                 // Thay vì: cmd.SportCenterId = centerId;
                 // Tạo lại command với centerId từ path
@@ -920,14 +899,14 @@ namespace CourtBooking.Test.API.Endpoints
                 async (centerId, ctx, sender) =>
                 {
                     try
-                {
-                    var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier);
+                    {
+                        var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier);
                         if (userIdClaim == null)
-                        return Results.Unauthorized();
+                            return Results.Unauthorized();
 
                         var result = await sender.Send(new GetAllCourtsOfSportCenterQuery(centerId));
                         var response = new GetAllCourtsOfSportCenterResponse(result.Courts);
-                    return Results.Ok(response);
+                        return Results.Ok(response);
                     }
                     catch (KeyNotFoundException)
                     {

@@ -35,5 +35,10 @@
         Task<List<Review>> GetFlaggedReviewsAsync(int page, int limit, CancellationToken cancellationToken);
 
         Task<int> CountFlaggedReviewsAsync(CancellationToken cancellationToken);
+
+        // New methods for getting reviews by reviewer ID
+        Task<List<Review>> GetReviewsByReviewerIdAsync(Guid reviewerId, int page, int limit, CancellationToken cancellationToken);
+
+        Task<int> CountReviewsByReviewerIdAsync(Guid reviewerId, CancellationToken cancellationToken);
     }
 }

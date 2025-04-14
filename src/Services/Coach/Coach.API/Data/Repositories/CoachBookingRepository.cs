@@ -63,5 +63,10 @@ namespace Coach.API.Data.Repositories
                 b.StartTime < endTime &&
                 b.EndTime > startTime, cancellationToken);
         }
+
+        public async Task<List<CoachBooking>> GetCoachBookingsByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            return await _context.CoachBookings.Where(b => b.UserId == userId).ToListAsync(cancellationToken);
+        }
     }
 }

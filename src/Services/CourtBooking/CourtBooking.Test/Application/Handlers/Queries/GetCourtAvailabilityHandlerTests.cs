@@ -1,10 +1,10 @@
-using BuildingBlocks.Exceptions;
 using CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability;
+using CourtBooking.Application.Data;
 using CourtBooking.Application.Data.Repositories;
-using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.Exceptions;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
+using CourtBooking.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using System;
@@ -13,7 +13,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using CourtBooking.Application.Data;
 
 namespace CourtBooking.Test.Application.Handlers.Queries
 {
@@ -153,7 +152,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule>());
 
@@ -211,7 +210,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -286,7 +285,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             var schedules = new List<CourtSchedule> { schedule };
 
             var bookingDetail = BookingDetail.Create(
-                BookingId.Of(booking.Id.Value),
+                booking.Id,
                 CourtId.Of(courtId),
                 TimeSpan.FromHours(8),
                 TimeSpan.FromHours(9),
@@ -302,7 +301,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -376,7 +375,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -439,13 +438,14 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             );
 
             // Set schedule to maintenance
-            schedule.Update(schedule.DayOfWeek, schedule.StartTime, schedule.EndTime, schedule.PriceSlot, CourtScheduleStatus.Maintenance);
+            schedule.Update(schedule.DayOfWeek, schedule.StartTime, schedule.EndTime,
+                schedule.PriceSlot, CourtScheduleStatus.Maintenance);
 
             _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -465,7 +465,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.Single(result.Schedule);
             Assert.Equal(2, result.Schedule[0].TimeSlots.Count);
 
-            // All slots should be marked as maintenance
+            // Both slots should be in maintenance
             Assert.All(result.Schedule[0].TimeSlots, slot => Assert.Equal("MAINTENANCE", slot.Status));
         }
     }
