@@ -6,6 +6,7 @@ using FluentValidation;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -99,14 +100,23 @@ app.MapCarter();
 app.UseCors(builder =>
 {
     builder.AllowAnyOrigin()
-    .AllowAnyMethod()
+        .AllowAnyMethod()
     .AllowAnyHeader();
 });
+
 app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<NotifyHub>("/notifyHub");
+app.UseWebSockets();
+
+app.MapHub<NotifyHub>("/notifyHub", options =>
+{
+    options.Transports =
+        HttpTransportType.WebSockets |
+        HttpTransportType.ServerSentEvents |
+        HttpTransportType.LongPolling;
+});
 
 if (app.Environment.IsDevelopment())
 {
