@@ -13,6 +13,7 @@ namespace Coach.API.Tests.TestHelpers
         public ICollection<EndpointDataSource> DataSources => new List<EndpointDataSource>();
 
         public List<TestRouteHandlerBuilder> Routes { get; } = new List<TestRouteHandlerBuilder>();
+        private Dictionary<string, TestRouteHandlerBuilder> _routePatterns = new Dictionary<string, TestRouteHandlerBuilder>();
 
         public IApplicationBuilder CreateApplicationBuilder() => throw new NotImplementedException();
 
@@ -20,6 +21,7 @@ namespace Coach.API.Tests.TestHelpers
         {
             var routeBuilder = new TestRouteHandlerBuilder(handler);
             Routes.Add(routeBuilder);
+            _routePatterns[pattern] = routeBuilder;
             return routeBuilder;
         }
 
@@ -27,6 +29,7 @@ namespace Coach.API.Tests.TestHelpers
         {
             var routeBuilder = new TestRouteHandlerBuilder(handler);
             Routes.Add(routeBuilder);
+            _routePatterns[pattern] = routeBuilder;
             return routeBuilder;
         }
 
@@ -34,6 +37,7 @@ namespace Coach.API.Tests.TestHelpers
         {
             var routeBuilder = new TestRouteHandlerBuilder(handler);
             Routes.Add(routeBuilder);
+            _routePatterns[pattern] = routeBuilder;
             return routeBuilder;
         }
 
@@ -41,6 +45,7 @@ namespace Coach.API.Tests.TestHelpers
         {
             var routeBuilder = new TestRouteHandlerBuilder(handler);
             Routes.Add(routeBuilder);
+            _routePatterns[pattern] = routeBuilder;
             return routeBuilder;
         }
 
@@ -48,13 +53,25 @@ namespace Coach.API.Tests.TestHelpers
         {
             var routeBuilder = new TestRouteHandlerBuilder(handler);
             Routes.Add(routeBuilder);
+            _routePatterns[pattern] = routeBuilder;
             return routeBuilder;
+        }
+
+        public TestRouteHandlerBuilder GetRouteByPattern(string pattern)
+        {
+            if (_routePatterns.TryGetValue(pattern, out var route))
+            {
+                return route;
+            }
+
+            throw new InvalidOperationException($"No route found with pattern '{pattern}'");
         }
     }
 
     public class TestRouteHandlerBuilder
     {
         public Delegate RequestDelegate { get; }
+        public string Pattern { get; set; }
 
         public TestRouteHandlerBuilder(Delegate requestDelegate)
         {
