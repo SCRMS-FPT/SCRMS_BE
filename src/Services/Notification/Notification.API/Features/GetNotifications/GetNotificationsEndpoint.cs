@@ -3,19 +3,17 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Threading;
 
 namespace Notification.API.Features.GetNotifications
 {
-    public record GetNotificationsRequest(Guid UserId, int Page, int Limit, Boolean? IsRead);
     public class GetNotificationsEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapGet("/notifications",
-                async ([FromBody] 
-                GetNotificationsRequest request,
-                [FromServices] ISender sender, 
-                HttpContext httpContext,
+                async ([FromServices] ISender sender,
+                HttpContext httpContext, string? Type, Boolean? IsRead,
                 int Page = 1,
                 int Limit = 10) =>
                 {
@@ -25,7 +23,7 @@ namespace Notification.API.Features.GetNotifications
                     if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                         return Results.Unauthorized();
 
-                    var command = new GetNotificationsRequest(userId, request.Page, request.Limit, request.IsRead);
+                    var command = new GetNotificationsQuery(userId, Page, Limit, IsRead, Type);
 
                     var result = await sender.Send(command);
 
