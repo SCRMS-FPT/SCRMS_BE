@@ -13,6 +13,7 @@ using CourtBooking.Application.BookingManagement.Command.UpdateBookingStatus;
 using CourtBooking.Application.BookingManagement.Queries.CalculateBookingPrice;
 using Microsoft.IdentityModel.JsonWebTokens;
 using CourtBooking.Application.BookingManagement.Command.CreateOwnerBooking;
+using CourtBooking.Application.UserManagement.Queries.GetUserDashboard;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -42,6 +43,13 @@ namespace CourtBooking.API.Endpoints
 
     public record CreateOwnerBookingRequest(BookingCreateDTO Booking, string Note = "Đặt trực tiếp tại sân");
     public record CreateOwnerBookingResponse(Guid Id, string Status, string Message);
+
+    // New record for user dashboard response
+    public record UserDashboardResponse(
+        List<UpcomingBookingDto> UpcomingBookings,
+        List<IncompleteTransactionDto> IncompleteTransactions,
+        UserBookingStatsDto Stats
+    );
 
     public class BookingEndpoints : ICarterModule
     {
@@ -285,6 +293,32 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Cancel a booking")
             .WithDescription("Cancels a booking and processes refund if applicable based on the court's cancellation policy");
+
+            // User Dashboard Endpoint
+            group.MapGet("/dashboard", [Authorize] async (
+                HttpContext httpContext,
+                [FromServices] ISender sender) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                                           ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.Unauthorized();
+
+                var query = new GetUserDashboardQuery(userId);
+                var result = await sender.Send(query);
+
+                return Results.Ok(new UserDashboardResponse(
+                    result.UpcomingBookings,
+                    result.IncompleteTransactions,
+                    result.Stats
+                ));
+            })
+            .WithName("GetUserDashboard")
+            .Produces<UserDashboardResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithSummary("Get User Dashboard")
+            .WithDescription("Returns user dashboard information including upcoming bookings, incomplete transactions, and booking statistics");
         }
     }
 

@@ -185,7 +185,7 @@ namespace CourtBooking.Test.Application.Repositories
 
             var court = Court.Create(
                 CourtId.Of(Guid.NewGuid()),
-                new CourtName("Test Court"),
+                CourtName.Of("Test Court"),
                 sportCenter.Id,
                 sportId,
                 TimeSpan.FromMinutes(60),

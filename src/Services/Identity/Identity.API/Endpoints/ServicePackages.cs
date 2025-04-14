@@ -9,6 +9,7 @@ using Identity.Application.ServicePackages.Commands.SubscribeToServicePackage;
 using Identity.Application.ServicePackages.Commands.UpdatePromotion;
 using Identity.Application.ServicePackages.Queries.GetPromotions;
 using Identity.Application.ServicePackages.Queries.GetServicePackages;
+using Identity.Application.ServicePackages.Queries.GetUserDashboard;
 using Identity.Application.ServicePackages.Queries.ServicePackagesManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -43,6 +44,24 @@ namespace Identity.API.Endpoints
                 var result = await sender.Send(new GetServicePackageByIdQuery(id));
                 return result is not null ? Results.Ok(result) : Results.NotFound();
             });
+
+            // Endpoint for User Dashboard
+            servicePackagesGroup.MapGet("/dashboard", async (ISender sender, HttpContext httpContext) =>
+            {
+                var userIdClaim = httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Results.Unauthorized();
+
+                var query = new GetUserDashboardQuery(userId);
+                var result = await sender.Send(query);
+                return Results.Ok(result);
+            })
+            .RequireAuthorization()
+            .WithName("GetUserDashboard")
+            .WithDescription("Get current user's dashboard information including subscribed packages and roles.")
+            .Produces<UserDashboardDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
             servicePackagesGroup.MapPost("/subscribe", async (SubscribeRequest request, ISender sender, HttpContext httpContext) =>
             {

@@ -245,9 +245,9 @@ namespace CourtBooking.Test.Application.Repositories
         {
             return CourtPromotion.Create(
                 courtId,
-                "Test Promotion",
+                "Test Promotion with Dates",
                 "Percentage",
-                15.0m,
+                25m,
                 validFrom,
                 validTo
             );

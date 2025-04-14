@@ -176,5 +176,23 @@ namespace Reviews.API.Data.Repositories
                 .Distinct()
                 .CountAsync(cancellationToken);
         }
+
+        // Implement new methods for getting reviews by reviewer ID
+        public async Task<List<Review>> GetReviewsByReviewerIdAsync(Guid reviewerId, int page, int limit, CancellationToken cancellationToken)
+        {
+            return await _context.Reviews
+                .Include(r => r.Replies)
+                .Where(r => r.ReviewerId == reviewerId)
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> CountReviewsByReviewerIdAsync(Guid reviewerId, CancellationToken cancellationToken)
+        {
+            return await _context.Reviews
+                .CountAsync(r => r.ReviewerId == reviewerId, cancellationToken);
+        }
     }
 }

@@ -70,13 +70,12 @@ namespace Coach.API.Tests.Bookings
                 Name = "Basic Package"
             };
 
-            // Use MockQueryable.Moq to create a properly mocked DbSet for async operations
-            var bookingsQueryable = bookings.AsQueryable();
-            var mockBookingsDbSet = bookingsQueryable.BuildMockDbSet();
+            // Create a mock for the DbSet properly using MockQueryable.Moq
+            var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(bookingsQueryable);
+                .Returns(mockDbSet.Object);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
@@ -87,7 +86,7 @@ namespace Coach.API.Tests.Bookings
                 .ReturnsAsync(mockPackage);
 
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             // Create the handler
             var handler = new GetUserBookingsQueryHandler(
@@ -146,13 +145,12 @@ namespace Coach.API.Tests.Bookings
                 new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId, Status = "cancelled" }
             };
 
-            // Use MockQueryable.Moq for proper IQueryable async mocking
-            var bookingsQueryable = bookings.AsQueryable();
-            var mockBookingsDbSet = bookingsQueryable.BuildMockDbSet();
+            // Create a mock for the DbSet using MockQueryable.Moq
+            var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(bookingsQueryable);
+                .Returns(mockDbSet.Object);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
@@ -160,7 +158,7 @@ namespace Coach.API.Tests.Bookings
 
             var mockPackageRepo = new Mock<ICoachPackageRepository>();
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             var handler = new GetUserBookingsQueryHandler(
                 mockBookingRepo.Object,
@@ -209,13 +207,12 @@ namespace Coach.API.Tests.Bookings
                 new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId, BookingDate = nextWeek }
             };
 
-            // Use MockQueryable.Moq for proper IQueryable async mocking
-            var bookingsQueryable = bookings.AsQueryable();
-            var mockBookingsDbSet = bookingsQueryable.BuildMockDbSet();
+            // Create a mock for the DbSet using MockQueryable.Moq
+            var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(bookingsQueryable);
+                .Returns(mockDbSet.Object);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
@@ -223,7 +220,7 @@ namespace Coach.API.Tests.Bookings
 
             var mockPackageRepo = new Mock<ICoachPackageRepository>();
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             var handler = new GetUserBookingsQueryHandler(
                 mockBookingRepo.Object,
@@ -266,13 +263,12 @@ namespace Coach.API.Tests.Bookings
                 new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId2 }
             };
 
-            // Use MockQueryable.Moq for proper IQueryable async mocking
-            var bookingsQueryable = bookings.AsQueryable();
-            var mockBookingsDbSet = bookingsQueryable.BuildMockDbSet();
+            // Create a mock for the DbSet using MockQueryable.Moq
+            var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(bookingsQueryable);
+                .Returns(mockDbSet.Object);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId1, It.IsAny<CancellationToken>()))
@@ -282,7 +278,7 @@ namespace Coach.API.Tests.Bookings
 
             var mockPackageRepo = new Mock<ICoachPackageRepository>();
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             var handler = new GetUserBookingsQueryHandler(
                 mockBookingRepo.Object,
@@ -318,16 +314,16 @@ namespace Coach.API.Tests.Bookings
             // Arrange
             var userId = Guid.NewGuid();
 
-            // Use empty list with MockQueryable.Moq
-            var emptyList = new List<CoachBooking>().AsQueryable();
-            var mockBookingsDbSet = emptyList.BuildMockDbSet();
+            // Create an empty mock DbSet
+            var emptyList = new List<CoachBooking>();
+            var mockDbSet = emptyList.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(emptyList);
+                .Returns(mockDbSet.Object);
 
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             var handler = new GetUserBookingsQueryHandler(
                 mockBookingRepo.Object,
@@ -358,20 +354,19 @@ namespace Coach.API.Tests.Bookings
                 new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId }
             };
 
-            // Use MockQueryable.Moq for proper IQueryable async mocking
-            var bookingsQueryable = bookings.AsQueryable();
-            var mockBookingsDbSet = bookingsQueryable.BuildMockDbSet();
+            // Create a mock for the DbSet using MockQueryable.Moq
+            var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(bookingsQueryable);
+                .Returns(mockDbSet.Object);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Data.Models.Coach)null);  // Coach not found
 
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             var handler = new GetUserBookingsQueryHandler(
                 mockBookingRepo.Object,
@@ -411,20 +406,19 @@ namespace Coach.API.Tests.Bookings
                 });
             }
 
-            // Use MockQueryable.Moq for proper IQueryable async mocking
-            var bookingsQueryable = bookings.AsQueryable();
-            var mockBookingsDbSet = bookingsQueryable.BuildMockDbSet();
+            // Create a mock for the DbSet using MockQueryable.Moq
+            var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(r => r.GetCoachBookingsByUserIdQueryable(userId))
-                .Returns(bookingsQueryable);
+                .Returns(mockDbSet.Object);
 
             var mockCoachRepo = new Mock<ICoachRepository>();
             mockCoachRepo.Setup(r => r.GetCoachByIdAsync(coachId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Data.Models.Coach { UserId = coachId, FullName = "Test Coach" });
 
             var mockDbContext = new Mock<CoachDbContext>();
-            mockDbContext.Setup(c => c.CoachBookings).Returns(mockBookingsDbSet.Object);
+            mockDbContext.Setup(c => c.CoachBookings).Returns(mockDbSet.Object);
 
             var handler = new GetUserBookingsQueryHandler(
                 mockBookingRepo.Object,
