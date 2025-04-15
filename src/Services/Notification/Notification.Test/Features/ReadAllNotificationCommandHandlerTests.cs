@@ -8,7 +8,9 @@ namespace Notification.Test.Features
     {
         private readonly ReadAllNotificationCommandHandler _handler;
         private readonly Guid _hardcodedUserId = Guid.Parse("00000000-0000-0000-0000-000000000010");
-        private readonly Guid _hardcodedOtherUserId = Guid.Parse("00000000-0000-0000-0000-000000000011");
+        private readonly Guid _testId1 = Guid.Parse("00000000-0000-0000-0000-000000000011");
+        private readonly Guid _testId2 = Guid.Parse("00000000-0000-0000-0000-000000000012");
+        private readonly Guid _testId3 = Guid.Parse("00000000-0000-0000-0000-000000000013");
 
         public ReadAllNotificationCommandHandlerTests()
         {
@@ -23,30 +25,30 @@ namespace Notification.Test.Features
             {
                 new MessageNotification
                 {
-                    Id = Guid.NewGuid(),
+                    Id = _testId1,
                     Receiver = _hardcodedUserId,
                     IsRead = false,
                     Title = "Hardcoded Title 1",
                     Content = "Hardcoded Content 1",
-                    Type = "Hardcoded Type 1"
+                    Type = "Court"
                 },
                 new MessageNotification
                 {
-                    Id = Guid.NewGuid(),
+                    Id = _testId2,
                     Receiver = _hardcodedUserId,
                     IsRead = false,
                     Title = "Hardcoded Title 2",
                     Content = "Hardcoded Content 2",
-                    Type = "Hardcoded Type 2"
+                    Type = "Court"
                 },
                 new MessageNotification
                 {
-                    Id = Guid.NewGuid(),
+                    Id = _testId3,
                     Receiver = _hardcodedUserId,
                     IsRead = false,
                     Title = "Hardcoded Title 3",
                     Content = "Hardcoded Content 3",
-                    Type = "Hardcoded Type 3"
+                    Type = "Court"
                 }
             };
             Context.MessageNotifications.AddRange(notifications);
@@ -70,21 +72,21 @@ namespace Notification.Test.Features
             {
                 new MessageNotification
                 {
-                    Id = Guid.NewGuid(),
+                    Id = _testId1,
                     Receiver = _hardcodedUserId,
                     IsRead = true,
                     Title = "Hardcoded Read Title 1",
                     Content = "Hardcoded Read Content 1",
-                    Type = "Hardcoded Read Type 1"
+                    Type = "Coach"
                 },
                 new MessageNotification
                 {
-                    Id = Guid.NewGuid(),
+                    Id = _testId2,
                     Receiver = _hardcodedUserId,
                     IsRead = true,
                     Title = "Hardcoded Read Title 2",
                     Content = "Hardcoded Read Content 2",
-                    Type = "Hardcoded Read Type 2"
+                    Type = "Coach"
                 }
             };
 
