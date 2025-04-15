@@ -1,4 +1,5 @@
-﻿using Carter;
+﻿using BuildingBlocks.Pagination;
+using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,7 +31,7 @@ namespace Notification.API.Features.GetNotifications
                     return Results.Ok(result);
                 })
             .WithName("GetNotifications")
-            .Produces<List<NotificationResponse>>(StatusCodes.Status200OK)
+            .Produces<PaginatedResult<NotificationResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithSummary("Get notifications")
             .WithDescription("Get list of user's notifications");
