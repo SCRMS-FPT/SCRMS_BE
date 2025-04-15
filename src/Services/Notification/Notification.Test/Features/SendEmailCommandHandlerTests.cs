@@ -16,7 +16,10 @@ namespace Notification.Test.Features
         public async Task Handle_CallsEmailServiceWithCorrectParameters()
         {
             // Arrange
-            var command = new SendEmailCommand("test@gmail.com", "Subject", "Body", false);
+            var hardcodedEmail = "hardcoded@example.com";
+            var hardcodedSubject = "Hardcoded Subject";
+            var hardcodedBody = "Hardcoded Body";
+            var command = new SendEmailCommand(hardcodedEmail, hardcodedSubject, hardcodedBody, false);
             EmailServiceMock.Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(true);
 
@@ -24,7 +27,7 @@ namespace Notification.Test.Features
             await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            EmailServiceMock.Verify(x => x.SendEmailAsync(command.To, command.Subject, command.Body, command.IsHtml), Times.Once());
+            EmailServiceMock.Verify(x => x.SendEmailAsync(hardcodedEmail, hardcodedSubject, hardcodedBody, false), Times.Once());
         }
     }
 }

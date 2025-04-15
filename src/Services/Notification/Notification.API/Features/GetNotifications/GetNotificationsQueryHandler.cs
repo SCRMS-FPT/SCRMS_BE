@@ -1,4 +1,5 @@
 ﻿using BuildingBlocks.CQRS;
+using BuildingBlocks.Pagination;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -6,8 +7,8 @@ using Notification.API.Data;
 
 namespace Notification.API.Features.GetNotifications
 {
-    public record GetNotificationsQuery(Guid UserId, int Page, int Limit, Boolean? IsRead, string? Type) : IQuery<List<NotificationResponse>>;
-    public record NotificationResponse(Boolean IsRead, string Title, string Content, string Type, DateTime CreatedAt);
+    public record GetNotificationsQuery(Guid UserId, int Page, int Limit, Boolean? IsRead, string? Type) : IQuery<PaginatedResult<NotificationResponse>>;
+    public record NotificationResponse(Guid Id, Boolean IsRead, string Title, string Content, string Type, DateTime CreatedAt);
     public class GetNotifiesCommandValidator : AbstractValidator<GetNotificationsQuery>
     {
         public GetNotifiesCommandValidator()
@@ -19,7 +20,7 @@ namespace Notification.API.Features.GetNotifications
             RuleFor(x => x.Limit).GreaterThan(0).WithMessage("Limit must be positive.");
         }
     }
-    public class GetNotificationsQueryHandler : IQueryHandler<GetNotificationsQuery, List<NotificationResponse>>
+    public class GetNotificationsQueryHandler : IQueryHandler<GetNotificationsQuery, PaginatedResult<NotificationResponse>>
     {
         private readonly NotificationDbContext context;
         private readonly IMediator mediator;
@@ -30,10 +31,10 @@ namespace Notification.API.Features.GetNotifications
             this.mediator = mediator;
         }
 
-        public async Task<List<NotificationResponse>> Handle(GetNotificationsQuery command, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<NotificationResponse>> Handle(GetNotificationsQuery command, CancellationToken cancellationToken)
         {
             var list = await context.MessageNotifications
-                .Where(n => n.Receiver == command.UserId).ToListAsync(cancellationToken);
+                .Where(n => n.Receiver == command.UserId).OrderByDescending(p => p.CreatedAt).ToListAsync(cancellationToken);
 
             if (command.IsRead != null)
             {
@@ -45,15 +46,17 @@ namespace Notification.API.Features.GetNotifications
                 list = list.Where(n => n.Type.Equals(command.Type)).ToList();
             }
 
+            var count = list.Count();
+
             var result = list.Skip((command.Page - 1) * command.Limit)
              .Take(command.Limit)
              .Select(n => new NotificationResponse
              (
-                 n.IsRead, n.Title, n.Content, n.Type, n.CreatedAt
+               n.Id, n.IsRead, n.Title, n.Content, n.Type, n.CreatedAt
              ))
              .ToList();
 
-            return result;
+            return new PaginatedResult<NotificationResponse>(command.Page, command.Limit, count, result);
         }
     }
 
