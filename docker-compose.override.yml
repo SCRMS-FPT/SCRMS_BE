@@ -177,6 +177,9 @@ services:
       dockerfile: src/Services/Coach/Coach.API/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - MessageBroker__Host=amqp://messagebroker
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
       - ConnectionStrings__Database=Host=coachdb;Port=5432;Database=CoachDB;Username=postgres;Password=2405
     ports:
       - "6004:8080"

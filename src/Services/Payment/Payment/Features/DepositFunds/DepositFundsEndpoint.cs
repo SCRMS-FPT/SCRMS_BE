@@ -7,7 +7,7 @@ namespace Payment.API.Features.DepositFunds
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/payments/wallet/deposit", async (DepositFundsRequest request, ISender sender, HttpContext httpContext) =>
+            app.MapPost("/api/payments/wallet/deposit", async (DepositFundsRequest request, ISender sender, HttpContext httpContext, IConfiguration configuration) =>
             {
                 var userId = Guid.Parse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
                 var command = new DepositFundsCommand(
@@ -15,19 +15,25 @@ namespace Payment.API.Features.DepositFunds
                     request.Amount,
                     request.Description ?? "Deposit funds");
 
-                var transactionId = await sender.Send(command);
+                var result = await sender.Send(command);
 
-                // Get updated balance
-                var wallet = await sender.Send(new GetUserWalletQuery(userId));
+                // Get bank account information from configuration
+                var bankAccount = configuration["Sepay:BankAccount"];
+                var bankName = configuration["Sepay:BankName"];
 
-                return Results.Created($"/api/payments/wallet/transactions/{transactionId}",
-                    new
-                    {
-                        Id = transactionId,
-                        Balance = wallet?.Balance ?? 0,
-                        Amount = request.Amount,
-                        Timestamp = DateTime.UtcNow
-                    });
+                // Generate QR code URL (using SePay's QR code service)
+                var qrCodeUrl = $"https://qr.sepay.vn/img?acc={bankAccount}&bank={bankName}&amount={request.Amount}&des={result.DepositCode}";
+
+                return Results.Ok(new
+                {
+                    Id = result.DepositId,
+                    Code = result.DepositCode,
+                    Amount = result.Amount,
+                    Instructions = "Please transfer the exact amount to our bank account and include this code in your transfer description. Your account will be credited once we receive the payment.",
+                    BankInfo = result.BankInfo,
+                    QrCodeUrl = qrCodeUrl,
+                    Timestamp = DateTime.UtcNow
+                });
             })
             .RequireAuthorization()
             .WithName("DepositFunds");
