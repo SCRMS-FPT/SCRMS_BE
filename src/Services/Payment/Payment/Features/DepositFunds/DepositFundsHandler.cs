@@ -1,126 +1,57 @@
-﻿using MassTransit;
-using Payment.API.Data.Repositories;
-using BuildingBlocks.Messaging.Events;
-using BuildingBlocks.Messaging.Outbox;
-using Payment.API.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Payment.API.Data.Repositories;
 
 namespace Payment.API.Features.DepositFunds
 {
-    public record DepositFundsCommand(
-        Guid UserId,
-        decimal Amount,
-        string Description) : IRequest<Guid>;
-
-    public class DepositFundsHandler : IRequestHandler<DepositFundsCommand, Guid>
+    public class DepositFundsHandler : IRequestHandler<DepositFundsCommand, DepositFundsResult>
     {
-        private readonly IUserWalletRepository _userWalletRepository;
-        private readonly IWalletTransactionRepository _walletTransactionRepository;
-        private readonly PaymentDbContext _context;
-        private readonly IOutboxService _outboxService;
+        private readonly IPendingDepositRepository _pendingDepositRepository;
+        private readonly IConfiguration _configuration;
 
         public DepositFundsHandler(
-            IUserWalletRepository userWalletRepository,
-            IWalletTransactionRepository walletTransactionRepository,
-            PaymentDbContext context,
-            IOutboxService outboxService)
+            IPendingDepositRepository pendingDepositRepository,
+            IConfiguration configuration)
         {
-            _userWalletRepository = userWalletRepository;
-            _walletTransactionRepository = walletTransactionRepository;
-            _context = context;
-            _outboxService = outboxService;
+            _pendingDepositRepository = pendingDepositRepository;
+            _configuration = configuration;
         }
 
-        public async Task<Guid> Handle(DepositFundsCommand request, CancellationToken cancellationToken)
+        public async Task<DepositFundsResult> Handle(DepositFundsCommand request, CancellationToken cancellationToken)
         {
-            if (request.Amount <= 0)
-                throw new ArgumentException("Amount must be positive.");
+            // Generate a unique code for this deposit in format ORD + numbers
+            string depositCode = GenerateUniqueCode();
 
-            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-            try
+            // Create a pending deposit record
+            var pendingDeposit = new PendingDeposit
             {
-                // Get or create wallet
-                var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
-                bool isNewWallet = false;
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                Amount = request.Amount,
+                Code = depositCode,
+                Description = request.Description ?? "Deposit funds",
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
+            };
 
-                if (wallet == null)
-                {
-                    isNewWallet = true;
-                    wallet = new UserWallet
-                    {
-                        UserId = request.UserId,
-                        Balance = 0,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                }
+            await _pendingDepositRepository.AddAsync(pendingDeposit, cancellationToken);
 
-                // Create transaction record
-                var transactionRecord = new WalletTransaction
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = request.UserId,
-                    TransactionType = "deposit",
-                    ReferenceId = null,
-                    Amount = request.Amount,
-                    Description = request.Description ?? "Deposit funds",
-                    CreatedAt = DateTime.UtcNow
-                };
+            // Get bank information from configuration
+            var bankInfo = _configuration.GetSection("Sepay:BankInfo").Value ??
+                "Please transfer to our bank account with the exact amount and include the code in the transfer description.";
 
-                // Update wallet balance
-                wallet.Balance += request.Amount;
-                wallet.UpdatedAt = DateTime.UtcNow;
-
-                // Save changes
-                if (isNewWallet)
-                {
-                    await _userWalletRepository.AddUserWalletAsync(wallet, cancellationToken);
-                    await _context.SaveChangesAsync(cancellationToken);
-                }
-                else
-                {
-                    await _userWalletRepository.UpdateUserWalletAsync(wallet, cancellationToken);
-                }
-
-                await _walletTransactionRepository.AddWalletTransactionAsync(transactionRecord, cancellationToken);
-                await _context.SaveChangesAsync(cancellationToken);
-
-                // Create simple deposit event
-                var paymentEvent = new PaymentSucceededEvent(
-                    transactionRecord.Id,
-                    request.UserId,
-                    null,
-                    request.Amount,
-                    DateTime.UtcNow,
-                    request.Description ?? "Wallet deposit",
-                    "Deposit"
-                );
-
-                // Save to outbox
-                await _outboxService.SaveMessageAsync(paymentEvent);
-
-                await transaction.CommitAsync(cancellationToken);
-                return transactionRecord.Id;
-            }
-            catch
+            return new DepositFundsResult
             {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
-        }
-    }
-
-    public class GetUserWalletQueryHandler : IRequestHandler<GetUserWalletQuery, UserWallet>
-    {
-        private readonly IUserWalletRepository _userWalletRepository;
-
-        public GetUserWalletQueryHandler(IUserWalletRepository userWalletRepository)
-        {
-            _userWalletRepository = userWalletRepository;
+                DepositId = pendingDeposit.Id,
+                DepositCode = depositCode,
+                Amount = request.Amount,
+                BankInfo = bankInfo
+            };
         }
 
-        public async Task<UserWallet> Handle(GetUserWalletQuery request, CancellationToken cancellationToken)
+        private string GenerateUniqueCode()
         {
-            return await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
+            // Generate a code in the format ORD + 10 random digits
+            string randomDigits = new Random().Next(1000000000, 2147483647).ToString();
+            return $"ORD{randomDigits}";
         }
     }
 }
