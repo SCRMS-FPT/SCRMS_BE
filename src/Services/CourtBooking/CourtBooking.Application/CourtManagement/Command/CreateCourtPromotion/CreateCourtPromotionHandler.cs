@@ -37,6 +37,12 @@ namespace CourtBooking.Application.CourtManagement.Command.CreateCourtPromotion
             if (sportCenter == null || sportCenter.OwnerId.Value != request.UserId)
                 throw new UnauthorizedAccessException("Bạn không sở hữu sân này.");
 
+            // Validate discount value for percentage type
+            if (request.DiscountType == "Percentage" && (request.DiscountValue <= 0 || request.DiscountValue > 100))
+            {
+                throw new ArgumentException("Giá trị khuyến mãi phần trăm phải nằm trong khoảng từ 1 đến 100.");
+            }
+
             var promotion = CourtPromotion.Create(
                 CourtId.Of(request.CourtId),
                 request.Description,

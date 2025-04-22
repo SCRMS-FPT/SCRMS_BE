@@ -52,41 +52,95 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
         // Filter by availability on specific date and time if requested
         if (query.BookingDate.HasValue)
         {
-            var requestedDate = query.BookingDate.Value.Date; // Ensure we're comparing dates only
+            var requestedDate = query.BookingDate.Value.Date;
+            // Map .NET DayOfWeek (0=Sunday) → DayOfWeekValue (1=Monday…7=Sunday)
+            var dow = (int)requestedDate.DayOfWeek;
+            var dayValue = dow == 0 ? 7 : dow;
 
-            // Get all bookings for the requested date
-            var bookedCourtsQuery = _context.BookingDetails
-            .Join(_context.Bookings,
-                bd => bd.BookingId,
-                b => b.Id,
-                (bd, b) => new { BookingDetail = bd, Booking = b })
-            .Where(x => x.Booking.Status != BookingStatus.Cancelled &&
-                  x.Booking.BookingDate.Date == requestedDate);
+            // Base bookings on that date, non‑cancelled and not payment‑failed
+            var baseBookingQ = _context.BookingDetails
+                .Join(_context.Bookings,
+                      bd => bd.BookingId,
+                      b  => b.Id,
+                      (bd, b) => new { bd, b })
+                .Where(x => x.b.Status != BookingStatus.Cancelled
+                         && x.b.Status != BookingStatus.PaymentFail
+                         && x.b.BookingDate.Date == requestedDate);
 
-            if (query.StartTime.HasValue)
+            // Apply time‑window filter if provided
+            if (query.StartTime.HasValue && query.EndTime.HasValue)
             {
-                var startTime = query.StartTime.Value;
-                bookedCourtsQuery = bookedCourtsQuery.Where(x =>
-                    (x.BookingDetail.StartTime <= startTime && x.BookingDetail.EndTime > startTime) ||
-                    (x.BookingDetail.StartTime >= startTime));
+                var start = query.StartTime.Value;
+                var end   = query.EndTime.Value;
+                baseBookingQ = baseBookingQ
+                    .Where(x => x.bd.EndTime > start && x.bd.StartTime < end);
             }
 
-            if (query.EndTime.HasValue)
+            // 1) Load schedules and court durations separately, then filter & join in memory
+            var allSchedules = await _context.CourtSchedules
+                .ToListAsync(cancellationToken);
+            var courtDurations = await _context.Courts
+                .Select(c => new { c.Id, c.SlotDuration })
+                .ToListAsync(cancellationToken);
+
+            // apply day‐of‐week and time filters in memory
+            var filteredSchedules = allSchedules
+                .Where(cs => cs.DayOfWeek.Days.Contains(dayValue)
+                          && (!query.StartTime.HasValue || cs.EndTime > query.StartTime.Value)
+                          && (!query.EndTime  .HasValue || cs.StartTime < query.EndTime.Value))
+                .ToList();
+
+            // join with durations
+            var rawSchedules = filteredSchedules
+                .Join(courtDurations,
+                      cs => cs.CourtId,
+                      cd => cd.Id,
+                      (cs, cd) => new {
+                          cs.CourtId,
+                          cs.StartTime,
+                          cs.EndTime,
+                          cd.SlotDuration
+                      })
+                .ToList();
+
+            // 2) Compute overlap & slot counts as before
+            var schedules = rawSchedules.Select(x =>
             {
-                var endTime = query.EndTime.Value;
-                bookedCourtsQuery = bookedCourtsQuery.Where(x =>
-                    (x.BookingDetail.StartTime < endTime && x.BookingDetail.EndTime >= endTime) ||
-                    (x.BookingDetail.EndTime <= endTime));
-            }
+                var windowStart = query.StartTime.HasValue && x.StartTime < query.StartTime.Value
+                    ? query.StartTime.Value : x.StartTime;
+                var windowEnd   = query.EndTime  .HasValue && x.EndTime   > query.EndTime.Value
+                    ? query.EndTime.Value   : x.EndTime;
+                var overlapMin  = Math.Max(0, (windowEnd - windowStart).TotalMinutes);
+                return new {
+                    x.CourtId,
+                    OverlapMinutes      = (int)overlapMin,
+                    SlotDurationMinutes = (int)x.SlotDuration.TotalMinutes
+                };
+            }).ToList();
 
-            var bookedCourts = await bookedCourtsQuery
-            .Select(x => x.BookingDetail.CourtId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
+            // 3) Sum slots per court
+            var slotCounts = schedules
+                .GroupBy(x => x.CourtId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => x.OverlapMinutes / x.SlotDurationMinutes)
+                );
 
-            // Filter sport centers that have courts not booked on the requested date and time
-            sportCentersQuery = sportCentersQuery.Where(sc =>
-            sc.Courts.Any(c => !bookedCourts.Contains(c.Id)));
+            // 2) Count booked slots per court
+            var bookedSlots = await baseBookingQ
+                .GroupBy(x => x.bd.CourtId)
+                .Select(g => new { CourtId = g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken);
+
+            // 3) Fully‑booked courts = booked count ≥ total slots
+            var fullyBookedCourtIds = bookedSlots
+                .Where(b => slotCounts.TryGetValue(b.CourtId, out var total) && b.Count >= total)
+                .Select(b => b.CourtId)
+                .ToList();
+
+            // 4) Keep centers that have at least one court NOT fully booked
+            sportCentersQuery = sportCentersQuery
+                .Where(sc => sc.Courts.Any(c => !fullyBookedCourtIds.Contains(c.Id)));
         }
 
         // Get total count from filtered query

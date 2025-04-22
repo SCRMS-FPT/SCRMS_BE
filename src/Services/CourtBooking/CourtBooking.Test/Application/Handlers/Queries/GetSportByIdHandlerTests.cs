@@ -69,8 +69,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.NotNull(result);
             Assert.Equal(sportId, result.Id);
             Assert.Equal("Tennis", result.Name);
-            Assert.Equal("Tennis is a racket sport", result.Description);
             Assert.Equal("tennis.png", result.Icon);
+            Assert.Equal("Tennis is a racket sport", result.Description);
 
             _mockSportRepository.Verify(r => r.GetByIdAsync(
                 SportId.Of(sportId), It.IsAny<CancellationToken>()), Times.Once);
@@ -87,7 +87,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 SportId.Of(sportId),
                 "Tennis",
                 "", // Empty description
-                "tennis.png"
+                "tennis.png" // Icon
             );
 
             _mockSportRepository.Setup(r => r.GetByIdAsync(
@@ -101,8 +101,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.NotNull(result);
             Assert.Equal(sportId, result.Id);
             Assert.Equal("Tennis", result.Name);
-            Assert.Equal("", result.Description);
             Assert.Equal("tennis.png", result.Icon);
+            Assert.Equal("", result.Description);
         }
 
         [Fact]

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CourtBooking.Application.DTOs;
 
 namespace CourtBooking.Infrastructure.Data.Extensions;
 
@@ -145,12 +146,12 @@ public static class DatabaseExtentions
         var tennisSport = sports.Find(s => s.Name == "Tennis");
         for (int i = 1; i <= 2; i++)
         {
-            var tennisFacilities = new List<object>
+            var tennisFacilities = new List<FacilityDTO>
             {
-                new { Name = "Vòi nước uống", Description = "Vòi nước uống miễn phí cho người chơi" },
-                new { Name = "Ghế nghỉ", Description = "Ghế nghỉ cho vận động viên giữa hiệp đấu" },
-                new { Name = "Lưới chất lượng cao", Description = "Lưới tennis tiêu chuẩn quốc tế" },
-                new { Name = "Khu vực khán giả", Description = "Khu vực dành cho 30 người xem" }
+                new FacilityDTO { Name = "Vòi nước uống", Description = "Vòi nước uống miễn phí cho người chơi" },
+                new FacilityDTO { Name = "Ghế nghỉ", Description = "Ghế nghỉ cho vận động viên giữa hiệp đấu" },
+                new FacilityDTO { Name = "Lưới chất lượng cao", Description = "Lưới tennis tiêu chuẩn quốc tế" },
+                new FacilityDTO { Name = "Khu vực khán giả", Description = "Khu vực dành cho 30 người xem" }
             };
 
             var court = Court.Create(
@@ -175,12 +176,12 @@ public static class DatabaseExtentions
         var badmintonSport = sports.Find(s => s.Name == "Cầu lông");
         for (int i = 1; i <= 3; i++)
         {
-            var badmintonFacilities = new List<object>
+            var badmintonFacilities = new List<FacilityDTO>
             {
-                new { Name = "Phòng thay đồ", Description = "Phòng thay đồ riêng biệt cho nam và nữ" },
-                new { Name = "Điều hòa", Description = "Hệ thống điều hòa hiện đại giữ nhiệt độ lý tưởng" },
-                new { Name = "Hệ thống âm thanh", Description = "Hệ thống âm thanh cho giải đấu" },
-                new { Name = "Khu vực nghỉ ngơi", Description = "Khu vực nghỉ ngơi dành cho người chơi" }
+                new FacilityDTO { Name = "Phòng thay đồ", Description = "Phòng thay đồ riêng biệt cho nam và nữ" },
+                new FacilityDTO { Name = "Điều hòa", Description = "Hệ thống điều hòa hiện đại giữ nhiệt độ lý tưởng" },
+                new FacilityDTO { Name = "Hệ thống âm thanh", Description = "Hệ thống âm thanh cho giải đấu" },
+                new FacilityDTO { Name = "Khu vực nghỉ ngơi", Description = "Khu vực nghỉ ngơi dành cho người chơi" }
             };
 
             var court = Court.Create(
@@ -203,12 +204,12 @@ public static class DatabaseExtentions
 
         // Sân Bóng rổ
         var basketballSport = sports.Find(s => s.Name == "Bóng rổ");
-        var basketballFacilities = new List<object>
+        var basketballFacilities = new List<FacilityDTO>
         {
-            new { Name = "Bảng điểm điện tử", Description = "Bảng điểm điện tử hiển thị thời gian và điểm số" },
-            new { Name = "Ghế khán giả", Description = "Có 50 ghế dành cho khán giả" },
-            new { Name = "Phòng y tế", Description = "Phòng y tế sơ cứu tại chỗ" },
-            new { Name = "Tủ đựng đồ", Description = "Tủ đựng đồ có khóa an toàn cho người chơi" }
+            new FacilityDTO { Name = "Bảng điểm điện tử", Description = "Bảng điểm điện tử hiển thị thời gian và điểm số" },
+            new FacilityDTO { Name = "Ghế khán giả", Description = "Có 50 ghế dành cho khán giả" },
+            new FacilityDTO { Name = "Phòng y tế", Description = "Phòng y tế sơ cứu tại chỗ" },
+            new FacilityDTO { Name = "Tủ đựng đồ", Description = "Tủ đựng đồ có khóa an toàn cho người chơi" }
         };
 
         var basketballCourt = Court.Create(
@@ -230,12 +231,12 @@ public static class DatabaseExtentions
 
         // Sân Bóng đá
         var soccerSport = sports.Find(s => s.Name == "Bóng đá");
-        var soccerFacilities = new List<object>
+        var soccerFacilities = new List<FacilityDTO>
         {
-            new { Name = "Phòng thay đồ", Description = "Phòng thay đồ riêng biệt cho hai đội" },
-            new { Name = "Ghế huấn luyện viên", Description = "Khu vực dành cho HLV và đội ngũ kỹ thuật" },
-            new { Name = "Hệ thống chiếu sáng", Description = "Hệ thống đèn LED chiếu sáng toàn sân" },
-            new { Name = "Khu vực khán đài", Description = "Khán đài có mái che dành cho 100 người" }
+            new FacilityDTO { Name = "Phòng thay đồ", Description = "Phòng thay đồ riêng biệt cho hai đội" },
+            new FacilityDTO { Name = "Ghế huấn luyện viên", Description = "Khu vực dành cho HLV và đội ngũ kỹ thuật" },
+            new FacilityDTO { Name = "Hệ thống chiếu sáng", Description = "Hệ thống đèn LED chiếu sáng toàn sân" },
+            new FacilityDTO { Name = "Khu vực khán đài", Description = "Khán đài có mái che dành cho 100 người" }
         };
 
         var soccerCourt = Court.Create(

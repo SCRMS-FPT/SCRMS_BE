@@ -40,12 +40,12 @@ namespace CourtBooking.Domain.Models
             {
                 Id = id,
                 OwnerId = ownerId,
-                Name = name,
-                PhoneNumber = phoneNumber,
-                Address = address,
-                LocationPoint = location,
-                Images = images,
-                Description = description,
+                Name = ValidateString(name, "Name is required"),
+                PhoneNumber = ValidateString(phoneNumber, "Phone number is required"),
+                Address = address ?? throw new DomainException("Address is required"),
+                LocationPoint = location ?? throw new DomainException("Location is required"),
+                Images = images ?? new SportCenterImages(string.Empty, new List<string>()),
+                Description = description ?? string.Empty,
                 IsDeleted = false // Explicitly set default value
             };
 
@@ -85,7 +85,7 @@ namespace CourtBooking.Domain.Models
             SetLastModified(DateTime.UtcNow);
         }
 
-        private string ValidateString(string value, string errorMessage)
+        private static string ValidateString(string value, string errorMessage)
         {
             return string.IsNullOrWhiteSpace(value) ? throw new DomainException(errorMessage) : value.Trim();
         }

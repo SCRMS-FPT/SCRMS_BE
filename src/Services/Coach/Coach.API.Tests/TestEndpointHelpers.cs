@@ -14,13 +14,13 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Threading;
-using System.Security.AccessControl;
 using Coach.API.Features.Coaches.UpdateCoach;
 using Coach.API.Features.Promotion.CreateCoachPromotion;
 using Coach.API.Features.Bookings.BlockCoachSchedule;
 using Microsoft.AspNetCore.Http.Features;
+using System.IO;
 
-namespace Coach.API.Tests
+namespace Coach.API.Tests.TestHelpers
 {
     public class TestEndpointRouteBuilder : IEndpointRouteBuilder
     {
@@ -35,7 +35,6 @@ namespace Coach.API.Tests
             public string Method { get; set; } = string.Empty;
             public Delegate Handler { get; set; } = null!;
 
-            // Add InvokeAsync method to RouteInfo
             public async Task<IResult> InvokeAsync(HttpContext httpContext, params object[] args)
             {
                 try
@@ -173,13 +172,23 @@ namespace Coach.API.Tests
 
                     return Results.Ok();
                 }
+                catch (TargetInvocationException targetEx)
+                {
+                    // Important: Unwrap TargetInvocationException to get the actual exception and rethrow
+                    Debug.WriteLine($"Unwrapping TargetInvocationException: {targetEx.InnerException?.Message}");
+                    if (targetEx.InnerException != null)
+                    {
+                        throw targetEx.InnerException;
+                    }
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Error invoking handler: {ex.Message}");
                     Debug.WriteLine($"Stack trace: {ex.StackTrace}");
 
                     // If it's a reflection exception related to invocation, print more details
-                    if (ex is TargetInvocationException || ex is TargetParameterCountException)
+                    if (ex is TargetParameterCountException)
                     {
                         Debug.WriteLine("Handler parameter details:");
                         foreach (var param in Handler.Method.GetParameters())
@@ -188,12 +197,7 @@ namespace Coach.API.Tests
                         }
                     }
 
-                    // Unwrap TargetInvocationException to get the actual exception
-                    if (ex is TargetInvocationException targetEx && targetEx.InnerException != null)
-                    {
-                        throw targetEx.InnerException;
-                    }
-
+                    // Rethrow the exception to ensure it's propagated to tests
                     throw;
                 }
             }
@@ -201,7 +205,6 @@ namespace Coach.API.Tests
 
         public List<RouteInfo> Routes { get; } = new List<RouteInfo>();
 
-        // Add parameterless constructor that creates a mock service provider
         public TestEndpointRouteBuilder()
         {
             var mockServiceProvider = new Mock<IServiceProvider>();
@@ -246,12 +249,11 @@ namespace Coach.API.Tests
                 try
                 {
                     var result = await sender.Send(new Features.Coaches.GetMyCoachProfile.GetMyCoachProfileQuery(coachId));
-                    // Use generic TypedResults without specifying the concrete type
-                    return TypedResults.Ok(result);
+                    return Results.Ok(result);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    throw; // Propagate exception for exception handling tests
+                    throw; // Ensure we propagate the exception to properly test MediatorThrowsException_PropagatesException
                 }
             });
 
@@ -356,8 +358,7 @@ namespace Coach.API.Tests
                     );
 
                     var result = await sender.Send(query);
-                    // Use TypedResults.Ok to ensure the correct return type
-                    return TypedResults.Ok(result);
+                    return Results.Ok(result);
                 }
                 catch (Exception ex)
                 {
@@ -410,7 +411,7 @@ namespace Coach.API.Tests
                 {
                     var query = new Coach.API.Features.Promotion.GetAllPromotion.GetAllPromotionQuery(coachId, 1, 10);
                     var result = await sender.Send(query);
-                    return TypedResults.Ok<List<Coach.API.Features.Promotion.GetAllPromotion.PromotionRecord>>(result);
+                    return Results.Ok(result);
                 }
                 catch (Exception ex)
                 {
@@ -480,9 +481,6 @@ namespace Coach.API.Tests
                 var result = await sender.Send(command);
                 return Results.Created($"/coaches/bookings/{result.BookingId}", result);
             });
-
-            // Other booking endpoints...
-            // ...existing code...
         }
 
         public IApplicationBuilder CreateApplicationBuilder()
@@ -562,6 +560,33 @@ namespace Coach.API.Tests
                 Debug.WriteLine($"{route.Method} {route.Pattern}");
             }
             Debug.WriteLine("============================");
+        }
+    }
+
+    // Utility class for mock form files
+    public class MockFormFile : IFormFile
+    {
+        public string ContentType => "image/jpeg";
+        public string ContentDisposition => "form-data; name=\"file\"; filename=\"test.jpg\"";
+        public IHeaderDictionary Headers => new HeaderDictionary();
+        public long Length => 1024;
+        public string Name => "file";
+        public string FileName => "test.jpg";
+
+        public void CopyTo(Stream target)
+        {
+            // Do nothing in mock
+        }
+
+        public Task CopyToAsync(Stream target, CancellationToken cancellationToken = default)
+        {
+            // Do nothing in mock
+            return Task.CompletedTask;
+        }
+
+        public Stream OpenReadStream()
+        {
+            return new MemoryStream();
         }
     }
 

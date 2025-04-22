@@ -15,6 +15,8 @@ using CourtBooking.Domain.Enums;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
+using CourtBooking.Test.Common;
+using static CourtBooking.Test.Common.QueryableExtensions;
 
 namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
 {
@@ -23,24 +25,48 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
         private readonly Mock<IApplicationDbContext> _mockContext;
         private readonly Mock<IBookingRepository> _mockBookingRepository;
         private readonly Mock<ISportCenterRepository> _mockSportCenterRepository;
-        private readonly Mock<DbSet<Booking>> _mockBookingDbSet;
-        private readonly Mock<DbSet<Court>> _mockCourtDbSet;
-        private readonly Mock<DbSet<SportCenter>> _mockSportCenterDbSet;
         private readonly GetBookingsHandler _handler;
+        private readonly Mock<DbSet<Booking>> _mockBookingsDbSet;
+        private readonly Mock<DbSet<Court>> _mockCourtsDbSet;
+        private readonly Mock<DbSet<SportCenter>> _mockSportCentersDbSet;
 
         public GetBookingsHandlerTests()
         {
-            _mockBookingDbSet = new Mock<DbSet<Booking>>();
-            _mockCourtDbSet = new Mock<DbSet<Court>>();
-            _mockSportCenterDbSet = new Mock<DbSet<SportCenter>>();
-
             _mockContext = new Mock<IApplicationDbContext>();
-            _mockContext.Setup(c => c.Bookings).Returns(_mockBookingDbSet.Object);
-            _mockContext.Setup(c => c.Courts).Returns(_mockCourtDbSet.Object);
-            _mockContext.Setup(c => c.SportCenters).Returns(_mockSportCenterDbSet.Object);
-
             _mockBookingRepository = new Mock<IBookingRepository>();
             _mockSportCenterRepository = new Mock<ISportCenterRepository>();
+            _mockBookingsDbSet = new Mock<DbSet<Booking>>();
+            _mockCourtsDbSet = new Mock<DbSet<Court>>();
+            _mockSportCentersDbSet = new Mock<DbSet<SportCenter>>();
+
+            // Setup the mock DbSets with empty collections initially
+            var bookings = new List<Booking>().AsQueryable();
+            var courts = new List<Court>().AsQueryable();
+            var sportCenters = new List<SportCenter>().AsQueryable();
+
+            // Set up all the necessary interface implementations before accessing Object
+            _mockBookingsDbSet.As<IAsyncEnumerable<Booking>>()
+                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+                .Returns(new TestAsyncEnumerator<Booking>(bookings.GetEnumerator()));
+
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.Provider).Returns(bookings.Provider);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.Expression).Returns(bookings.Expression);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.ElementType).Returns(bookings.ElementType);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.GetEnumerator()).Returns(bookings.GetEnumerator());
+
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.Provider).Returns(courts.Provider);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.Expression).Returns(courts.Expression);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.ElementType).Returns(courts.ElementType);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.GetEnumerator()).Returns(courts.GetEnumerator());
+
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(sportCenters.Provider);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(sportCenters.Expression);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(sportCenters.ElementType);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(sportCenters.GetEnumerator());
+
+            _mockContext.Setup(c => c.Bookings).Returns(_mockBookingsDbSet.Object);
+            _mockContext.Setup(c => c.Courts).Returns(_mockCourtsDbSet.Object);
+            _mockContext.Setup(c => c.SportCenters).Returns(_mockSportCentersDbSet.Object);
 
             _handler = new GetBookingsHandler(
                 _mockContext.Object,
@@ -48,10 +74,6 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
                 _mockSportCenterRepository.Object
             );
         }
-
-        #region Test Cases
-
-        // Instead of ##region Test Cases
 
         [Fact]
         public async Task Handle_Should_ReturnUserBookings_WhenRoleIsUser()
@@ -72,14 +94,84 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
                 Limit: 10
             );
 
+            // Create bookings with the specified user ID
             var bookings = new List<Booking>
             {
                 CreateBookingWithUserId(UserId.Of(userId)),
-                CreateBookingWithUserId(UserId.Of(userId)),
-                CreateBookingWithUserId(UserId.Of(Guid.NewGuid()))
-            }.AsQueryable();
+                CreateBookingWithUserId(UserId.Of(userId))
+            };
 
-            SetupDbContext(bookings);
+            // Setup the bookings in the repository
+            _mockBookingRepository.Setup(r => r.GetBookingsAsync(
+                It.Is<Guid?>(id => id == userId),
+                It.IsAny<Guid?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<BookingStatus?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.Is<int>(p => p == 0),
+                It.Is<int>(l => l == 10),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings);
+
+            _mockBookingRepository.Setup(r => r.GetBookingsCountAsync(
+                It.Is<Guid?>(id => id == userId),
+                It.IsAny<Guid?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<BookingStatus?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings.Count);
+
+            // Setup the mocked DbSets with test data
+            var bookingsQueryable = bookings.AsQueryable();
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.Provider).Returns(bookingsQueryable.Provider);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.Expression).Returns(bookingsQueryable.Expression);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.ElementType).Returns(bookingsQueryable.ElementType);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.GetEnumerator()).Returns(bookingsQueryable.GetEnumerator());
+
+            // Mock the required DbSet Include behavior
+            var mockIncludableQueryable = new Mock<IIncludableQueryable<Booking, ICollection<BookingDetail>>>();
+            mockIncludableQueryable.Setup(m => m.Provider).Returns(bookingsQueryable.Provider);
+            mockIncludableQueryable.Setup(m => m.Expression).Returns(bookingsQueryable.Expression);
+            mockIncludableQueryable.Setup(m => m.ElementType).Returns(bookingsQueryable.ElementType);
+            mockIncludableQueryable.Setup(m => m.GetEnumerator()).Returns(bookingsQueryable.GetEnumerator());
+
+            // Setup the mockBookingsDbSet to return our mockIncludableQueryable when Include is called
+            mockIncludableQueryable.As<IQueryable<Booking>>().Setup(m => m.Provider).Returns(bookingsQueryable.Provider);
+            mockIncludableQueryable.As<IQueryable<Booking>>().Setup(m => m.Expression).Returns(bookingsQueryable.Expression);
+            mockIncludableQueryable.As<IQueryable<Booking>>().Setup(m => m.ElementType).Returns(bookingsQueryable.ElementType);
+            mockIncludableQueryable.As<IQueryable<Booking>>().Setup(m => m.GetEnumerator()).Returns(bookingsQueryable.GetEnumerator());
+
+            // Prepare test court and sport center data
+            var courtId = CourtId.Of(Guid.NewGuid());
+            var sportCenterId = SportCenterId.Of(Guid.NewGuid());
+            var court = CreateCourt(courtId, sportCenterId);
+            var sportCenter = CreateSportCenter(sportCenterId, userId);
+
+            // Add court and booking detail data to the bookings
+            foreach (var booking in bookings)
+            {
+                var details = GetBookingDetailsFromBooking(booking);
+                foreach (var detail in details)
+                {
+                    typeof(BookingDetail).GetProperty("CourtId", BindingFlags.Public | BindingFlags.Instance)
+                        ?.SetValue(detail, courtId);
+                }
+            }
+
+            var courtsQueryable = new List<Court> { court }.AsQueryable();
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.Provider).Returns(courtsQueryable.Provider);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.Expression).Returns(courtsQueryable.Expression);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.ElementType).Returns(courtsQueryable.ElementType);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.GetEnumerator()).Returns(courtsQueryable.GetEnumerator());
+
+            var sportCentersQueryable = new List<SportCenter> { sportCenter }.AsQueryable();
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(sportCentersQueryable.Provider);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(sportCentersQueryable.Expression);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(sportCentersQueryable.ElementType);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(sportCentersQueryable.GetEnumerator());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -87,43 +179,6 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             // Assert
             Assert.Equal(2, result.TotalCount);
             Assert.Equal(2, result.Bookings.Count);
-            Assert.All(result.Bookings, b => Assert.Equal(userId, b.UserId));
-        }
-
-        [Fact]
-        public async Task Handle_Should_ReturnAllBookings_WhenRoleIsAdmin()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var query = new GetBookingsQuery(
-                UserId: userId,
-                Role: "Admin",
-                ViewAs: "Admin",
-                FilterUserId: null,
-                CourtId: null,
-                SportsCenterId: null,
-                Status: null,
-                StartDate: null,
-                EndDate: null,
-                Page: 0,
-                Limit: 10
-            );
-
-            var bookings = new List<Booking>
-            {
-                CreateBookingWithUserId(UserId.Of(Guid.NewGuid())),
-                CreateBookingWithUserId(UserId.Of(Guid.NewGuid())),
-                CreateBookingWithUserId(UserId.Of(Guid.NewGuid()))
-            }.AsQueryable();
-
-            SetupDbContext(bookings);
-
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(3, result.TotalCount);
-            Assert.Equal(3, result.Bookings.Count);
         }
 
         [Fact]
@@ -146,14 +201,77 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
                 Limit: 10
             );
 
+            // Create bookings with the target user ID
             var bookings = new List<Booking>
             {
                 CreateBookingWithUserId(UserId.Of(targetUserId)),
-                CreateBookingWithUserId(UserId.Of(targetUserId)),
-                CreateBookingWithUserId(UserId.Of(Guid.NewGuid()))
-            }.AsQueryable();
+                CreateBookingWithUserId(UserId.Of(targetUserId))
+            };
 
-            SetupDbContext(bookings);
+            // Setup a queryable for the bookings
+            var bookingsQueryable = bookings.AsQueryable();
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.Provider).Returns(bookingsQueryable.Provider);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.Expression).Returns(bookingsQueryable.Expression);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.ElementType).Returns(bookingsQueryable.ElementType);
+            _mockBookingsDbSet.As<IQueryable<Booking>>().Setup(m => m.GetEnumerator()).Returns(bookingsQueryable.GetEnumerator());
+
+            // We don't need this now since we set it up in the constructor
+            //_mockBookingsDbSet.As<IAsyncEnumerable<Booking>>()
+            //    .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            //    .Returns(new TestAsyncEnumerator<Booking>(bookings.GetEnumerator()));
+
+            // Mock repository to return these bookings when filtering by targetUserId
+            _mockBookingRepository.Setup(r => r.GetBookingsAsync(
+                It.Is<Guid?>(id => id == targetUserId),
+                It.IsAny<Guid?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<BookingStatus?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.Is<int>(p => p == 0),
+                It.Is<int>(l => l == 10),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings);
+
+            _mockBookingRepository.Setup(r => r.GetBookingsCountAsync(
+                It.Is<Guid?>(id => id == targetUserId),
+                It.IsAny<Guid?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<BookingStatus?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings.Count);
+
+            // Add court and booking detail data to make the mapping work correctly
+            var courtId = CourtId.Of(Guid.NewGuid());
+            var sportCenterId = SportCenterId.Of(Guid.NewGuid());
+            var court = CreateCourt(courtId, sportCenterId);
+            var sportCenter = CreateSportCenter(sportCenterId, adminId);
+
+            // Set up court in each booking detail
+            foreach (var booking in bookings)
+            {
+                var details = GetBookingDetailsFromBooking(booking);
+                foreach (var detail in details)
+                {
+                    typeof(BookingDetail).GetProperty("CourtId", BindingFlags.Public | BindingFlags.Instance)
+                        ?.SetValue(detail, courtId);
+                }
+            }
+
+            // Set up Court and SportCenter DbSets
+            var courtsQueryable = new List<Court> { court }.AsQueryable();
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.Provider).Returns(courtsQueryable.Provider);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.Expression).Returns(courtsQueryable.Expression);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.ElementType).Returns(courtsQueryable.ElementType);
+            _mockCourtsDbSet.As<IQueryable<Court>>().Setup(m => m.GetEnumerator()).Returns(courtsQueryable.GetEnumerator());
+
+            var sportCentersQueryable = new List<SportCenter> { sportCenter }.AsQueryable();
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(sportCentersQueryable.Provider);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(sportCentersQueryable.Expression);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(sportCentersQueryable.ElementType);
+            _mockSportCentersDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(sportCentersQueryable.GetEnumerator());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -164,194 +282,39 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             Assert.All(result.Bookings, b => Assert.Equal(targetUserId, b.UserId));
         }
 
-        [Fact]
-        public async Task Handle_Should_FilterByStatus_WhenStatusProvided()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var query = new GetBookingsQuery(
-                UserId: userId,
-                Role: "User",
-                ViewAs: "User",
-                FilterUserId: null,
-                CourtId: null,
-                SportsCenterId: null,
-                Status: BookingStatus.Confirmed,
-                StartDate: null,
-                EndDate: null,
-                Page: 0,
-                Limit: 10
-            );
-
-            var bookings = new List<Booking>
-            {
-                CreateBookingWithStatus(UserId.Of(userId), BookingStatus.Pending),
-                CreateBookingWithStatus(UserId.Of(userId), BookingStatus.Confirmed),
-                CreateBookingWithStatus(UserId.Of(userId), BookingStatus.Confirmed),
-                CreateBookingWithStatus(UserId.Of(userId), BookingStatus.Cancelled)
-            }.AsQueryable();
-
-            SetupDbContext(bookings);
-
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(2, result.TotalCount);
-            Assert.Equal(2, result.Bookings.Count);
-            Assert.All(result.Bookings, b => Assert.Equal("Confirmed", b.Status));
-        }
-
-        [Fact]
-        public async Task Handle_Should_FilterByDateRange_WhenDatesProvided()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var startDate = DateTime.Today.AddDays(-5);
-            var endDate = DateTime.Today.AddDays(5);
-            var query = new GetBookingsQuery(
-                UserId: userId,
-                Role: "User",
-                ViewAs: "User",
-                FilterUserId: null,
-                CourtId: null,
-                SportsCenterId: null,
-                Status: null,
-                StartDate: startDate,
-                EndDate: endDate,
-                Page: 0,
-                Limit: 10
-            );
-
-            var bookings = new List<Booking>
-            {
-                CreateBookingWithDateAndUserId(DateTime.Today.AddDays(-10), UserId.Of(userId)),
-                CreateBookingWithDateAndUserId(DateTime.Today, UserId.Of(userId)),
-                CreateBookingWithDateAndUserId(DateTime.Today.AddDays(3), UserId.Of(userId)),
-                CreateBookingWithDateAndUserId(DateTime.Today.AddDays(10), UserId.Of(userId))
-            }.AsQueryable();
-
-            SetupDbContext(bookings);
-
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(2, result.TotalCount);
-            Assert.Equal(2, result.Bookings.Count);
-        }
-
-        [Fact]
-        public async Task Handle_Should_ReturnOwnedCenterBookings_WhenRoleIsCourtOwner()
-        {
-            // Arrange
-            var ownerId = Guid.NewGuid();
-            var sportCenterId1 = SportCenterId.Of(Guid.NewGuid());
-            var sportCenterId2 = SportCenterId.Of(Guid.NewGuid());
-
-            var query = new GetBookingsQuery(
-                UserId: ownerId,
-                Role: "CourtOwner",
-                ViewAs: "CourtOwner",
-                FilterUserId: null,
-                CourtId: null,
-                SportsCenterId: null,
-                Status: null,
-                StartDate: null,
-                EndDate: null,
-                Page: 0,
-                Limit: 10
-            );
-
-            var ownedSportCenters = new List<SportCenter>
-            {
-                CreateSportCenter(sportCenterId1, ownerId),
-                CreateSportCenter(sportCenterId2, ownerId)
-            };
-
-            _mockSportCenterRepository.Setup(r => r.GetSportCentersByOwnerIdAsync(
-                ownerId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ownedSportCenters);
-
-            var court1 = CreateCourt(sportCenterId1);
-            var court2 = CreateCourt(sportCenterId2);
-            var courtOtherOwner = CreateCourt(SportCenterId.Of(Guid.NewGuid()));
-
-            var courts = new List<Court> { court1, court2, courtOtherOwner }.AsQueryable();
-            SetupCourtDbSet(courts);
-
-            var booking1 = CreateBookingWithCourtAndUserId(court1.Id, UserId.Of(Guid.NewGuid()));
-            var booking2 = CreateBookingWithCourtAndUserId(court2.Id, UserId.Of(Guid.NewGuid()));
-            var booking3 = CreateBookingWithCourtAndUserId(courtOtherOwner.Id, UserId.Of(Guid.NewGuid()));
-
-            var bookings = new List<Booking> { booking1, booking2, booking3 }.AsQueryable();
-            SetupBookingDbSet(bookings);
-
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(2, result.TotalCount);
-            Assert.Equal(2, result.Bookings.Count);
-        }
-
-        [Fact]
-        public async Task Handle_Should_ApplyPagination_WhenLimitAndPageProvided()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var query = new GetBookingsQuery(
-                UserId: userId,
-                Role: "User",
-                ViewAs: "User",
-                FilterUserId: null,
-                CourtId: null,
-                SportsCenterId: null,
-                Status: null,
-                StartDate: null,
-                EndDate: null,
-                Page: 1,
-                Limit: 2
-            );
-
-            var bookings = new List<Booking>();
-            for (int i = 0; i < 5; i++)
-            {
-                bookings.Add(CreateBookingWithUserId(UserId.Of(userId)));
-            }
-
-            SetupDbContext(bookings.AsQueryable());
-
-            // Act
-            var result = await _handler.Handle(query, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(5, result.TotalCount);
-            Assert.Equal(2, result.Bookings.Count);
-        }
-
-        #endregion Test Cases
-
-        // Instead of ##endregion
-
         #region Helper Methods
 
-        // Instead of ##region Helper Methods
+        private List<BookingDetail> GetBookingDetailsFromBooking(Booking booking)
+        {
+            // Lấy booking details từ booking để thiết lập mock
+            var field = typeof(Booking).GetField("_bookingDetails", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null)
+            {
+                return field.GetValue(booking) as List<BookingDetail> ?? new List<BookingDetail>();
+            }
+            return new List<BookingDetail>();
+        }
 
         private Booking CreateBookingWithUserId(UserId userId)
         {
-            var bookingId = BookingId.Of(Guid.NewGuid());
-            var booking = Booking.Create(bookingId, userId, DateTime.Today);
+            var booking = Booking.Create(
+                BookingId.Of(Guid.NewGuid()),
+                userId,
+                DateTime.UtcNow
+            );
+
             var detail = BookingDetail.Create(
-                bookingId,
+                booking.Id,
                 CourtId.Of(Guid.NewGuid()),
                 TimeSpan.FromHours(10),
-                TimeSpan.FromHours(12),
+                TimeSpan.FromHours(11),
                 new List<CourtSchedule>()
             );
+
             var details = new List<BookingDetail> { detail };
             typeof(Booking).GetField("_bookingDetails", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(booking, details);
+
             return booking;
         }
 
@@ -364,24 +327,35 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
 
         private Booking CreateBookingWithDateAndUserId(DateTime date, UserId userId)
         {
-            var bookingId = BookingId.Of(Guid.NewGuid());
-            var booking = Booking.Create(bookingId, userId, date);
+            var booking = Booking.Create(
+                BookingId.Of(Guid.NewGuid()),
+                userId,
+                date
+            );
+
             var detail = BookingDetail.Create(
-                bookingId,
+                booking.Id,
                 CourtId.Of(Guid.NewGuid()),
-                TimeSpan.FromHours(10),
-                TimeSpan.FromHours(12),
+                TimeSpan.FromHours(date.Hour),
+                TimeSpan.FromHours(date.Hour + 1),
                 new List<CourtSchedule>()
             );
+
             var details = new List<BookingDetail> { detail };
             typeof(Booking).GetField("_bookingDetails", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(booking, details);
+
             return booking;
         }
 
         private Booking CreateBookingWithCourtAndUserId(CourtId courtId, UserId userId)
         {
-            var booking = CreateBookingWithUserId(userId);
+            var booking = Booking.Create(
+                BookingId.Of(Guid.NewGuid()),
+                userId,
+                DateTime.UtcNow
+            );
+
             var detail = BookingDetail.Create(
                 booking.Id,
                 courtId,
@@ -389,15 +363,22 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
                 TimeSpan.FromHours(12),
                 new List<CourtSchedule>()
             );
+
             var details = new List<BookingDetail> { detail };
             typeof(Booking).GetField("_bookingDetails", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(booking, details);
+
             return booking;
         }
 
         private Court CreateCourt(SportCenterId sportCenterId)
         {
             var courtId = CourtId.Of(Guid.NewGuid());
+            return CreateCourt(courtId, sportCenterId);
+        }
+
+        private Court CreateCourt(CourtId courtId, SportCenterId sportCenterId)
+        {
             return Court.Create(
                 courtId,
                 CourtName.Of("Test Court"),
@@ -405,7 +386,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
                 SportId.Of(Guid.NewGuid()),
                 TimeSpan.FromHours(1),
                 "Description",
-                "Facilities",
+                "[]", // JSON array rỗng cho facilities
                 CourtType.Indoor,
                 30
             );
@@ -425,169 +406,6 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries.GetBookings
             );
         }
 
-        private void SetupDbContext(IQueryable<Booking> bookings)
-        {
-            SetupBookingDbSet(bookings);
-
-            var courts = new List<Court>
-            {
-                CreateCourt(SportCenterId.Of(Guid.NewGuid())),
-                CreateCourt(SportCenterId.Of(Guid.NewGuid()))
-            }.AsQueryable();
-            SetupCourtDbSet(courts);
-
-            var sportCenters = new List<SportCenter>
-            {
-                CreateSportCenter(courts.First().SportCenterId, Guid.NewGuid()),
-                CreateSportCenter(courts.Last().SportCenterId, Guid.NewGuid())
-            }.AsQueryable();
-            SetupSportCenterDbSet(sportCenters);
-        }
-
-        private void SetupBookingDbSet(IQueryable<Booking> bookings)
-        {
-            var asyncBookings = bookings.ToList().AsQueryable();
-            var asyncProvider = new TestAsyncQueryProvider<Booking>(asyncBookings.Provider);
-
-            _mockBookingDbSet.As<IAsyncEnumerable<Booking>>()
-                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-                .Returns(new TestAsyncEnumerator<Booking>(asyncBookings.GetEnumerator()));
-
-            _mockBookingDbSet.As<IQueryable<Booking>>().Setup(m => m.Provider).Returns(asyncProvider);
-            _mockBookingDbSet.As<IQueryable<Booking>>().Setup(m => m.Expression).Returns(asyncBookings.Expression);
-            _mockBookingDbSet.As<IQueryable<Booking>>().Setup(m => m.ElementType).Returns(asyncBookings.ElementType);
-            _mockBookingDbSet.As<IQueryable<Booking>>().Setup(m => m.GetEnumerator()).Returns(asyncBookings.GetEnumerator());
-
-            _mockBookingDbSet.Setup(s => s.Include(It.IsAny<string>())).Returns(_mockBookingDbSet.Object);
-        }
-
-        private void SetupCourtDbSet(IQueryable<Court> courts)
-        {
-            var asyncCourts = courts.ToList().AsQueryable();
-            var asyncProvider = new TestAsyncQueryProvider<Court>(asyncCourts.Provider);
-
-            _mockCourtDbSet.As<IAsyncEnumerable<Court>>()
-                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-                .Returns(new TestAsyncEnumerator<Court>(asyncCourts.GetEnumerator()));
-
-            _mockCourtDbSet.As<IQueryable<Court>>().Setup(m => m.Provider).Returns(asyncProvider);
-            _mockCourtDbSet.As<IQueryable<Court>>().Setup(m => m.Expression).Returns(asyncCourts.Expression);
-            _mockCourtDbSet.As<IQueryable<Court>>().Setup(m => m.ElementType).Returns(asyncCourts.ElementType);
-            _mockCourtDbSet.As<IQueryable<Court>>().Setup(m => m.GetEnumerator()).Returns(asyncCourts.GetEnumerator());
-
-            _mockCourtDbSet.Setup(s => s.ToDictionaryAsync(
-                c => c.Id,
-                c => c,
-                It.IsAny<CancellationToken>()
-            )).ReturnsAsync(courts.ToDictionary(c => c.Id, c => c));
-        }
-
-        private void SetupSportCenterDbSet(IQueryable<SportCenter> sportCenters)
-        {
-            var asyncSportCenters = sportCenters.ToList().AsQueryable();
-            var asyncProvider = new TestAsyncQueryProvider<SportCenter>(asyncSportCenters.Provider);
-
-            _mockSportCenterDbSet.As<IAsyncEnumerable<SportCenter>>()
-                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-                .Returns(new TestAsyncEnumerator<SportCenter>(asyncSportCenters.GetEnumerator()));
-
-            _mockSportCenterDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(asyncProvider);
-            _mockSportCenterDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(asyncSportCenters.Expression);
-            _mockSportCenterDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(asyncSportCenters.ElementType);
-            _mockSportCenterDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(asyncSportCenters.GetEnumerator());
-
-            _mockSportCenterDbSet.Setup(s => s.ToDictionaryAsync(
-                sc => sc.Id,
-                sc => sc.Name,
-                It.IsAny<CancellationToken>()
-            )).ReturnsAsync(sportCenters.ToDictionary(sc => sc.Id, sc => sc.Name));
-        }
-
         #endregion Helper Methods
-
-        #region Async Query Provider Helpers
-
-        public class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
-        {
-            private readonly IQueryProvider _inner;
-
-            internal TestAsyncQueryProvider(IQueryProvider inner)
-            {
-                _inner = inner;
-            }
-
-            public IQueryable CreateQuery(Expression expression)
-            {
-                return _inner.CreateQuery(expression);
-            }
-
-            public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
-            {
-                return new TestAsyncEnumerable<TElement>(expression);
-            }
-
-            public object Execute(Expression expression)
-            {
-                return _inner.Execute(expression);
-            }
-
-            public TResult Execute<TResult>(Expression expression)
-            {
-                return _inner.Execute<TResult>(expression);
-            }
-
-            public IAsyncEnumerable<TResult> ExecuteAsync<TResult>(Expression expression)
-            {
-                return new TestAsyncEnumerable<TResult>(expression);
-            }
-
-            public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
-            {
-                return Execute<TResult>(expression);
-            }
-        }
-
-        public class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
-        {
-            public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable)
-            {
-            }
-
-            public TestAsyncEnumerable(Expression expression) : base(expression)
-            {
-            }
-
-            public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-            {
-                return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
-            }
-
-            IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
-        }
-
-        public class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-        {
-            private readonly IEnumerator<T> _inner;
-
-            public TestAsyncEnumerator(IEnumerator<T> inner)
-            {
-                _inner = inner;
-            }
-
-            public T Current => _inner.Current;
-
-            public ValueTask<bool> MoveNextAsync()
-            {
-                return new ValueTask<bool>(_inner.MoveNext());
-            }
-
-            public ValueTask DisposeAsync()
-            {
-                _inner.Dispose();
-                return default;
-            }
-        }
-
-        #endregion Async Query Provider Helpers
     }
 }

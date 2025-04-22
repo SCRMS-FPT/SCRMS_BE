@@ -62,7 +62,7 @@ namespace CourtBooking.Test.Domain.Models
             var exception = Assert.Throws<DomainException>(() =>
                 BookingDetail.Create(bookingId, courtId, startTime, endTime, schedules));
 
-            Assert.Contains("Not found this slot", exception.Message);
+            Assert.Contains($"No schedule found for time slot starting at {startTime}", exception.Message);
         }
 
         [Fact]

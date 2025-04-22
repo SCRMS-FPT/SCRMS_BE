@@ -245,8 +245,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     "Test Center",
                     "1234567890",
                     new Location("Address", "City", "Country", "PostalCode"),
-                    new GeoLocation(0, 0),
-                    null,
+                    new GeoLocation(0.0, 0.0),
+                    new SportCenterImages("avatar.jpg", new List<string>()),
                     "Description"
                 )
             }.AsQueryable();
@@ -265,11 +265,11 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
             mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
 
-            mockDbSet.Setup(m => m.FirstOrDefaultAsync(
-                It.IsAny<System.Linq.Expressions.Expression<Func<T, bool>>>(),
-                It.IsAny<CancellationToken>()))
-                .Returns<System.Linq.Expressions.Expression<Func<T, bool>>, CancellationToken>(
-                    (expr, token) => Task.FromResult(data.FirstOrDefault(expr.Compile())));
+            // Instead of trying to mock FirstOrDefaultAsync directly, we'll mock the necessary methods
+            // to allow LINQ queries to work properly on our mock
+            mockDbSet.Setup(x => x.Find(It.IsAny<object[]>()))
+                .Returns<object[]>(ids => data.FirstOrDefault(d =>
+                    typeof(T).GetProperty("Id").GetValue(d).Equals(ids[0])));
         }
     }
 }

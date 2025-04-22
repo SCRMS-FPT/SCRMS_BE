@@ -14,7 +14,7 @@ namespace CourtBooking.Domain.Models
         public BookingStatus Status { get; private set; }
         public decimal TotalTime { get; private set; }
         public decimal TotalPrice { get; private set; }
-        public decimal RemainingBalance { get; private set; }
+        public decimal RemainingBalance { get; private set; }  //số tiền còn lại cần thanh toán
         public decimal InitialDeposit { get; private set; }
         public decimal TotalPaid { get; private set; }
         public string? Note { get; private set; }
@@ -196,6 +196,9 @@ namespace CourtBooking.Domain.Models
 
             if (depositAmount < minRequired)
                 throw new DomainException($"Số tiền đặt cọc tối thiểu: {minRequired}");
+
+            if (depositAmount > TotalPrice - TotalPaid)
+                throw new DomainException($"Số tiền đặt cọc không thể lớn hơn số dư còn lại: {TotalPrice - TotalPaid}");
 
             TotalPaid += depositAmount;
             RemainingBalance = TotalPrice - TotalPaid;

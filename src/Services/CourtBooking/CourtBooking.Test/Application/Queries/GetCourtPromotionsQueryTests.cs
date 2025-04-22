@@ -21,15 +21,16 @@ namespace CourtBooking.Test.Application.Queries
         }
 
         [Fact]
-        public void Constructor_Should_ThrowArgumentException_When_CourtIdIsEmpty()
+        public void Constructor_Should_AcceptEmptyCourtId_When_Called()
         {
             // Arrange
             var userId = Guid.NewGuid();
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => new GetCourtPromotionsQuery(Guid.Empty, userId, "User"));
+            // Act
+            var query = new GetCourtPromotionsQuery(Guid.Empty, userId, "User");
 
-            Assert.Contains("rỗng", exception.Message);
+            // Assert
+            Assert.Equal(Guid.Empty, query.CourtId);
         }
     }
 }

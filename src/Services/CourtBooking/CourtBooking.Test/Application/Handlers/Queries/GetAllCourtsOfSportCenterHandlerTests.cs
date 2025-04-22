@@ -77,7 +77,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 SportCenterId.Of(sportCenterId),
                 SportId.Of(sportId),
                 TimeSpan.FromMinutes(100),
-                "Main court", "facilities",
+                "Main court",
+                "[]",
                (CourtType)1,
                 30, 24,
                 1
@@ -132,7 +133,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 SportCenterId.Of(sportCenterId),
                 SportId.Of(sportId),
                 TimeSpan.FromMinutes(100),
-                "Main court", "facilities",
+                "Main court",
+                "[]",
                (CourtType)1,
                 30, 24,
                 1
@@ -175,22 +177,19 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             var facilitiesJson = JsonSerializer.Serialize(facilities);
 
+            // Create the court with the facilities JSON directly in the constructor
             var court = Court.Create(
                 CourtId.Of(courtId),
                 CourtName.Of("Tennis Court 1"),
                 SportCenterId.Of(sportCenterId),
                 SportId.Of(sportId),
                 TimeSpan.FromMinutes(100),
-                "Main court", "facilities",
-               (CourtType)1,
+                "Main court",
+                facilitiesJson, // Use the JSON here instead of "[]"
+                (CourtType)1,
                 30, 24,
                 1
             );
-
-            // Set facilities JSON
-            var privateField = typeof(Court).GetField("_facilities",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            privateField?.SetValue(court, facilitiesJson);
 
             var sport = Sport.Create(
                 SportId.Of(sportId),

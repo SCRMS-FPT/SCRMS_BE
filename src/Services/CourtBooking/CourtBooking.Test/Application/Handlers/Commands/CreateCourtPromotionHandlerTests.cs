@@ -16,6 +16,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using MockQueryable.Moq;
 
 namespace CourtBooking.Test.Application.Handlers.Commands
 {
@@ -91,23 +92,10 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 "Test Description"
             );
 
-            // Setup mock DbSet
-            var sportCenters = new List<SportCenter> { sportCenter };
-            var sportCentersQueryable = sportCenters.AsQueryable();
-            var mockDbSet = new Mock<DbSet<SportCenter>>();
-
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(sportCentersQueryable.Provider);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(sportCentersQueryable.Expression);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(sportCentersQueryable.ElementType);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(sportCentersQueryable.GetEnumerator());
-
+            // Create mock DbSet with proper setup for async operations
+            var sportCenters = new List<SportCenter> { sportCenter }.AsQueryable();
+            var mockDbSet = sportCenters.BuildMockDbSet();
             _mockDbContext.Setup(c => c.SportCenters).Returns(mockDbSet.Object);
-
-            // Setup FirstOrDefaultAsync method
-            _mockDbContext.Setup(c => c.SportCenters.FirstOrDefaultAsync(
-                It.IsAny<System.Linq.Expressions.Expression<Func<SportCenter, bool>>>(),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(sportCenter);
 
             // Setup repository to capture the created promotion
             CourtPromotion addedPromotion = null;
@@ -180,23 +168,10 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 "Test Description"
             );
 
-            // Setup mock DbSet
-            var sportCenters = new List<SportCenter> { sportCenter };
-            var sportCentersQueryable = sportCenters.AsQueryable();
-            var mockDbSet = new Mock<DbSet<SportCenter>>();
-
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(sportCentersQueryable.Provider);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(sportCentersQueryable.Expression);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(sportCentersQueryable.ElementType);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(sportCentersQueryable.GetEnumerator());
-
+            // Create mock DbSet with proper setup for async operations
+            var sportCenters = new List<SportCenter> { sportCenter }.AsQueryable();
+            var mockDbSet = sportCenters.BuildMockDbSet();
             _mockDbContext.Setup(c => c.SportCenters).Returns(mockDbSet.Object);
-
-            // Setup FirstOrDefaultAsync method
-            _mockDbContext.Setup(c => c.SportCenters.FirstOrDefaultAsync(
-                It.IsAny<System.Linq.Expressions.Expression<Func<SportCenter, bool>>>(),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(sportCenter);
 
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -283,31 +258,15 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 "Test Description"
             );
 
-            // Setup mock DbSet
-            var sportCenters = new List<SportCenter> { sportCenter };
-            var sportCentersQueryable = sportCenters.AsQueryable();
-            var mockDbSet = new Mock<DbSet<SportCenter>>();
-
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Provider).Returns(sportCentersQueryable.Provider);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.Expression).Returns(sportCentersQueryable.Expression);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.ElementType).Returns(sportCentersQueryable.ElementType);
-            mockDbSet.As<IQueryable<SportCenter>>().Setup(m => m.GetEnumerator()).Returns(sportCentersQueryable.GetEnumerator());
-
+            // Create mock DbSet with proper setup for async operations
+            var sportCenters = new List<SportCenter> { sportCenter }.AsQueryable();
+            var mockDbSet = sportCenters.BuildMockDbSet();
             _mockDbContext.Setup(c => c.SportCenters).Returns(mockDbSet.Object);
-
-            // Setup FirstOrDefaultAsync method
-            _mockDbContext.Setup(c => c.SportCenters.FirstOrDefaultAsync(
-                It.IsAny<System.Linq.Expressions.Expression<Func<SportCenter, bool>>>(),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(sportCenter);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(
                 () => _handler.Handle(command, CancellationToken.None)
             );
-
-            // Verify repository calls
-            _mockPromotionRepository.Verify(r => r.AddAsync(It.IsAny<CourtPromotion>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

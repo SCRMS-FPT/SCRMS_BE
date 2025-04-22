@@ -144,7 +144,7 @@ namespace CourtBooking.API.Endpoints
                 var role = roleClaim?.Value ?? "User";
                 // Kiểm tra xem người dùng có phải là chủ sở hữu của sân này không
                 var isOwner = await courtRepository.IsOwnedByUserAsync(id, userId);
-                if (!isOwner || role != "Admin")
+                if (!isOwner && role != "Admin")
                 {
                     return Results.Problem("Bạn không có quyền xóa sân này", statusCode: StatusCodes.Status403Forbidden);
                 }
