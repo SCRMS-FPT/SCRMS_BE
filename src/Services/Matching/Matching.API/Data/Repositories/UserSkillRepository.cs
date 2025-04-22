@@ -54,11 +54,11 @@ namespace Matching.API.Data.Repositories
         }
 
         public async Task<Dictionary<Guid, List<UserSkill>>> GetSuggestionsWithSkillsAsync(
-    Guid userId,
-    int page,
-    int limit,
-    List<SportSkillFilter> sportSkillFilters,
-    CancellationToken cancellationToken)
+            Guid userId,
+            int page,
+            int limit,
+            List<SportSkillFilter> sportSkillFilters,
+            CancellationToken cancellationToken)
         {
             // Lấy danh sách ID người dùng đã bị swipe
             var swipedUserIds = await _context.SwipeActions

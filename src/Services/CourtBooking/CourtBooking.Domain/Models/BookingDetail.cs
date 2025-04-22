@@ -59,6 +59,10 @@ namespace CourtBooking.Domain.Models
 
         private static decimal CalculatePrice(TimeSpan startTime, TimeSpan endTime, List<CourtSchedule> schedules)
         {
+            // Kiểm tra nếu schedules rỗng hoặc null, trả về 0
+            if (schedules == null || schedules.Count == 0)
+                return 0;
+                
             decimal total = 0;
             TimeSpan current = startTime;
 

@@ -70,9 +70,11 @@ namespace CourtBooking.Test.API.Endpoints
             // Assert
             Assert.NotNull(result);
             Assert.IsType<Created<CreateBookingResponse>>(result);
-            var createdResult = (CreatedResult)result;
+
+            var createdResult = result as Created<CreateBookingResponse>;
+            Assert.NotNull(createdResult);
             Assert.Equal($"/api/bookings/{resultId}", createdResult.Location);
-            Assert.Equal(resultId, ((CreateBookingResponse)createdResult.Value).Id);
+            Assert.Equal(resultId, createdResult.Value.Id);
         }
 
         [Fact]

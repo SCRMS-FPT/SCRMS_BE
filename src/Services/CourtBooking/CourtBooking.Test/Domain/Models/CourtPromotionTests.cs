@@ -39,22 +39,21 @@ namespace CourtBooking.Test.Domain.Models
         {
             // Arrange
             var promotion = CreateValidCourtPromotion();
-            
             var newDescription = "Updated Promotion";
             var newDiscountType = "FixedAmount";
             var newDiscountValue = 50.0m;
-            var newValidFrom = DateTime.Today.AddDays(5);
-            var newValidTo = DateTime.Today.AddDays(60);
+            var newStartDate = DateTime.Today.AddDays(1);
+            var newEndDate = DateTime.Today.AddDays(30);
 
             // Act
-            promotion.Update(newDescription, newDiscountType, newDiscountValue, newValidFrom, newValidTo);
+            promotion.Update(newDescription, newDiscountType, newDiscountValue, newStartDate, newEndDate);
 
             // Assert
             Assert.Equal(newDescription, promotion.Description);
             Assert.Equal(newDiscountType, promotion.DiscountType);
             Assert.Equal(newDiscountValue, promotion.DiscountValue);
-            Assert.Equal(newValidFrom, promotion.ValidFrom);
-            Assert.Equal(newValidTo, promotion.ValidTo);
+            Assert.Equal(newStartDate, promotion.ValidFrom);
+            Assert.Equal(newEndDate, promotion.ValidTo);
             Assert.NotNull(promotion.LastModified);
         }
 
@@ -63,7 +62,7 @@ namespace CourtBooking.Test.Domain.Models
         {
             // Arrange
             var before = DateTime.UtcNow.AddSeconds(-1);
-            
+
             // Act
             var promotion = CreateValidCourtPromotion();
             var after = DateTime.UtcNow.AddSeconds(1);
@@ -85,4 +84,4 @@ namespace CourtBooking.Test.Domain.Models
             );
         }
     }
-} 
+}

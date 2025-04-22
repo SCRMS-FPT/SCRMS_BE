@@ -55,7 +55,11 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
 
         var sportIds = courts.Select(c => c.SportId).Distinct().ToList();
         var sports = await _sportRepository.GetSportsByIdsAsync(sportIds, cancellationToken);
-        var sportNames = sports.ToDictionary(s => s.Id, s => s.Name);
+
+        // Fix: Create dictionary safely without null keys
+        var sportNames = sports
+            .Where(s => s != null && s.Id != null)
+            .ToDictionary(s => s.Id, s => s.Name);
 
         // Dictionary to store promotions for each court
         var courtPromotions = new Dictionary<CourtId, List<CourtPromotionDTO>>();

@@ -1,5 +1,6 @@
 using FluentValidation;
 using CourtBooking.Application.DTOs;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.CourtManagement.Command.CreateCourt
 {
@@ -31,7 +32,7 @@ namespace CourtBooking.Application.CourtManagement.Command.CreateCourt
                     .WithMessage("Phần trăm đặt cọc tối thiểu phải từ 0% đến 100%");
 
                 RuleFor(c => c.Court.CourtType)
-                    .IsInEnum()
+                    .Must(courtType => Enum.IsDefined(typeof(CourtType), courtType))
                     .WithMessage("Loại sân không hợp lệ");
 
                 RuleFor(c => c.Court.CancellationWindowHours)
@@ -41,11 +42,11 @@ namespace CourtBooking.Application.CourtManagement.Command.CreateCourt
                 RuleFor(c => c.Court.RefundPercentage)
                     .InclusiveBetween(0, 100)
                     .WithMessage("Phần trăm hoàn tiền phải từ 0% đến 100%");
-                
+
                 RuleFor(c => c.Court.CourtSchedules)
                     .NotEmpty()
                     .WithMessage("Lịch hoạt động của sân không được trống");
             });
         }
     }
-} 
+}

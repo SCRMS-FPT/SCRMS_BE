@@ -32,8 +32,18 @@ namespace CourtBooking.Test.API.Endpoints
         {
             // Arrange
             var courtId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
             var promotionId = Guid.NewGuid();
             var now = DateTime.Now;
+
+            // Thiết lập mock cho User trong context
+            var userClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Role, "User")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(userClaims, "TestAuth"));
+            _mockHttpContext.Setup(c => c.User).Returns(user);
 
             var promotions = new List<CourtPromotionDTO>
             {
@@ -81,23 +91,23 @@ namespace CourtBooking.Test.API.Endpoints
 
             _mockHttpContext.Setup(c => c.User).Returns(user);
 
-            // Tạo CreateCourtPromotionRequest với các tham số cụ thể
+            // Create request with properly named parameters
             var request = new CreateCourtPromotionRequest(
-                "Black Friday",
-                "Test Promotion",
-                10,
-                now,
-                now.AddDays(7)
+                Description: "Black Friday Discount",
+                DiscountType: "Percentage",
+                DiscountValue: 10,
+                ValidFrom: now,
+                ValidTo: now.AddDays(7)
             );
 
             var promotionDTO = new CourtPromotionDTO(
                 Id: promotionId,
                 CourtId: courtId,
-                Description: request.Name,
+                Description: request.Description,
                 DiscountType: request.DiscountType,
                 DiscountValue: request.DiscountValue,
-                ValidFrom: request.StartDate,
-                ValidTo: request.EndDate,
+                ValidFrom: request.ValidFrom,
+                ValidTo: request.ValidTo,
                 CreatedAt: now,
                 LastModified: null
             );
@@ -139,13 +149,13 @@ namespace CourtBooking.Test.API.Endpoints
 
             _mockHttpContext.Setup(c => c.User).Returns(user);
 
-            // Tạo CreateCourtPromotionRequest với các tham số cụ thể
+            // Create request with properly named parameters
             var request = new CreateCourtPromotionRequest(
-                "Black Friday",
-                "Test Promotion",
-                10,
-                now,
-                now.AddDays(7)
+                Description: "Black Friday Discount",
+                DiscountType: "Percentage",
+                DiscountValue: 10,
+                ValidFrom: now,
+                ValidTo: now.AddDays(7)
             );
 
             // Act
@@ -175,23 +185,23 @@ namespace CourtBooking.Test.API.Endpoints
 
             _mockHttpContext.Setup(c => c.User).Returns(user);
 
-            // Tạo UpdateCourtPromotionRequest với các tham số cụ thể
+            // Create request with properly named parameters
             var request = new UpdateCourtPromotionRequest(
-                "Updated Promotion",
-                "Updated Description",
-                15,
-                now,
-                now.AddDays(7)
+                Description: "Updated Black Friday Discount",
+                DiscountType: "Percentage",
+                DiscountValue: 15,
+                ValidFrom: now,
+                ValidTo: now.AddDays(7)
             );
 
             var updatedPromotionDTO = new CourtPromotionDTO(
                 Id: promotionId,
                 CourtId: courtId,
-                Description: request.Name,
+                Description: request.Description,
                 DiscountType: request.DiscountType,
                 DiscountValue: request.DiscountValue,
-                ValidFrom: request.StartDate,
-                ValidTo: request.EndDate,
+                ValidFrom: request.ValidFrom,
+                ValidTo: request.ValidTo,
                 CreatedAt: now,
                 LastModified: now
             );
@@ -295,8 +305,8 @@ namespace CourtBooking.Test.API.Endpoints
                         req.Description,
                         req.DiscountType,
                         req.DiscountValue,
-                        req.StartDate,
-                        req.EndDate,
+                        req.ValidFrom,
+                        req.ValidTo,
                         Guid.Parse(userId)
                     );
 
@@ -326,8 +336,8 @@ namespace CourtBooking.Test.API.Endpoints
                         req.Description,
                         req.DiscountType,
                         req.DiscountValue,
-                        req.StartDate,
-                        req.EndDate,
+                        req.ValidFrom,
+                        req.ValidTo,
                         Guid.Parse(userId)
                     );
 
@@ -364,24 +374,18 @@ namespace CourtBooking.Test.API.Endpoints
         }
     }
 
-    // Cập nhật cấu trúc request để phù hợp với API
+    // Update record models with correct property names to match the endpoints
     public record CreateCourtPromotionRequest(
-        string Name,
         string Description,
+        string DiscountType,
         decimal DiscountValue,
-        DateTime StartDate,
-        DateTime EndDate)
-    {
-        public string DiscountType { get; } = "Percentage"; // Giá trị mặc định
-    }
+        DateTime ValidFrom,
+        DateTime ValidTo);
 
     public record UpdateCourtPromotionRequest(
-        string Name,
         string Description,
+        string DiscountType,
         decimal DiscountValue,
-        DateTime StartDate,
-        DateTime EndDate)
-    {
-        public string DiscountType { get; } = "Percentage"; // Giá trị mặc định
-    }
+        DateTime ValidFrom,
+        DateTime ValidTo);
 }

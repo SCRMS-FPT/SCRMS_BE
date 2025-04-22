@@ -11,35 +11,26 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using CourtBooking.Infrastructure.Data;
+using CourtBooking.Test.Infrastructure.Data;
 
 namespace CourtBooking.Test.Application.Repositories
 {
+    [Collection("PostgresDatabase")]
     public class SportRepositoryTests : IDisposable
     {
-        private const string ConnectionString = "Host=localhost;Port=5432;Database=courtbooking_test;Username=postgres;Password=123456";
-        private readonly DbContextOptions<ApplicationDbContext> _options;
         private readonly ApplicationDbContext _context;
         private readonly SportRepository _repository;
+        private readonly PostgresTestFixture _fixture;
 
-        public SportRepositoryTests()
+        public SportRepositoryTests(PostgresTestFixture fixture)
         {
-            _options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseNpgsql(ConnectionString)
-                .Options;
-
-            _context = new ApplicationDbContext(_options);
-            _context.Database.EnsureCreated();
-
+            _fixture = fixture;
+            _context = new ApplicationDbContext(_fixture.ContextOptions);
             _repository = new SportRepository(_context);
-
-            // Cleanup trước khi chạy test
-            _context.Database.BeginTransaction();
-            CleanupTestData();
         }
 
         public void Dispose()
         {
-            _context.Database.RollbackTransaction();
             _context.Dispose();
         }
 
@@ -102,13 +93,15 @@ namespace CourtBooking.Test.Application.Repositories
             await _context.SaveChangesAsync();
 
             // Assert
-            Assert.Empty(_context.Sports);
+            var result = await _context.Sports.FindAsync(sport.Id);
+            Assert.Null(result);
         }
 
         [Fact]
         public async Task GetAllSportsAsync_Should_ReturnAllRecords()
         {
             // Arrange
+            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE sports CASCADE");
             var testData = await CreateMultipleSports(5);
 
             // Act
@@ -169,54 +162,52 @@ namespace CourtBooking.Test.Application.Repositories
             return sports;
         }
 
-        private async Task<Court> CreateCourtForSport(SportId sportId)
+        private Sport CreateValidSport()
         {
-            var id = SportCenterId.Of(Guid.NewGuid());
-            var ownerId = OwnerId.Of(Guid.NewGuid());
-            var name = "Tennis Center";
-            var phoneNumber = "0123456789";
-            var address = new Location("123 Main St", "HCMC", "Vietnam", "70000");
-            var location = new GeoLocation(10.762622, 106.660172);
-            var images = new SportCenterImages("main.jpg", new List<string> { "1.jpg", "2.jpg" });
-            var description = "A great tennis center";
+            return Sport.Create(
+                SportId.Of(Guid.NewGuid()),
+                "Test Sport",
+                "Test Sport Description",
+                "icon.png"
+            );
+        }
 
-            // Act
-            var sportCenter = SportCenter.Create(id, ownerId, name, phoneNumber, address, location, images, description);
+        private async Task<SportCenter> CreateAndSaveSportCenter()
+        {
+            var sportCenter = SportCenter.Create(
+                SportCenterId.Of(Guid.NewGuid()),
+                OwnerId.Of(Guid.NewGuid()),
+                "Test Sport Center",
+                "0123456789",
+                new Location("123 Main St", "HCMC", "Vietnam", "70000"),
+                new GeoLocation(10.762622, 106.660172),
+                new SportCenterImages("main.jpg", new List<string> { "1.jpg", "2.jpg" }),
+                "Test Sport Center Description"
+            );
+            _context.SportCenters.Add(sportCenter);
+            await _context.SaveChangesAsync();
+            return sportCenter;
+        }
 
+        private async Task CreateCourtForSport(SportId sportId)
+        {
+            var sportCenter = await CreateAndSaveSportCenter();
             var court = Court.Create(
                 CourtId.Of(Guid.NewGuid()),
                 CourtName.Of("Test Court"),
                 sportCenter.Id,
                 sportId,
-                TimeSpan.FromMinutes(60),
-                "Test description",
+                TimeSpan.FromHours(1),
+                "Test Court Description",
                 "[]",
                 CourtType.Indoor,
-                50
+                50,
+                24,
+                100
             );
 
-            _context.SportCenters.Add(sportCenter);
             _context.Courts.Add(court);
             await _context.SaveChangesAsync();
-            return court;
-        }
-
-        private void CleanupTestData()
-        {
-            _context.Courts.RemoveRange(_context.Courts);
-            _context.SportCenters.RemoveRange(_context.SportCenters);
-            _context.Sports.RemoveRange(_context.Sports);
-            _context.SaveChanges();
-        }
-
-        private Sport CreateValidSport()
-        {
-            return Sport.Create(
-                SportId.Of(Guid.NewGuid()),
-                "Tennis",
-                "Racket sport played individually or in teams",
-                "tennis-icon.png"
-            );
         }
     }
 }

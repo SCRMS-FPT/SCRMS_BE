@@ -9,22 +9,29 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using CourtBooking.Test.Infrastructure.Data;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace CourtBooking.Test.Application.Repositories
 {
-    public class CourtRepositoryTests
+    [Collection("PostgresDatabase")]
+    public class CourtRepositoryTests : IDisposable
     {
         private readonly ApplicationDbContext _context;
         private readonly ICourtRepository _repository;
+        private readonly PostgresTestFixture _fixture;
 
-        public CourtRepositoryTests()
+        public CourtRepositoryTests(PostgresTestFixture fixture)
         {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: $"CourtDb_{Guid.NewGuid()}")
-                .Options;
-
-            _context = new ApplicationDbContext(options);
+            _fixture = fixture;
+            _context = new ApplicationDbContext(_fixture.ContextOptions);
             _repository = new CourtRepository(_context);
+        }
+
+        public void Dispose()
+        {
+            _context.Dispose();
         }
 
         [Fact]
@@ -157,6 +164,35 @@ namespace CourtBooking.Test.Application.Repositories
 
             // Assert
             Assert.False(result);
+        }
+
+        private async Task<Court> CreateTestCourt()
+        {
+            var sport = await CreateTestSport();
+            var sportcenter = await CreateTestSportCenter();
+
+            var facilities = new List<SportCenterFacility>
+            {
+                new SportCenterFacility { Name = "Locker", Description = "Locker room" },
+                new SportCenterFacility { Name = "Shower", Description = "Shower room" }
+            };
+
+            var court = Court.Create(
+                CourtId.Of(Guid.NewGuid()),
+                new CourtName("Test Court"),
+                sportcenter.Id,
+                sport.Id,
+                TimeSpan.FromMinutes(60),
+                "Description",
+                JsonSerializer.Serialize(facilities),
+                CourtType.Outdoor,
+                50
+            );
+
+            _context.Courts.Add(court);
+            await _context.SaveChangesAsync();
+
+            return court;
         }
     }
 }

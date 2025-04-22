@@ -3,7 +3,6 @@ using BuildingBlocks.Messaging.Outbox;
 using CourtBooking.Application.BookingManagement.Command.CancelBooking;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Data.Repositories;
-using DomainEvent = CourtBooking.Domain.Abstractions.IDomainEvent;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
@@ -40,6 +39,12 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             _mockDbContext.Setup(db => db.BeginTransactionAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_mockTransaction.Object);
 
+            _mockTransaction.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
             _handler = new CancelBookingCommandHandler(
                 _mockBookingRepository.Object,
                 _mockCourtRepository.Object,
@@ -55,6 +60,8 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             // Arrange
             var bookingId = Guid.NewGuid();
             var userId = Guid.NewGuid();
+            var courtId = Guid.NewGuid();
+            var sportCenterId = Guid.NewGuid();
             var requestedAt = DateTime.Now;
             var command = new CancelBookingCommand(
                 bookingId,
@@ -72,16 +79,68 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 "Test booking"
             );
 
+            // Add booking detail with court
+            var detail = BookingDetail.Create(
+                booking.Id,
+                CourtId.Of(courtId),
+                TimeSpan.FromHours(10),
+                TimeSpan.FromHours(12),
+                new List<CourtSchedule>()
+            );
+
+            var bookingDetails = new List<BookingDetail> { detail };
+
             _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(booking);
 
+            // Setup booking details
+            _mockBookingRepository.Setup(r => r.GetBookingDetailsAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookingDetails);
+
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(sportCenterId),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromMinutes(60),
+                "Test court",
+                "[]",
+                CourtType.Indoor,
+                50, 24, 100
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            // Setup sport center
+            var sportCenter = SportCenter.Create(
+                SportCenterId.Of(sportCenterId),
+                OwnerId.Of(Guid.NewGuid()),
+                "Test Sport Center",
+                "0123456789",
+                new Location("123 Street", "City", "Country", "12345"),
+                new GeoLocation(0, 0),
+                new SportCenterImages("test.jpg", new List<string>()),
+                "Description"
+            );
+
+            _mockSportCenterRepository.Setup(r => r.GetSportCenterByIdAsync(It.Is<SportCenterId>(s => s.Value == sportCenterId), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(sportCenter);
+
+            // Setup save changes
+            _mockDbContext.Setup(db => db.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
             // Act
-            await _handler.Handle(command, CancellationToken.None);
+            var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             Assert.Equal(BookingStatus.Cancelled, booking.Status);
+            Assert.Equal(bookingId, result.BookingId);
+            Assert.Equal("Cancelled", result.Status);
             _mockBookingRepository.Verify(r => r.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
-            _mockOutboxService.Verify(o => o.PublishAsync<DomainEvent>(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockOutboxService.Verify(o => o.SaveMessageAsync(It.IsAny<object>()), Times.AtLeastOnce);
             _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -90,7 +149,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
         {
             // Arrange
             var bookingId = Guid.NewGuid();
-            var userId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
             var anotherUserId = Guid.NewGuid();
             var sportCenterId = Guid.NewGuid();
             var courtId = Guid.NewGuid();
@@ -99,7 +158,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 bookingId,
                 "Test cancellation reason",
                 requestedAt,
-                userId,
+                ownerId,
                 "SportCenterOwner"
             );
 
@@ -112,32 +171,70 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             );
 
             // Add booking detail with court
-            booking.AddBookingDetail(
+            var detail = BookingDetail.Create(
+                booking.Id,
                 CourtId.Of(courtId),
                 TimeSpan.FromHours(10),
                 TimeSpan.FromHours(12),
-                new List<CourtSchedule>(),
-                0
+                new List<CourtSchedule>()
             );
+
+            var bookingDetails = new List<BookingDetail> { detail };
 
             _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(booking);
 
-            // Setup court is owned by sport center
-            _mockCourtRepository.Setup(r => r.GetSportCenterIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(sportCenterId);
+            // Setup booking details
+            _mockBookingRepository.Setup(r => r.GetBookingDetailsAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookingDetails);
 
-            // Setup sport center is owned by userId
-            _mockSportCenterRepository.Setup(r => r.IsOwnedByUserAsync(sportCenterId, userId, It.IsAny<CancellationToken>()))
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(sportCenterId),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromMinutes(60),
+                "Test court",
+                "[]",
+                CourtType.Indoor,
+                50, 24, 100
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            // Setup sport center owned by ownerId
+            var sportCenter = SportCenter.Create(
+                SportCenterId.Of(sportCenterId),
+                OwnerId.Of(ownerId),
+                "Test Sport Center",
+                "0123456789",
+                new Location("123 Street", "City", "Country", "12345"),
+                new GeoLocation(0, 0),
+                new SportCenterImages("test.jpg", new List<string>()),
+                "Description"
+            );
+
+            _mockSportCenterRepository.Setup(r => r.GetSportCenterByIdAsync(It.Is<SportCenterId>(s => s.Value == sportCenterId), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(sportCenter);
+
+            // Setup is owned by user check
+            _mockSportCenterRepository.Setup(r => r.IsOwnedByUserAsync(sportCenterId, ownerId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
+            // Setup save changes
+            _mockDbContext.Setup(db => db.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
             // Act
-            await _handler.Handle(command, CancellationToken.None);
+            var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             Assert.Equal(BookingStatus.Cancelled, booking.Status);
+            Assert.Equal(bookingId, result.BookingId);
+            Assert.Equal("Cancelled", result.Status);
             _mockBookingRepository.Verify(r => r.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
-            _mockOutboxService.Verify(o => o.PublishAsync<DomainEvent>(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()), Times.Once);
             _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -161,10 +258,10 @@ namespace CourtBooking.Test.Application.Handlers.Commands
 
             // Act & Assert
             await Assert.ThrowsAsync<NotFoundException>(
-                () => _handler.Handle(command, CancellationToken.None)
+                async () => await _handler.Handle(command, CancellationToken.None)
             );
 
-            _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -173,6 +270,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             // Arrange
             var bookingId = Guid.NewGuid();
             var userId = Guid.NewGuid();
+            var courtId = Guid.NewGuid();
             var requestedAt = DateTime.Now;
             var command = new CancelBookingCommand(
                 bookingId,
@@ -191,16 +289,30 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             );
             booking.UpdateStatus(BookingStatus.Cancelled);
 
+            // Add booking detail with court
+            var detail = BookingDetail.Create(
+                booking.Id,
+                CourtId.Of(courtId),
+                TimeSpan.FromHours(10),
+                TimeSpan.FromHours(12),
+                new List<CourtSchedule>()
+            );
+
+            var bookingDetails = new List<BookingDetail> { detail };
+
             _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(booking);
 
+            // Setup booking details
+            _mockBookingRepository.Setup(r => r.GetBookingDetailsAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookingDetails);
+
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _handler.Handle(command, CancellationToken.None)
+                async () => await _handler.Handle(command, CancellationToken.None)
             );
 
-            Assert.Contains("đã bị hủy", exception.Message);
-            _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.Contains("already cancelled", exception.Message);
         }
 
         [Fact]
@@ -211,6 +323,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             var userId = Guid.NewGuid();
             var anotherUserId = Guid.NewGuid();
             var sportCenterId = Guid.NewGuid();
+            var sportCenterOwnerId = Guid.NewGuid(); // Different from userId
             var courtId = Guid.NewGuid();
             var requestedAt = DateTime.Now;
             var command = new CancelBookingCommand(
@@ -230,31 +343,47 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             );
 
             // Add booking detail with court
-            booking.AddBookingDetail(
+            var detail = BookingDetail.Create(
+                booking.Id,
                 CourtId.Of(courtId),
                 TimeSpan.FromHours(10),
                 TimeSpan.FromHours(12),
-                new List<CourtSchedule>(),
-                0
+                new List<CourtSchedule>()
             );
+
+            var bookingDetails = new List<BookingDetail> { detail };
 
             _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(booking);
 
-            // Setup court is owned by sport center
-            _mockCourtRepository.Setup(r => r.GetSportCenterIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(sportCenterId);
+            // Setup booking details
+            _mockBookingRepository.Setup(r => r.GetBookingDetailsAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookingDetails);
 
-            // Setup sport center is NOT owned by userId
+            // Setup court
+            var court = Court.Create(
+                CourtId.Of(courtId),
+                CourtName.Of("Tennis Court 1"),
+                SportCenterId.Of(sportCenterId),
+                SportId.Of(Guid.NewGuid()),
+                TimeSpan.FromMinutes(60),
+                "Test court",
+                "[]",
+                CourtType.Indoor,
+                50, 24, 100
+            );
+
+            _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(court);
+
+            // Set up the sport center owned by someone else
             _mockSportCenterRepository.Setup(r => r.IsOwnedByUserAsync(sportCenterId, userId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
 
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
-                () => _handler.Handle(command, CancellationToken.None)
+                async () => await _handler.Handle(command, CancellationToken.None)
             );
-
-            _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

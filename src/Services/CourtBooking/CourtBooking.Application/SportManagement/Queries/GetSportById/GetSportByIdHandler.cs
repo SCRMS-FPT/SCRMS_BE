@@ -25,8 +25,8 @@ namespace CourtBooking.Application.SportManagement.Queries.GetSportById
             return new SportDTO(
                 sport.Id.Value,
                 sport.Name,
-                sport.Icon,
-                sport.Description);
+                sport.Description,
+                sport.Icon);
         }
     }
 }

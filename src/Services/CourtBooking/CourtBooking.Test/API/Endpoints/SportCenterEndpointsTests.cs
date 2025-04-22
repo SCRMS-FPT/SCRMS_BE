@@ -441,8 +441,8 @@ namespace CourtBooking.Test.API.Endpoints
             var result = await InvokeUpdateSportCenterDelegate(sportCenterId, updateCommand, _mockHttpContext.Object);
 
             // Assert
-            Assert.IsType<Ok<SportCenterListDTO>>(result);
-            var okResult = (Ok<SportCenterListDTO>)result;
+            Assert.IsType<Ok<SportCenterDetailDTO>>(result);
+            var okResult = (Ok<SportCenterDetailDTO>)result;
             Assert.Equal(sportCenterId, okResult.Value.Id);
             Assert.Equal("Updated Sport Center", okResult.Value.Name);
 

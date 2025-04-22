@@ -152,7 +152,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule>());
 
@@ -190,10 +190,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 CourtName.Of("Tennis Court 1"),
                 SportCenterId.Of(Guid.NewGuid()),
                 SportId.Of(Guid.NewGuid()),
-                TimeSpan.FromHours(1), // Added slotDuration to match assertion (1-hour slots)
+                TimeSpan.FromHours(1), // 1-hour time slots
                 "Main court",
                 "Indoor",
-                CourtType.Indoor, // Use enum value instead of 1
+                CourtType.Indoor,
                 30
             );
 
@@ -210,7 +210,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -218,9 +218,11 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtPromotion>());
 
+            // Tạo danh sách bookings trống cho test case này
+            var bookings = new List<Booking>();
             _mockBookingRepository.Setup(r => r.GetBookingsInDateRangeForCourtAsync(
-                    It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Booking>());
+                    courtId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -231,14 +233,20 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.Equal(startDate.Date, result.Schedule[0].Date.Date);
             Assert.Equal(dayOfWeek, result.Schedule[0].DayOfWeek);
 
-            // Check time slots (with court duration of 60 minutes)
-            Assert.Equal(2, result.Schedule[0].TimeSlots.Count); // 8:00-9:00, 9:00-10:00
-            Assert.All(result.Schedule[0].TimeSlots, slot => Assert.Equal("AVAILABLE", slot.Status));
+            // Với lịch trình từ 8:00-10:00 và thời lượng sân 1 giờ, chúng ta kỳ vọng 2 time slots
+            Assert.Equal(2, result.Schedule[0].TimeSlots.Count);
+            
+            // Kiểm tra time slot đầu tiên: 8:00-9:00
+            Assert.Equal("AVAILABLE", result.Schedule[0].TimeSlots[0].Status);
             Assert.Equal("08:00", result.Schedule[0].TimeSlots[0].StartTime);
             Assert.Equal("09:00", result.Schedule[0].TimeSlots[0].EndTime);
             Assert.Equal(150.0m, result.Schedule[0].TimeSlots[0].Price);
+            
+            // Kiểm tra time slot thứ hai: 9:00-10:00
+            Assert.Equal("AVAILABLE", result.Schedule[0].TimeSlots[1].Status);
             Assert.Equal("09:00", result.Schedule[0].TimeSlots[1].StartTime);
             Assert.Equal("10:00", result.Schedule[0].TimeSlots[1].EndTime);
+            Assert.Equal(150.0m, result.Schedule[0].TimeSlots[1].Price);
         }
 
         [Fact]
@@ -258,10 +266,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 CourtName.Of("Tennis Court 1"),
                 SportCenterId.Of(Guid.NewGuid()),
                 SportId.Of(Guid.NewGuid()),
-                TimeSpan.FromHours(1), // Added slotDuration to match booking (1-hour slots)
+                TimeSpan.FromHours(1), // 1-hour time slots
                 "Main court",
                 "Indoor",
-                CourtType.Indoor, // Use enum value instead of 1
+                CourtType.Indoor,
                 30
             );
 
@@ -274,34 +282,36 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 150.0m
             );
 
-            // Create a booking for 8:00-9:00
+            // Create a booking for the first time slot on the test day
+            var bookingId = BookingId.Of(Guid.NewGuid());
             var booking = Booking.Create(
-                BookingId.Of(Guid.NewGuid()),
+                bookingId,
                 UserId.Of(userId),
                 startDate,
                 "Test booking"
             );
-
-            var schedules = new List<CourtSchedule> { schedule };
+            
+            // Thiết lập status là Confirmed
+            booking.UpdateStatus(BookingStatus.Confirmed);
 
             var bookingDetail = BookingDetail.Create(
-                booking.Id,
+                bookingId,
                 CourtId.Of(courtId),
-                TimeSpan.FromHours(8),
+                TimeSpan.FromHours(8),  // First time slot: 8:00 - 9:00
                 TimeSpan.FromHours(9),
-                schedules
+                new List<CourtSchedule> { schedule }
             );
 
             // Add booking detail to booking
-            var bookingDetailsField = typeof(Booking).GetField("_bookingDetails",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            bookingDetailsField?.SetValue(booking, new List<BookingDetail> { bookingDetail });
+            var bookingDetailsList = new List<BookingDetail> { bookingDetail };
+            typeof(Booking).GetField("_bookingDetails", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(booking, bookingDetailsList);
 
             _mockCourtRepository.Setup(r => r.GetCourtByIdAsync(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -310,7 +320,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 .ReturnsAsync(new List<CourtPromotion>());
 
             _mockBookingRepository.Setup(r => r.GetBookingsInDateRangeForCourtAsync(
-                    It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                    courtId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Booking> { booking });
 
             // Act
@@ -324,10 +334,14 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             // First slot should be booked
             Assert.Equal("BOOKED", result.Schedule[0].TimeSlots[0].Status);
             Assert.Equal(userId.ToString(), result.Schedule[0].TimeSlots[0].BookedBy);
+            Assert.Equal("08:00", result.Schedule[0].TimeSlots[0].StartTime);
+            Assert.Equal("09:00", result.Schedule[0].TimeSlots[0].EndTime);
 
             // Second slot should be available
             Assert.Equal("AVAILABLE", result.Schedule[0].TimeSlots[1].Status);
             Assert.Null(result.Schedule[0].TimeSlots[1].BookedBy);
+            Assert.Equal("09:00", result.Schedule[0].TimeSlots[1].StartTime);
+            Assert.Equal("10:00", result.Schedule[0].TimeSlots[1].EndTime);
         }
 
         [Fact]
@@ -346,10 +360,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 CourtName.Of("Tennis Court 1"),
                 SportCenterId.Of(Guid.NewGuid()),
                 SportId.Of(Guid.NewGuid()),
-                TimeSpan.FromHours(1), // Added slotDuration to match schedule
+                TimeSpan.FromHours(1), // 1-hour time slots
                 "Main court",
                 "Indoor",
-                CourtType.Indoor, // Use enum value instead of 1
+                CourtType.Indoor,
                 30
             );
 
@@ -375,7 +389,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -383,9 +397,11 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtPromotion> { promotion });
 
+            // Tạo danh sách bookings trống
+            var bookings = new List<Booking>();
             _mockBookingRepository.Setup(r => r.GetBookingsInDateRangeForCourtAsync(
-                    It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Booking>());
+                    courtId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -395,14 +411,19 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.Single(result.Schedule);
             Assert.Equal(2, result.Schedule[0].TimeSlots.Count);
 
-            // Check promotion is applied to both slots
+            // Kiểm tra slot đầu tiên (8:00-9:00)
             Assert.NotNull(result.Schedule[0].TimeSlots[0].Promotion);
             Assert.Equal("Percentage", result.Schedule[0].TimeSlots[0].Promotion.DiscountType);
             Assert.Equal(20.0m, result.Schedule[0].TimeSlots[0].Promotion.DiscountValue);
+            Assert.Equal("08:00", result.Schedule[0].TimeSlots[0].StartTime);
+            Assert.Equal("09:00", result.Schedule[0].TimeSlots[0].EndTime);
 
+            // Kiểm tra slot thứ hai (9:00-10:00)
             Assert.NotNull(result.Schedule[0].TimeSlots[1].Promotion);
             Assert.Equal("Percentage", result.Schedule[0].TimeSlots[1].Promotion.DiscountType);
             Assert.Equal(20.0m, result.Schedule[0].TimeSlots[1].Promotion.DiscountValue);
+            Assert.Equal("09:00", result.Schedule[0].TimeSlots[1].StartTime);
+            Assert.Equal("10:00", result.Schedule[0].TimeSlots[1].EndTime);
         }
 
         [Fact]
@@ -421,10 +442,10 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 CourtName.Of("Tennis Court 1"),
                 SportCenterId.Of(Guid.NewGuid()),
                 SportId.Of(Guid.NewGuid()),
-                TimeSpan.FromHours(1), // Added slotDuration to match schedule
+                TimeSpan.FromHours(1), // 1-hour time slots
                 "Main court",
                 "Indoor",
-                CourtType.Indoor, // Use enum value instead of 1
+                CourtType.Indoor,
                 30
             );
 
@@ -445,7 +466,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(court);
 
-            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourtIdAsync(
+            _mockCourtScheduleRepository.Setup(r => r.GetSchedulesByCourt(
                     It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtSchedule> { schedule });
 
@@ -453,9 +474,11 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                     It.IsAny<CourtId>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtPromotion>());
 
+            // Tạo danh sách bookings trống
+            var bookings = new List<Booking>();
             _mockBookingRepository.Setup(r => r.GetBookingsInDateRangeForCourtAsync(
-                    It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Booking>());
+                    courtId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bookings);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -465,8 +488,14 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.Single(result.Schedule);
             Assert.Equal(2, result.Schedule[0].TimeSlots.Count);
 
-            // Both slots should be in maintenance
+            // All slots should be marked as maintenance
             Assert.All(result.Schedule[0].TimeSlots, slot => Assert.Equal("MAINTENANCE", slot.Status));
+            
+            // Kiểm tra thời gian của các slot
+            Assert.Equal("08:00", result.Schedule[0].TimeSlots[0].StartTime);
+            Assert.Equal("09:00", result.Schedule[0].TimeSlots[0].EndTime);
+            Assert.Equal("09:00", result.Schedule[0].TimeSlots[1].StartTime);
+            Assert.Equal("10:00", result.Schedule[0].TimeSlots[1].EndTime);
         }
     }
 }
