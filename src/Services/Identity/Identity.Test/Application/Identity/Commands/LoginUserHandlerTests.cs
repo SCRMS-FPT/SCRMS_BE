@@ -13,16 +13,21 @@ using Moq;
 using Xunit;
 using Identity.Application.Data.Repositories;
 using Identity.Application.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Identity.Test.Application.Identity.Commands
 {
     public class LoginUserHandlerTests
     {
-        private readonly Mock<IUserRepository> _userRepositoryMock; private readonly IOptions<JwtSettings> _jwtSettings;
+        private readonly Mock<IUserRepository> _userRepositoryMock;
+        private readonly Mock<ISubscriptionRepository> _subscriptionRepositoryMock;
+        private readonly IOptions<JwtSettings> _jwtSettings;
+        private readonly Mock<ILogger<LoginUserHandler>> _loggerMock;
 
         public LoginUserHandlerTests()
         {
             _userRepositoryMock = new Mock<IUserRepository>();
+            _subscriptionRepositoryMock = new Mock<ISubscriptionRepository>();
             _jwtSettings = Options.Create(new JwtSettings
             {
                 Secret = "TestSecretKey123456789012345678901234", // 32 characters (256 bits)
@@ -30,6 +35,7 @@ namespace Identity.Test.Application.Identity.Commands
                 Issuer = "identity-service",
                 Audience = "webapp"
             });
+            _loggerMock = new Mock<ILogger<LoginUserHandler>>();
         }
 
         [Fact]
@@ -44,7 +50,16 @@ namespace Identity.Test.Application.Identity.Commands
             _userRepositoryMock.Setup(x => x.GetRolesAsync(user))
                 .ReturnsAsync(new List<string> { "User" });
 
-            var handler = new LoginUserHandler(_userRepositoryMock.Object, _jwtSettings);
+            // Setup subscription repository to return empty list (no subscriptions)
+            _subscriptionRepositoryMock.Setup(x => x.GetSubscriptionByUserIdAsync(user.Id))
+                .ReturnsAsync(new List<ServicePackageSubscription>());
+
+            var handler = new LoginUserHandler(
+                _userRepositoryMock.Object,
+                _subscriptionRepositoryMock.Object,
+                _jwtSettings,
+                _loggerMock.Object);
+
             var command = new LoginUserCommand("test@example.com", "password");
 
             // Act
@@ -64,7 +79,12 @@ namespace Identity.Test.Application.Identity.Commands
             _userRepositoryMock.Setup(x => x.GetUserByEmailAsync("wrong@example.com"))
                 .ReturnsAsync((User)null);
 
-            var handler = new LoginUserHandler(_userRepositoryMock.Object, _jwtSettings);
+            var handler = new LoginUserHandler(
+                _userRepositoryMock.Object,
+                _subscriptionRepositoryMock.Object,
+                _jwtSettings,
+                _loggerMock.Object);
+
             var command = new LoginUserCommand("wrong@example.com", "password");
 
             // Act
