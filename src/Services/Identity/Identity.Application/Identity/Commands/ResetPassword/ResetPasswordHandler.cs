@@ -1,78 +1,130 @@
+using BuildingBlocks.Messaging.Events;
 using Identity.Application.Data.Repositories;
 using Identity.Domain.Exceptions;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
-using System.Net.Http.Json;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
-using Identity.Application.Data.Repositories;
+using System.Text;
 
 namespace Identity.Application.Identity.Commands.ResetPassword
 {
-    public sealed class ResetPasswordHandler : ICommandHandler<ResetPasswordCommand, Unit>
+    public sealed class ResetPasswordHandler :
+        ICommandHandler<RequestPasswordResetCommand, Unit>,
+        ICommandHandler<ConfirmPasswordResetCommand, Unit>
     {
         private readonly UserManager<User> _userManager;
         private readonly HttpClient _httpClient;
         private readonly IUserRepository _userRepository;
+        private readonly EndpointSettings _endpointSettings;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public ResetPasswordHandler(UserManager<User> userManager, IHttpClientFactory httpClientFactory, IUserRepository userRepository)
+        public ResetPasswordHandler(UserManager<User> userManager, IHttpClientFactory httpClientFactory, IUserRepository userRepository, IOptions<EndpointSettings> endpointSettings,
+            IPublishEndpoint publishEndpoint)
         {
             _userManager = userManager;
             _httpClient = httpClientFactory.CreateClient("NotificationAPI");
             _userRepository = userRepository;
+            _endpointSettings = endpointSettings.Value;
+            _publishEndpoint = publishEndpoint;
         }
 
-        public async Task<Unit> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(RequestPasswordResetCommand command, CancellationToken cancellationToken)
         {
             var user = await _userRepository.GetUserByEmailAsync(command.Email);
             if (user == null)
-                throw new DomainException("User not found");
+                throw new DomainException("Người dùng không tồn tại");
 
-            var newPassword = GenerateSecurePassword(12);
-            // RESET PASSWORD
-            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetLink = $"{_endpointSettings.ResetPassword}/{Uri.EscapeDataString(GenerateAnCodeForResetPassword(command.Email, token, _endpointSettings.VerificationKey))}";
 
-            if (!resetResult.Succeeded)
-            {
-                throw new DomainException($"Failed to change password: {string.Join(", ", resetResult.Errors.Select(e => e.Description))}");
-            }
-            // SEND EMAIL
-            var emailRequest = new
-            {
-                to = user.Email,
-                subject = "Password Reset Successful",
-                body = GeneratePasswordResetEmail(user.FirstName.Concat(" " + user.LastName).ToString(), newPassword),
-                isHtml = true
-            };
+            await _publishEndpoint.Publish(
+               new SendMailEvent(
+                   user.Email,
+                   GeneratePasswordResetEmail(user.FirstName + " " + user.LastName, resetLink),
+                   "Yêu cầu đặt lại mật khẩu",
+                   true));
 
-            var response = await _httpClient.PostAsJsonAsync("/sendmail", emailRequest, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new DomainException("Failed to send email");
-            }
             return Unit.Value;
         }
 
-        private static string GenerateSecurePassword(int length)
+        public async Task<Unit> Handle(ConfirmPasswordResetCommand command, CancellationToken cancellationToken)
         {
-            const string validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
-            var passwordChars = new char[length];
-            using (var rng = RandomNumberGenerator.Create())
+            var response = DecryptModel(command.Token, _endpointSettings.VerificationKey);
+            if (response == null)
             {
-                var byteBuffer = new byte[length];
-
-                rng.GetBytes(byteBuffer);
-                for (int i = 0; i < length; i++)
-                {
-                    passwordChars[i] = validChars[byteBuffer[i] % validChars.Length];
-                }
+                throw new DomainException("Token không hợp lệ hoặc đã hết hạn");
             }
-            return new string(passwordChars);
+            var user = await _userRepository.GetUserByEmailAsync(response.Email);
+            if (user == null)
+                throw new DomainException("Token không hợp lệ hoặc đã hết hạn");
+
+            var result = await _userManager.ResetPasswordAsync(user, response.Token, command.NewPassword);
+            if (!result.Succeeded)
+                throw new DomainException("Không thể thay đổi mật khẩu: " +
+                                          string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            return Unit.Value;
         }
 
-        public string GeneratePasswordResetEmail(string user, string newPassword)
+        public static string GenerateAnCodeForResetPassword(string email, string token, string secretKey)
         {
-            string loginUrl = "https://localhost:7105";
+            var resetData = $"{email}|{token}";
+
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
+            {
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(resetData));
+                var hashString = Convert.ToBase64String(hash);
+                var code = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{resetData}|{hashString}"));
+
+                return code;
+            }
+        }
+
+        private static ResetModel? DecryptModel(string code, string secretKey)
+        {
+            try
+            {
+                var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(code));
+                var parts = decoded.Split('|');
+
+                if (parts.Length != 3)
+                    return null;
+
+                var (email, token, providedHash) =
+                        (parts[0], parts[1], parts[2]);
+
+                var payload = string.Join('|', parts.Take(2));
+
+                using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey));
+                var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload)));
+
+                if (!computedHash.Equals(providedHash))
+                {
+                    return null;
+                }
+
+                return new ResetModel
+                {
+                    Email = email,
+                    Token = token,
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private class ResetModel
+        {
+            public string Email { get; set; }
+            public string Token { get; set; }
+        }
+
+        public string GeneratePasswordResetEmail(string user, string newLink)
+        {
+            string loginUrl = _endpointSettings.Login;
             string address = "Thach That, Hoa Lac, Ha Noi";
             string companyName = "Sports Court Management and Reservation System";
 
@@ -162,25 +214,25 @@ namespace Identity.Application.Identity.Commands.ResetPassword
             </td>
           </tr>
           <!-- Content -->
-          <tr>
-            <td class=""content"">
-              <p>Dear {user},</p>
-              <p>We have received a request to reset your password. Your password has been successfully reset.</p>
-              <p>Your new password is: <strong>{newPassword}</strong></p>
-              <p>Please click the button below to log in to your account and update your password if desired.</p>
-              <a href=""{loginUrl}"" class=""button"">Login to Your Account</a>
-              <p>If you did not request this change, please contact our support team immediately.</p>
-              <p>Best regards,</p>
-              <p>{companyName}</p>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td class=""footer"">
-              <p>{companyName} | {address}</p>
-              <p>© 2025 {companyName}. All rights reserved.</p>
-            </td>
-          </tr>
+         <tr>
+          <td class=""content"">
+            <p>Chào {user},</p>
+            <p>Chúng tôi đã nhận được yêu cầu thay đổi mật khẩu từ bạn.</p>
+            <p>Vui lòng nhấn vào nút bên dưới để đặt lại mật khẩu mới cho tài khoản của bạn.</p>
+            <a href=""{newLink}"" class=""button"">Thay đổi mật khẩu</a>
+            <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+            <p>Trân trọng,</p>
+            <p>{companyName}</p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td class=""footer"">
+            <p>{companyName} | {address}</p>
+            <p>© 2025 {companyName}. Bảo lưu mọi quyền.</p>
+          </td>
+        </tr>
+
         </table>
       </td>
     </tr>
