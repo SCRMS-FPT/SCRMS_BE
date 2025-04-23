@@ -55,8 +55,8 @@ namespace Identity.API.Endpoints
             identityGroup.MapPost("/register", async (RegisterUserRequest request, ISender sender) =>
             {
                 var command = request.Adapt<RegisterUserCommand>();
-                var result = await sender.Send(command);
-                return Results.Created($"/api/users/{result.Id}", result);
+                await sender.Send(command);
+                return Results.Ok();
             });
 
             identityGroup.MapPost("/registerwithgoogle", async (RegisterWithGoogle request, ISender sender) =>
@@ -169,7 +169,14 @@ namespace Identity.API.Endpoints
 
             identityGroup.MapPost("/users/reset-password", async (ResetPasswordRequest request, ISender sender) =>
             {
-                var command = request.Adapt<ResetPasswordCommand>();
+                var command = request.Adapt<RequestPasswordResetCommand>();
+                await sender.Send(command);
+                return Results.Ok();
+            });
+
+            identityGroup.MapPost("/users/reset-password-confirm", async (ResetPasswordConfirmRequest request, ISender sender) =>
+            {
+                var command = request.Adapt<ConfirmPasswordResetCommand>();
                 await sender.Send(command);
                 return Results.Ok();
             });
@@ -240,6 +247,7 @@ namespace Identity.API.Endpoints
         string Phone,
         DateTime BirthDate);
     public record ResetPasswordRequest(string Email);
+    public record ResetPasswordConfirmRequest(string Email, string Token, string NewPassword);
     public record AssignRolesRequest(Guid UserId, List<string> Roles);
     public record RemoveRolesRequest(Guid UserId, List<string> Roles);
     public class UpdateProfileRequest
