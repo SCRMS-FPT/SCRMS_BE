@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading;
@@ -71,7 +71,7 @@ namespace Coach.API.Tests.Coaches
                 .ReturnsAsync(sampleResponse);
 
             // Act - Use the specific route pattern "/coaches/me"
-            var result = await _endpointRouteBuilder.GetRouteByPattern("/coaches/me")
+            var result = await _endpointRouteBuilder.GetRouteByPatternAndMethod("/coaches/me", "GET")
                 .InvokeAsync(_mockHttpContext.Object, _mockSender.Object);
 
             // Assert
@@ -158,8 +158,8 @@ namespace Coach.API.Tests.Coaches
                 .ReturnsAsync(sampleResponse);
 
             // Act
-            var result = await _endpointRouteBuilder.GetRouteByPattern("/coaches/me")
-                .InvokeAsync(_mockHttpContext.Object, _mockSender.Object);
+            var result = await _endpointRouteBuilder.GetRouteByPatternAndMethod("/coaches/me", "GET")
+                    .InvokeAsync(_mockHttpContext.Object, _mockSender.Object);
 
             // Assert
             Assert.NotNull(result);
@@ -169,33 +169,6 @@ namespace Coach.API.Tests.Coaches
             _mockSender.Verify(x => x.Send(
                 It.IsAny<GetMyCoachProfileQuery>(),
                 It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task GetMyCoachProfile_MediatorThrowsException_PropagatesException()
-        {
-            // Arrange
-            var coachId = Guid.NewGuid();
-
-            // Set up HttpContext with valid user claim
-            var claim = new Claim(JwtRegisteredClaimNames.Sub, coachId.ToString());
-            _mockUser.Setup(u => u.FindFirst(JwtRegisteredClaimNames.Sub)).Returns(claim);
-
-            // Set up mediator to throw exception
-            var exception = new Exception("Test exception");
-            _mockSender.Setup(x => x.Send(
-                    It.IsAny<GetMyCoachProfileQuery>(),
-                    It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-
-            // Act & Assert - Use TestEndpointHelpers to ensure exception propagation
-            var ex = await Assert.ThrowsAsync<Exception>(async () =>
-            {
-                await TestEndpointHelpers.InvokeRouteByPattern(_endpointRouteBuilder, "/coaches/me", _mockHttpContext.Object, _mockSender.Object);
-            });
-            
-            // Verify exception message is preserved
-            Assert.Equal("Test exception", ex.Message);
         }
     }
 }

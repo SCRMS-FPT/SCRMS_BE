@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -22,13 +22,14 @@ namespace Coach.API.Tests.Bookings
         public async Task Handle_WithValidUserId_ReturnsUserBookings()
         {
             // Arrange
-            var userId = Guid.Parse("a9791696-cf29-465b-ba18-7a7a6773a98a"); 
+            var userId = Guid.Parse("a9791696-cf29-465b-ba18-7a7a6773a98a");
             var coachId = Guid.Parse("7f8b6fbc-a15c-4055-8129-90d4252f50d3");
             var sportId = Guid.NewGuid();
             var packageId = Guid.NewGuid();
 
             // Match the expected booking ID with the actual one from the error message
             var bookingId = Guid.Parse("5ef4fcd7-2da5-44e7-82e4-ca1057bacc0e");
+            var bookingId2 = Guid.Parse("4f9c2f18-6a3f-4a8c-9b4f-2d2a7f67e819");
 
             var bookings = new List<CoachBooking>
             {
@@ -39,7 +40,7 @@ namespace Coach.API.Tests.Bookings
                     CoachId = coachId,
                     SportId = sportId,
                     PackageId = packageId,
-                    BookingDate = DateOnly.FromDateTime(DateTime.Now),
+                    BookingDate = DateOnly.FromDateTime(DateTime.Now.AddDays(10)),
                     StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)),
                     EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)),
                     Status = "confirmed",
@@ -47,7 +48,7 @@ namespace Coach.API.Tests.Bookings
                 },
                 new CoachBooking
                 {
-                    Id = Guid.NewGuid(),
+                    Id = bookingId2,
                     UserId = userId,
                     CoachId = coachId,
                     SportId = sportId,

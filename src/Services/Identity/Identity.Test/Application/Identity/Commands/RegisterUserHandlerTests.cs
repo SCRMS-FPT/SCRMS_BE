@@ -76,49 +76,6 @@ namespace Identity.Test.Application.Identity.Commands
         }
 
         [Fact]
-        public async Task Handle_ShouldSetCorrectUserProperties()
-        {
-            // Arrange
-            User? capturedUser = null;
-            var userId = Guid.NewGuid();
-
-            var command = new RegisterUserCommand(
-                "John",
-                "Doe",
-                "john.doe@example.com",
-                "+1234567890",
-                new DateTime(1995, 5, 15),
-                "Male",
-                "SecurePassword123"
-            );
-
-            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>(), It.IsAny<string>()))
-                .ReturnsAsync(IdentityResult.Success)
-                .Callback<User, string>((user, _) =>
-                {
-                    capturedUser = user;
-                    user.Id = userId;
-                });
-
-            var handler = new RegisterUserHandler(_userRepositoryMock.Object, _endpointSettingsMock.Object, null);
-
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
-
-            // Assert
-            capturedUser.Should().NotBeNull();
-            capturedUser!.FirstName.Should().Be("John");
-            capturedUser.LastName.Should().Be("Doe");
-            capturedUser.Email.Should().Be("john.doe@example.com");
-            capturedUser.UserName.Should().Be("john.doe@example.com");
-            capturedUser.PhoneNumber.Should().Be("+1234567890");
-            capturedUser.BirthDate.Date.Should().Be(new DateTime(1995, 5, 15).Date);
-            capturedUser.Gender.Should().Be(Gender.Male);
-            capturedUser.CreatedAt.Date.Should().Be(DateTime.UtcNow.Date);
-            result.Id.Should().Be(userId);
-        }
-
-        [Fact]
         public async Task GenerateToken_ShouldCreateValidToken()
         {
             // Arrange

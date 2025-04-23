@@ -211,7 +211,16 @@ namespace Coach.API.Tests.TestHelpers
             ServiceProvider = mockServiceProvider.Object;
             RegisterCommonRoutes();
         }
-
+        // Thêm vào TestEndpointRouteBuilder.cs
+        public TestEndpointRoute GetRouteByPatternAndMethod(string pattern, string method)
+        {
+            var route = Routes.FirstOrDefault(r => r.Pattern == pattern && r.Method == method);
+            if (route != null)
+            {
+                return new TestEndpointRoute(route.Handler);
+            }
+            throw new ArgumentException($"No route found with pattern: {pattern} and method: {method}");
+        }
         public TestEndpointRouteBuilder(IServiceProvider serviceProvider)
         {
             ServiceProvider = serviceProvider;
@@ -238,7 +247,7 @@ namespace Coach.API.Tests.TestHelpers
         private void RegisterMyCoachProfileEndpoints()
         {
             // GET /coaches/me
-            AddRoute("/coaches/me", "GET", async (ISender sender, HttpContext context) =>
+            AddRoute("/coaches/me", "GET", async (HttpContext context, ISender sender) =>
             {
                 var userIdClaim = context.User.FindFirst(JwtRegisteredClaimNames.Sub)
                     ?? context.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -251,9 +260,10 @@ namespace Coach.API.Tests.TestHelpers
                     var result = await sender.Send(new Features.Coaches.GetMyCoachProfile.GetMyCoachProfileQuery(coachId));
                     return Results.Ok(result);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    throw; // Ensure we propagate the exception to properly test MediatorThrowsException_PropagatesException
+                    // propagate so the MediatorThrowsException test can catch it
+                    throw;
                 }
             });
 
