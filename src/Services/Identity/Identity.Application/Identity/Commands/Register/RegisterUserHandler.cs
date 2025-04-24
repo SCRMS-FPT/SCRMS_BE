@@ -1,5 +1,6 @@
 using BuildingBlocks.Messaging.Events;
 using Identity.Application.Data.Repositories;
+using Identity.Domain.Events;
 using Identity.Domain.Exceptions;
 using MassTransit;
 using Microsoft.Extensions.Options;
@@ -46,6 +47,9 @@ namespace Identity.Application.Identity.Commands.Register
                     $"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}"
                 );
             }
+
+            // Phát hành sự kiện UserCreatedEvent để các service khác có thể xử lý
+            await _publishEndpoint.Publish(new UserCreatedEvent(user.Id));
 
             // Send email 
             await _publishEndpoint.Publish(
