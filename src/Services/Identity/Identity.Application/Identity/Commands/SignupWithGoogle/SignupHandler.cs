@@ -123,7 +123,7 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
 </head>
 <body>
     <div style=""  margin:0 auto; max-width: 600px;
-            background-color: #ffffff;
+            background-color: #f2f2f2;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
