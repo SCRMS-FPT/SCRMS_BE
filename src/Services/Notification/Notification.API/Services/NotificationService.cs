@@ -115,5 +115,11 @@ namespace Notification.API.Services
             await _emailService.SendEmailAsync(to, subject, body, isHtml );
             await Task.CompletedTask;
         }
+
+        public async Task SaveNotification(MessageNotification notification)
+        {
+            _context.MessageNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+        }
     }
 }
