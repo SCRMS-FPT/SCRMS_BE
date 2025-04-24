@@ -9,7 +9,8 @@ public record SportCenterListDTO(
     string Description,
     string Avatar,
     List<string> ImageUrl,
-    List<CourtListDTO> Courts
+    List<CourtListDTO> Courts,
+    bool IsDeleted = false
 );
 public record CourtListDTO(
     Guid Id,

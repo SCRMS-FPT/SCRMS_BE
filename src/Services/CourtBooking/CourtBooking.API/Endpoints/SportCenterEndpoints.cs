@@ -8,6 +8,7 @@ using CourtBooking.Application.CourtManagement.Queries.GetSportCenterById;
 using CourtBooking.Application.CourtManagement.Command.UpdateSportCenter;
 using CourtBooking.Application.CourtManagement.Command.DeleteSportCenter;
 using CourtBooking.Application.CourtManagement.Command.SoftDeleteSportCenter;
+using CourtBooking.Application.CourtManagement.Command.RestoreSportCenter;
 using Microsoft.AspNetCore.Authorization;
 using CourtBooking.Application.CourtManagement.Queries.GetAllCourtsOfSportCenter;
 using CourtBooking.Application.CourtManagement.Queries.GetSportCentersByOwner;
@@ -316,6 +317,27 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Soft Delete Sport Center")
             .WithDescription("Marks a sport center as deleted and sets all its courts to Closed status");
+
+            // Restore Sport Center
+            group.MapPost("/{centerId:guid}/restore", async (
+                Guid centerId,
+                ISender sender) =>
+            {
+                var command = new RestoreSportCenterCommand(centerId);
+                var result = await sender.Send(command);
+
+                if (result.Success)
+                    return Results.Ok(result);
+                else
+                    return Results.BadRequest(result);
+            })
+            .WithName("RestoreSportCenter")
+            .RequireAuthorization("AdminOrCourtOwner")
+            .Produces<RestoreSportCenterResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Restore Sport Center")
+            .WithDescription("Restores a previously soft-deleted sport center and sets available courts back to Open status");
         }
     }
 

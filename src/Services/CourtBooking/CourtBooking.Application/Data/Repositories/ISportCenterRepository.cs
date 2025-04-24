@@ -36,5 +36,7 @@ namespace CourtBooking.Application.Data.Repositories
         Task DeleteSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
 
         Task SoftDeleteSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
+
+        Task RestoreSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken);
     }
 }

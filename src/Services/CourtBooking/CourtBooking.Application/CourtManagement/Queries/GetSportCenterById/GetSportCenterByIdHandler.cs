@@ -36,6 +36,7 @@ public class GetSportCenterByIdHandler : IQueryHandler<GetSportCenterByIdQuery, 
             Longitude: sportCenter.LocationPoint.Longitude,
             Avatar: sportCenter.Images.Avatar,
             ImageUrls: sportCenter.Images.ImageUrls,
+            IsDeleted: sportCenter.IsDeleted,
             Description: sportCenter.Description,
             CreatedAt: sportCenter.CreatedAt,
             LastModified: sportCenter.LastModified

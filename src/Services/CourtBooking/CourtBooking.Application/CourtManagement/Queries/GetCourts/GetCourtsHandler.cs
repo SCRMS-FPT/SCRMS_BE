@@ -31,28 +31,36 @@ public class GetCourtsHandler : IQueryHandler<GetCourtsQuery, GetCourtsResult>
 
     public async Task<GetCourtsResult> Handle(GetCourtsQuery query, CancellationToken cancellationToken)
     {
-        int pageIndex = query.PaginationRequest.PageIndex;
-        int pageSize = query.PaginationRequest.PageSize;
+        // Get all courts first
+        var allCourts = await _courtRepository.GetAllCourtsAsync(cancellationToken);
 
-        // Get paginated courts
-        var courts = await _courtRepository.GetPaginatedCourtsAsync(pageIndex, pageSize, cancellationToken);
-
-        // Apply filters if any
+        // Apply filters
         if (query.sportCenterId.HasValue)
         {
-            courts = courts.Where(c => c.SportCenterId.Value == query.sportCenterId.Value).ToList();
+            allCourts = allCourts.Where(c => c.SportCenterId == SportCenterId.Of(query.sportCenterId.Value)).ToList();
         }
         if (query.sportId.HasValue)
         {
-            courts = courts.Where(c => c.SportId.Value == query.sportId.Value).ToList();
+            allCourts = allCourts.Where(c => c.SportId == SportId.Of(query.sportId.Value)).ToList();
         }
         if (!string.IsNullOrWhiteSpace(query.courtType))
         {
-            courts = courts.Where(c => c.CourtType.ToString().Equals(query.courtType, StringComparison.OrdinalIgnoreCase)).ToList();
+            allCourts = allCourts.Where(c => c.CourtType.ToString().Equals(query.courtType, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
-        long totalCount = courts.Count;
+        // Calculate total count after applying filters
+        long totalCount = allCourts.Count;
 
+        // Apply pagination after filtering
+        int pageIndex = query.PaginationRequest.PageIndex;
+        int pageSize = query.PaginationRequest.PageSize;
+
+        var courts = allCourts
+            .Skip(pageIndex * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        // Load related data
         var sportIds = courts.Select(c => c.SportId).Distinct().ToList();
         var sports = await _sportRepository.GetSportsByIdsAsync(sportIds, cancellationToken);
 
