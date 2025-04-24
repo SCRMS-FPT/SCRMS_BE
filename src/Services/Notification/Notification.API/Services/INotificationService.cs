@@ -1,4 +1,6 @@
-﻿namespace Notification.API.Services
+﻿using Notification.API.Data.Model;
+
+namespace Notification.API.Services
 {
     public interface INotificationService
     {
@@ -23,5 +25,6 @@
             string message,
             Dictionary<string, string>? data = null);
         Task SendMail(string to, string subject, string body, bool isHtml);
+        Task SaveNotification(MessageNotification notification);
     }
 }

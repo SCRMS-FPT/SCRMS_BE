@@ -15,6 +15,7 @@ namespace Notification.API.Data.Extensions
             {
                 await context.Database.MigrateAsync();
             }
+            await context.Database.MigrateAsync();
         }
     }
 }
