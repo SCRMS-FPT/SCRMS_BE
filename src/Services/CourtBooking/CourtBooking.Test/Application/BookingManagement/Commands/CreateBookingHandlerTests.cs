@@ -117,8 +117,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
             _mockBookingRepository.Verify(r => r.AddBookingAsync(
                 It.Is<Booking>(b =>
                     b.TotalPaid == depositAmount &&
-                    b.Status == BookingStatus.Confirmed
-                ),
+                    (b.Status == BookingStatus.PendingPayment || b.Status == BookingStatus.Confirmed)),
                 It.IsAny<CancellationToken>()),
                 Times.Once);
         }

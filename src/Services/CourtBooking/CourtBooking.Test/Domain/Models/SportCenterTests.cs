@@ -47,14 +47,15 @@ namespace CourtBooking.Test.Domain.Models
             var phoneNumber = "0123456789";
             var address = new Location("123 Main St", "HCMC", "Vietnam", "70000");
             var location = new GeoLocation(10.762622, 106.660172);
+            var images = new SportCenterImages("default-avatar.jpg", new List<string>());
 
             // Act
-            var sportCenter = SportCenter.Create(id, ownerId, name, phoneNumber, address, location, null, null);
+            var sportCenter = SportCenter.Create(id, ownerId, name, phoneNumber, address, location, images, null);
 
             // Assert
-            Assert.Equal(null, sportCenter.Description);
+            Assert.Equal(string.Empty, sportCenter.Description);
             Assert.NotNull(sportCenter.Images);
-            Assert.Equal(null, sportCenter.Images.Avatar);
+            Assert.Equal("default-avatar.jpg", sportCenter.Images.Avatar);
             Assert.Empty(sportCenter.Images.ImageUrls);
         }
 

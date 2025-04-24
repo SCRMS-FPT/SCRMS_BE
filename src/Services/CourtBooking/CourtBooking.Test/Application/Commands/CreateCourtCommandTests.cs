@@ -1,5 +1,6 @@
 using CourtBooking.Application.CourtManagement.Command.CreateCourt;
 using CourtBooking.Application.DTOs;
+using CourtBooking.Domain.Enums;
 using FluentValidation.TestHelper;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace CourtBooking.Test.Application.Commands
                 SlotDuration: TimeSpan.FromHours(1),
                 MinDepositPercentage: 30,
                 CourtType: 1,
-                CourtSchedules: new List<CourtScheduleDTO>() { 
+                CourtSchedules: new List<CourtScheduleDTO>() {
                     new CourtScheduleDTO(
                         Id: Guid.NewGuid(),
                         CourtId: Guid.NewGuid(),
@@ -41,7 +42,7 @@ namespace CourtBooking.Test.Application.Commands
                         Status: 1,
                         CreatedAt: now,
                         LastModified: null
-                    ) 
+                    )
                 },
                 CancellationWindowHours: 24,
                 RefundPercentage: 50
@@ -82,7 +83,7 @@ namespace CourtBooking.Test.Application.Commands
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 30,
                     CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -93,7 +94,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 24,
                     RefundPercentage: 50
@@ -122,7 +123,7 @@ namespace CourtBooking.Test.Application.Commands
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 30,
                     CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -133,7 +134,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 24,
                     RefundPercentage: 50
@@ -162,7 +163,7 @@ namespace CourtBooking.Test.Application.Commands
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 30,
                     CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -173,7 +174,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 24,
                     RefundPercentage: 50
@@ -202,7 +203,7 @@ namespace CourtBooking.Test.Application.Commands
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 30,
                     CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -213,7 +214,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 24,
                     RefundPercentage: 50
@@ -242,7 +243,7 @@ namespace CourtBooking.Test.Application.Commands
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 101, // Invalid - should fail
                     CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -253,7 +254,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 24,
                     RefundPercentage: 50
@@ -282,7 +283,7 @@ namespace CourtBooking.Test.Application.Commands
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 30,
                     CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -293,7 +294,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 0, // Invalid - should fail
                     RefundPercentage: 50
@@ -321,8 +322,8 @@ namespace CourtBooking.Test.Application.Commands
                     Facilities: null,
                     SlotDuration: TimeSpan.FromHours(1),
                     MinDepositPercentage: 30,
-                    CourtType: 1,
-                    CourtSchedules: new List<CourtScheduleDTO>() { 
+                    CourtType: (int)CourtType.Indoor, // Explicitly cast to ensure valid enum value
+                    CourtSchedules: new List<CourtScheduleDTO>() {
                         new CourtScheduleDTO(
                             Id: Guid.NewGuid(),
                             CourtId: Guid.NewGuid(),
@@ -333,7 +334,7 @@ namespace CourtBooking.Test.Application.Commands
                             Status: 1,
                             CreatedAt: now,
                             LastModified: null
-                        ) 
+                        )
                     },
                     CancellationWindowHours: 24,
                     RefundPercentage: 50

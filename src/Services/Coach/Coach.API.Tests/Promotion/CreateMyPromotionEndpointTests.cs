@@ -12,6 +12,7 @@ using Coach.API.Features.Promotion.CreateMyPromotion;
 using Coach.API.Features.Promotion.CreateCoachPromotion;
 using Moq;
 using Xunit;
+using Coach.API.Tests.TestHelpers;
 
 namespace Coach.API.Tests.Promotion
 {

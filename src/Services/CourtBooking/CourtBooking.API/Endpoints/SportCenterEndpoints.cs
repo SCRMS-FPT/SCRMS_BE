@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
 using CourtBooking.Infrastructure.Services;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Http;
 
 namespace CourtBooking.API.Endpoints
 {
@@ -42,40 +43,43 @@ namespace CourtBooking.API.Endpoints
             // Create Sport Center
             group.MapPost("/", async ([FromForm] CreateSportCenterFormModel model,
                                     [FromServices] IFileStorageService fileStorage,
-                                    [FromServices] ISender sender) =>
-           {
-               // Upload the avatar image
-               string avatarUrl = "";
-               if (model.AvatarImage != null)
-               {
-                   avatarUrl = await fileStorage.UploadFileAsync(model.AvatarImage, "sportcenters/avatars");
-               }
+                                    [FromServices] ISender sender,
+                                    HttpContext httpContext) =>
+            {
+                var form = await httpContext.Request.ReadFormAsync();
+                // Upload the avatar image
+                string avatarUrl = "";
+                if (model.AvatarImage != null)
+                {
+                    avatarUrl = await fileStorage.UploadFileAsync(model.AvatarImage, "sportcenters/avatars");
+                }
 
-               // Upload gallery images
-               List<string> galleryUrls = new List<string>();
-               if (model.GalleryImages != null && model.GalleryImages.Count > 0)
-               {
-                   galleryUrls = await fileStorage.UploadFilesAsync(model.GalleryImages, "sportcenters/gallery");
-               }
-               // Create the command with the uploaded image URLs
-               var command = new CreateSportCenterCommand(
-                   Name: model.Name,
-                   PhoneNumber: model.PhoneNumber,
-                   AddressLine: model.AddressLine,
-                   City: model.City,
-                   District: model.District,
-                   Commune: model.Commune,
-                   Latitude: model.Latitude,
-                   Longitude: model.Longitude,
-                   Avatar: avatarUrl,
-                   ImageUrls: galleryUrls,
-                   Description: model.Description
-               );
+                // Upload gallery images
+                List<string> galleryUrls = new List<string>();
+                var GalleryImages = model.GalleryImages ?? form.Files.GetFiles("GalleryImages").ToList() ?? new List<IFormFile>();
+                if (GalleryImages != null && GalleryImages.Count > 0)
+                {
+                    galleryUrls = await fileStorage.UploadFilesAsync(GalleryImages, "sportcenters/gallery");
+                }
+                // Create the command with the uploaded image URLs
+                var command = new CreateSportCenterCommand(
+                    Name: model.Name,
+                    PhoneNumber: model.PhoneNumber,
+                    AddressLine: model.AddressLine,
+                    City: model.City,
+                    District: model.District,
+                    Commune: model.Commune,
+                    Latitude: model.Latitude,
+                    Longitude: model.Longitude,
+                    Avatar: avatarUrl,
+                    ImageUrls: galleryUrls,
+                    Description: model.Description
+                );
 
-               var result = await sender.Send(command);
-               var response = new CreateSportCenterResponse(result.Id);
-               return Results.Created($"/api/sportcenters/{response.Id}", response);
-           })
+                var result = await sender.Send(command);
+                var response = new CreateSportCenterResponse(result.Id);
+                return Results.Created($"/api/sportcenters/{response.Id}", response);
+            })
            .WithName("CreateSportCenter")
            .RequireAuthorization("AdminOrCourtOwner")
            .DisableAntiforgery()
@@ -99,11 +103,11 @@ namespace CourtBooking.API.Endpoints
                 ISender sender) =>
             {
                 var paginationRequest = new PaginationRequest((page ?? 1) - 1, limit ?? 10);
-                
+
                 // Kiểm tra role của người dùng
                 Guid? excludeOwnerId = null;
                 var user = httpContext.User;
-                
+
                 // Nếu người dùng đã đăng nhập
                 if (user.Identity?.IsAuthenticated == true)
                 {
@@ -111,9 +115,9 @@ namespace CourtBooking.API.Endpoints
                     if (user.IsInRole("CourtOwner"))
                     {
                         // Trích xuất userId từ claims
-                        var userIdClaim = user.FindFirst(JwtRegisteredClaimNames.Sub) ?? 
+                        var userIdClaim = user.FindFirst(JwtRegisteredClaimNames.Sub) ??
                                          user.FindFirst(ClaimTypes.NameIdentifier);
-                        
+
                         if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var ownerId))
                         {
                             // Nếu là CourtOwner, loại bỏ các sportcenter của họ
@@ -121,17 +125,17 @@ namespace CourtBooking.API.Endpoints
                         }
                     }
                 }
-                
+
                 var query = new GetSportCentersQuery(
-                    paginationRequest, 
-                    city, 
-                    name, 
-                    SportId, 
-                    BookingDate, 
-                    StartTime, 
-                    EndTime, 
+                    paginationRequest,
+                    city,
+                    name,
+                    SportId,
+                    BookingDate,
+                    StartTime,
+                    EndTime,
                     excludeOwnerId);
-                    
+
                 var result = await sender.Send(query);
                 var response = result.Adapt<GetSportCentersResponse>();
                 return Results.Ok(response);
@@ -203,8 +207,10 @@ namespace CourtBooking.API.Endpoints
                 Guid centerId,
                 [FromForm] UpdateSportCenterFormModel model,
                 [FromServices] IFileStorageService fileStorage,
-                [FromServices] ISender sender) =>
+                [FromServices] ISender sender,
+                HttpContext httpContext) =>
             {
+                var form = await httpContext.Request.ReadFormAsync();
                 // Handle avatar image
                 string avatarUrl = model.ExistingAvatar ?? "";
 
@@ -225,16 +231,15 @@ namespace CourtBooking.API.Endpoints
 
                 // Handle gallery images
                 List<string> galleryUrls = new List<string>();
-
                 if (model.KeepExistingGallery && model.ExistingGalleryUrls != null)
                 {
                     galleryUrls.AddRange(model.ExistingGalleryUrls);
                 }
-
-                if (model.GalleryImages != null && model.GalleryImages.Count > 0)
+                var GalleryImages = model.GalleryImages ?? form.Files.GetFiles("GalleryImages").ToList() ?? new List<IFormFile>();
+                if (GalleryImages != null && GalleryImages.Count > 0)
                 {
                     // Add new gallery images
-                    var newGalleryUrls = await fileStorage.UploadFilesAsync(model.GalleryImages, "sportcenters/gallery");
+                    var newGalleryUrls = await fileStorage.UploadFilesAsync(GalleryImages, "sportcenters/gallery");
                     galleryUrls.AddRange(newGalleryUrls);
                 }
 

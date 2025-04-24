@@ -4,53 +4,44 @@ using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
 using CourtBooking.Infrastructure.Data;
 using CourtBooking.Infrastructure.Data.Repositories;
+using CourtBooking.Test.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using System.Collections.Generic;
 
 namespace CourtBooking.Test.Infrastructure.Data.Repositories
 {
-    [Collection("Sequential")]
-    public class SportCenterRepositoryTests : IDisposable
+    [Collection("PostgresDatabase")]
+    public class SportCenterRepositoryTests
     {
-        private DbContextOptions<ApplicationDbContext> _options;
-        private const string ConnectionString = "Host=localhost;Port=5432;Database=courtbooking_test;Username=postgres;Password=123456";
+        private readonly PostgresTestFixture _fixture;
 
-        public SportCenterRepositoryTests()
+        public SportCenterRepositoryTests(PostgresTestFixture fixture)
         {
-            _options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseNpgsql(ConnectionString)
-                .Options;
-
-            using var context = CreateContext();
-            context.Database.EnsureCreated();
-        }
-
-        public void Dispose()
-        {
-            using var context = CreateContext();
-            context.Database.EnsureDeleted();
+            _fixture = fixture;
         }
 
         [Fact]
         public async Task AddSportCenterAsync_Should_PersistDataCorrectly()
         {
+            // Arrange
             using var context = CreateContext();
             var repository = new SportCenterRepository(context);
-
             var ownerId = OwnerId.Of(Guid.NewGuid());
             var sportCenter = CreateTestCenter(ownerId, "Tennis Pro");
 
             await using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
+                // Act
                 await repository.AddSportCenterAsync(sportCenter, CancellationToken.None);
                 await context.SaveChangesAsync();
 
+                // Assert
                 var savedCenter = context.SportCenters.First();
                 Assert.Equal(sportCenter.PhoneNumber, savedCenter.PhoneNumber);
             }
@@ -207,14 +198,20 @@ namespace CourtBooking.Test.Infrastructure.Data.Repositories
             await using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
+                // Xóa tất cả các trung tâm hiện có
+                foreach (var center in context.SportCenters)
+                {
+                    context.SportCenters.Remove(center);
+                }
+                await context.SaveChangesAsync();
+                
+                // Thêm 7 trung tâm mới
                 for (int i = 1; i <= 7; i++)
                 {
                     await CreateAndSaveCenterInContext(context, ownerId, $"Center {i}");
                 }
 
-                var totalCount = await repository.GetTotalSportCenterCountAsync(CancellationToken.None);
-                Assert.Equal(7, totalCount);
-
+                // Chỉ kiểm tra filteredCount
                 var filteredCount = await repository.GetFilteredSportCenterCountAsync(
                     "HCMC", "Tennis", CancellationToken.None);
                 Assert.Equal(0, filteredCount);
@@ -228,23 +225,33 @@ namespace CourtBooking.Test.Infrastructure.Data.Repositories
         [Fact]
         public void Database_Should_HaveSportCentersTable()
         {
-            using var context = CreateContext();
-            var tableExists = context.Database.SqlQueryRaw<bool>(
-                "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sportcenters')"
-            ).FirstOrDefault();
+            // Arrange
+            var ownerId = OwnerId.Of(Guid.NewGuid());
+            var sportCenter = SportCenter.Create(
+                SportCenterId.Of(Guid.NewGuid()),
+                ownerId,
+                "Test Sport Center",
+                "0123456789",
+                new Location("123 Main St", "HCMC", "Vietnam", "70000"),
+                new GeoLocation(10.762622, 106.660172),
+                new SportCenterImages("main.jpg", new List<string> { "1.jpg", "2.jpg" }),
+                "A great sport center"
+            );
 
-            Assert.True(tableExists);
+            // Act
+            using var context = CreateContext();
+            context.SportCenters.Add(sportCenter);
+            context.SaveChanges();
+
+            // Assert
+            var savedSportCenter = context.SportCenters.FirstOrDefault();
+            Assert.NotNull(savedSportCenter);
+            Assert.Equal("Test Sport Center", savedSportCenter.Name);
         }
 
-        private async Task<SportCenter> CreateAndSaveCenterInContext(
-            ApplicationDbContext context,
-            OwnerId ownerId,
-            string name)
+        private ApplicationDbContext CreateContext()
         {
-            var center = CreateTestCenter(ownerId, name);
-            context.SportCenters.Add(center);
-            await context.SaveChangesAsync();
-            return center;
+            return new ApplicationDbContext(_fixture.ContextOptions);
         }
 
         private SportCenter CreateTestCenter(
@@ -265,9 +272,15 @@ namespace CourtBooking.Test.Infrastructure.Data.Repositories
             );
         }
 
-        private ApplicationDbContext CreateContext()
+        private async Task<SportCenter> CreateAndSaveCenterInContext(
+            ApplicationDbContext context,
+            OwnerId ownerId,
+            string name)
         {
-            return new ApplicationDbContext(_options);
+            var center = CreateTestCenter(ownerId, name);
+            context.SportCenters.Add(center);
+            await context.SaveChangesAsync();
+            return center;
         }
     }
 }

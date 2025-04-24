@@ -30,8 +30,13 @@ namespace CourtBooking.Domain.Models
         //    Status = CourtSlotStatus.Available;
         //}
         public static CourtSchedule Create(CourtScheduleId courtSlotId, CourtId courtId,
-            DayOfWeekValue dayOfWeek,TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
+            DayOfWeekValue dayOfWeek, TimeSpan startTime, TimeSpan endTime, decimal priceSlot)
         {
+            if (startTime >= endTime)
+                throw new DomainException("StartTime must be before EndTime");
+            if (priceSlot < 0)
+                throw new DomainException("Price must be non-negative");
+
             return new CourtSchedule
             {
                 Id = courtSlotId,

@@ -93,6 +93,8 @@ namespace CourtBooking.Test.Domain.Models
         {
             // Arrange
             var booking = CreateBookingWithDetail(200m);
+            // Đảm bảo số tiền đặt cọc đủ lớn để vượt qua validate
+            booking.SetInitialDeposit(100m); // Yêu cầu đặt cọc tối thiểu 100
             var depositAmount = 100m;
 
             // Act
@@ -113,11 +115,12 @@ namespace CourtBooking.Test.Domain.Models
         }
 
         [Fact]
-        public void MakeDeposit_Should_UpdateStatusToDeposited_WhenFullAmountPaid()
+        public void MakeDeposit_Should_UpdateStatusToCompleted_WhenFullAmountPaid()
         {
             // Arrange
             var booking = CreateBookingWithDetail(200m);
-            var depositAmount = 200m;
+            booking.SetInitialDeposit(100m); // Yêu cầu đặt cọc tối thiểu 100
+            var depositAmount = 200m; // Đặt cọc toàn bộ
 
             // Act
             booking.MakeDeposit(depositAmount);
@@ -125,7 +128,7 @@ namespace CourtBooking.Test.Domain.Models
             // Assert
             Assert.Equal(depositAmount, booking.TotalPaid);
             Assert.Equal(0m, booking.RemainingBalance);
-            Assert.Equal(BookingStatus.Deposited, booking.Status);
+            Assert.Equal(BookingStatus.Completed, booking.Status);
         }
 
         [Fact]
@@ -133,11 +136,25 @@ namespace CourtBooking.Test.Domain.Models
         {
             // Arrange
             var booking = CreateBookingWithDetail(200m);
+            booking.SetInitialDeposit(100m); // Yêu cầu đặt cọc tối thiểu 100
             var invalidAmount = -50m;
 
             // Act & Assert
             var exception = Assert.Throws<DomainException>(() => booking.MakeDeposit(invalidAmount));
-            Assert.Contains("Số tiền đặt cọc phải lớn hơn 0", exception.Message);
+            Assert.Contains("Số tiền đặt cọc tối thiểu", exception.Message);
+        }
+
+        [Fact]
+        public void MakeDeposit_Should_ThrowException_WhenBelowMinimumDeposit()
+        {
+            // Arrange
+            var booking = CreateBookingWithDetail(200m);
+            booking.SetInitialDeposit(100m); // Yêu cầu đặt cọc tối thiểu 100
+            var belowMinAmount = 50m; // Dưới mức tối thiểu 100
+
+            // Act & Assert
+            var exception = Assert.Throws<DomainException>(() => booking.MakeDeposit(belowMinAmount));
+            Assert.Contains("Số tiền đặt cọc tối thiểu", exception.Message);
         }
 
         [Fact]
@@ -157,6 +174,7 @@ namespace CourtBooking.Test.Domain.Models
         {
             // Arrange
             var booking = CreateBookingWithDetail(200m);
+            booking.SetInitialDeposit(50m); // Yêu cầu đặt cọc tối thiểu 50
             booking.MakeDeposit(50m); // Đã đặt cọc 50
             var paymentAmount = 150m;
 
@@ -166,7 +184,7 @@ namespace CourtBooking.Test.Domain.Models
             // Assert
             Assert.Equal(200m, booking.TotalPaid); // 50 + 150 = 200
             Assert.Equal(0m, booking.RemainingBalance);
-            Assert.Equal(BookingStatus.Deposited, booking.Status);
+            Assert.Equal(BookingStatus.Completed, booking.Status);
 
             // Kiểm tra domain event
             var paymentEvent = booking.DomainEvents.Last() as BookingPaymentMadeEvent;

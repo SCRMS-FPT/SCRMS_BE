@@ -84,14 +84,16 @@ namespace CourtBooking.Test.Application.Handlers.Commands
 
             // Setup sport center
             var location = new Location("123 Main St", "District", "City", "Country");
+            var geoLocation = new GeoLocation(10.0, 20.0);
+            var images = new SportCenterImages("avatar.jpg", new List<string>());
             var sportCenter = SportCenter.Create(
                 SportCenterId.Of(sportCenterId),
                 OwnerId.Of(ownerId),
                 "Sport Center 1",
                 "123456789",
                 location,
-                null,
-                null,
+                geoLocation,
+                images,
                 "Description"
             );
 
@@ -191,14 +193,16 @@ namespace CourtBooking.Test.Application.Handlers.Commands
 
             // Setup sport center with different owner
             var location = new Location("123 Main St", "District", "City", "Country");
+            var geoLocation = new GeoLocation(10.0, 20.0);
+            var images = new SportCenterImages("avatar.jpg", new List<string>());
             var sportCenter = SportCenter.Create(
                 SportCenterId.Of(sportCenterId),
                 OwnerId.Of(differentOwnerId),
                 "Sport Center 1",
                 "123456789",
                 location,
-                null,
-                null,
+                geoLocation,
+                images,
                 "Description"
             );
 
@@ -273,14 +277,16 @@ namespace CourtBooking.Test.Application.Handlers.Commands
 
             // Setup sport center
             var location = new Location("123 Main St", "District", "City", "Country");
+            var geoLocation = new GeoLocation(10.0, 20.0);
+            var images = new SportCenterImages("avatar.jpg", new List<string>());
             var sportCenter = SportCenter.Create(
                 SportCenterId.Of(sportCenterId),
                 OwnerId.Of(ownerId),
                 "Sport Center 1",
                 "123456789",
                 location,
-                null,
-                null,
+                geoLocation,
+                images,
                 "Description"
             );
 
@@ -355,14 +361,16 @@ namespace CourtBooking.Test.Application.Handlers.Commands
 
             // Setup sport center
             var location = new Location("123 Main St", "District", "City", "Country");
+            var geoLocation = new GeoLocation(10.0, 20.0);
+            var images = new SportCenterImages("avatar.jpg", new List<string>());
             var sportCenter = SportCenter.Create(
                 SportCenterId.Of(sportCenterId),
                 OwnerId.Of(ownerId),
                 "Sport Center 1",
                 "123456789",
                 location,
-                null,
-                null,
+                geoLocation,
+                images,
                 "Description"
             );
 

@@ -4,6 +4,7 @@ using CourtBooking.Application.Data.Repositories;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.Models;
 using CourtBooking.Domain.ValueObjects;
+using CourtBooking.Domain.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
 using Moq;
@@ -230,7 +231,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
         }
 
         [Fact]
-        public async Task Handle_Should_ThrowArgumentException_When_StartTimeGreaterThanEndTime()
+        public async Task Handle_Should_ThrowDomainException_When_StartTimeGreaterThanEndTime()
         {
             // Arrange
             var courtId = Guid.NewGuid();
@@ -264,15 +265,15 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 .ReturnsAsync(court);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+            var exception = await Assert.ThrowsAsync<DomainException>(() =>
                 _handler.Handle(command, CancellationToken.None));
-            
-            Assert.Contains("must be less than end time", exception.Message);
+
+            Assert.Contains("must be before EndTime", exception.Message, StringComparison.OrdinalIgnoreCase);
             _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
-        public async Task Handle_Should_ThrowArgumentException_When_DayOfWeekIsInvalid()
+        public async Task Handle_Should_ThrowDomainException_When_DayOfWeekIsInvalid()
         {
             // Arrange
             var courtId = Guid.NewGuid();
@@ -306,15 +307,15 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 .ReturnsAsync(court);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+            var exception = await Assert.ThrowsAsync<DomainException>(() =>
                 _handler.Handle(command, CancellationToken.None));
-            
-            Assert.Contains("Day of week must be between 1 and 7", exception.Message);
+
+            Assert.Contains("Invalid day", exception.Message, StringComparison.OrdinalIgnoreCase);
             _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
-        public async Task Handle_Should_ThrowArgumentException_When_PriceIsNegative()
+        public async Task Handle_Should_ThrowDomainException_When_PriceIsNegative()
         {
             // Arrange
             var courtId = Guid.NewGuid();
@@ -348,10 +349,10 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 .ReturnsAsync(court);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+            var exception = await Assert.ThrowsAsync<DomainException>(() =>
                 _handler.Handle(command, CancellationToken.None));
-            
-            Assert.Contains("Price cannot be negative", exception.Message);
+
+            Assert.Contains("must be non-negative", exception.Message, StringComparison.OrdinalIgnoreCase);
             _mockCourtScheduleRepository.Verify(r => r.AddCourtScheduleAsync(It.IsAny<CourtSchedule>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }

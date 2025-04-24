@@ -20,15 +20,17 @@ namespace CourtBooking.Test.Application.Commands
         {
             // Arrange
             var userId = Guid.NewGuid();
+            var courtId = Guid.NewGuid();
 
             // Act
             var command = new CreateCourtPromotionCommand(
-                   Guid.NewGuid(), "Discount for summer season", "Percentage", 20.0m, DateTime.Today, DateTime.Today.AddMonths(3), Guid.NewGuid()
+                   courtId, "Discount for summer season", "Percentage", 20.0m, DateTime.Today, DateTime.Today.AddMonths(3), userId
             );
 
             // Assert
             Assert.Equal("Discount for summer season", command.Description);
             Assert.Equal(userId, command.UserId);
+            Assert.Equal(courtId, command.CourtId);
         }
 
         [Fact]

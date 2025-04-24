@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Coach.API.Features.Promotion.GetAllPromotion;
+using MediatR;
+using Carter;
 
 namespace Coach.API.Features.Promotion.GetMyPromotions
 {
@@ -20,6 +22,7 @@ namespace Coach.API.Features.Promotion.GetMyPromotions
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var coachId))
                     return Results.Unauthorized();
 
+                // Use the try-catch block to allow exceptions to propagate properly to tests
                 var query = new GetAllPromotionQuery(
                     coachId,
                     Page,

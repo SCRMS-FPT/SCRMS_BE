@@ -149,8 +149,8 @@ namespace CourtBooking.Application.CourtManagement.Queries.GetCourtAvailability
 
                         // Thêm slot vào danh sách
                         timeSlots.Add(new TimeSlot(
-                            time.ToString(@"hh\:mm"),
-                            slotEndTime.ToString(@"hh\:mm"),
+                            time.ToString("hh\\:mm"),
+                            slotEndTime.ToString("hh\\:mm"),
                             basePrice,
                             status,
                             promotion,

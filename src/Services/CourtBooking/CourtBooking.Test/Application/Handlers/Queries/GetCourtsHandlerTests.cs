@@ -26,7 +26,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             _mockSportRepository = new Mock<ISportRepository>();
             _mockPromotionRepository = new Mock<ICourtPromotionRepository>();
             _handler = new GetCourtsHandler(
-                _mockCourtRepository.Object, 
+                _mockCourtRepository.Object,
                 _mockSportRepository.Object,
                 _mockPromotionRepository.Object);
         }
@@ -75,12 +75,22 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 30
             );
 
-            var sport = new Sport("Tennis", "Tennis sport", "icon");
+            // Properly create the Sport with the correct ID
+            var sport = Sport.Create(
+                SportId.Of(sportId),
+                "Tennis",
+                "Tennis sport",
+                "icon"
+            );
 
             _mockCourtRepository.Setup(r => r.GetPaginatedCourtsAsync(0, 10, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Court> { court });
-            _mockSportRepository.Setup(r => r.GetSportsByIdsAsync(new List<SportId> { SportId.Of(sportId) }, It.IsAny<CancellationToken>()))
+
+            _mockSportRepository.Setup(r => r.GetSportsByIdsAsync(
+                It.Is<List<SportId>>(ids => ids.Any(id => id.Value == sportId)),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport> { sport });
+
             _mockPromotionRepository.Setup(r => r.GetPromotionsByCourtIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtPromotion>());
 
@@ -89,8 +99,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result.Courts.Data); // Fixed: Changed from PaginatedResult to Courts
-            var courtDto = result.Courts.Data.ToList()[0];  // Fixed: Changed from PaginatedResult to Courts
+            Assert.Single(result.Courts.Data);
+            var courtDto = result.Courts.Data.First();
             Assert.Equal(courtId, courtDto.Id);
             Assert.Equal("Tennis Court 1", courtDto.CourtName);
             Assert.Equal("Main court", courtDto.Description);
