@@ -1,6 +1,7 @@
 ﻿using BuildingBlocks.Messaging.Events;
 using Google.Apis.Auth;
 using Identity.Application.Data.Repositories;
+using Identity.Domain.Events;
 using Identity.Domain.Exceptions;
 using MassTransit;
 using Microsoft.AspNetCore.Identity;
@@ -90,6 +91,9 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
                         throw new Exception("Failed to link Google login.");
                     }
                 }
+
+                // Phát hành sự kiện UserCreatedEvent để các service khác có thể xử lý
+                _publisher.Publish(new UserCreatedEvent(user.Id));
 
                 // Send gmail
                 _publisher.Publish(new SendMailEvent(payload.Email, GenerateAnnouncement(), "Đăng ký thành công dịch vụ của SCRMS", true));

@@ -55,10 +55,8 @@ namespace Notification.API.Consumers
             };
 
             // Send payment confirmation notification via the notification service
-            await _notificationService.SendPaymentConfirmation(
-                paymentEvent.UserId,
-                paymentEvent.Amount,
-                paymentEvent.Description
+            await _notificationService.SaveNotification(
+                noti
             );
             _logger.LogInformation("Đã lưu thông báo thanh toán cho người dùng {UserId}", paymentEvent.UserId);
 
