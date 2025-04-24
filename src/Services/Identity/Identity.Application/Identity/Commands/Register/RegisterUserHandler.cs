@@ -28,6 +28,11 @@ namespace Identity.Application.Identity.Commands.Register
             RegisterUserCommand command,
             CancellationToken cancellationToken)
         {
+            // Validate
+            if (_userRepository.GetUserByEmailAsync(command.Email) != null)
+            {
+                throw new DomainException("Email already taken");
+            }
             // Send email 
             await _publishEndpoint.Publish(
                 new SendMailEvent(
