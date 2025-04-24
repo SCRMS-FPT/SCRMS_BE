@@ -1,9 +1,7 @@
 using BuildingBlocks.Messaging.Events;
 using Identity.Application.Data.Repositories;
-using Identity.Domain.Events;
 using Identity.Domain.Exceptions;
 using MassTransit;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,10 +32,6 @@ namespace Identity.Application.Identity.Commands.Register
             {
                 throw new DomainException("Email already taken");
             }
-
-            // Phát hành sự kiện UserCreatedEvent để các service khác có thể xử lý
-            await _publishEndpoint.Publish(new UserCreatedEvent(user.Id));
-
             // Send email 
             await _publishEndpoint.Publish(
                 new SendMailEvent(

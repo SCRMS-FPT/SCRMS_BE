@@ -1,5 +1,7 @@
 ﻿using Identity.Application.Data.Repositories;
+using Identity.Domain.Events;
 using Identity.Domain.Exceptions;
+using MassTransit;
 using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -11,13 +13,15 @@ namespace Identity.Application.Identity.Queries.Verification
     {
         private readonly IUserRepository _userRepository;
         private readonly EndpointSettings _endpointSettings;
-
+        private readonly IPublishEndpoint _publishEndpoint;
         public VerificationHandler(
             IUserRepository userRepository,
-            IOptions<EndpointSettings> endpointSettings)
+            IOptions<EndpointSettings> endpointSettings,
+            IPublishEndpoint publishEndpoint)
         {
             _userRepository = userRepository;
             _endpointSettings = endpointSettings.Value;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<Unit> Handle(
@@ -51,7 +55,7 @@ namespace Identity.Application.Identity.Queries.Verification
             var result = await _userRepository.CreateUserAsync(newUser, userData.Password);
             if (!result.Succeeded)
                 throw new DomainException("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-
+            await _publishEndpoint.Publish(new UserCreatedEvent(newUser.Id));
             return Unit.Value;
         }
 
@@ -77,7 +81,7 @@ namespace Identity.Application.Identity.Queries.Verification
                 {
                     return null;
                 }
-                    
+
                 return new UserTokenModel
                 {
                     Email = email,
