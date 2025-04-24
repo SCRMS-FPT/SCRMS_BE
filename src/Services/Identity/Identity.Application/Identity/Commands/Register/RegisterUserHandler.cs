@@ -28,7 +28,8 @@ namespace Identity.Application.Identity.Commands.Register
             CancellationToken cancellationToken)
         {
             // Validate
-            if (_userRepository.GetUserByEmailAsync(command.Email) != null)
+            var user = await _userRepository.GetUserByEmailAsync(command.Email);
+            if (user != null)
             {
                 throw new DomainException("Email already taken");
             }
