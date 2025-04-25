@@ -9,9 +9,7 @@ namespace Identity.Application.Identity.Commands.Register
     string Phone,
     DateTime BirthDate,
     string Gender,
-    string Password) : ICommand<RegisterUserResult>;
-
-    public record RegisterUserResult(Guid Id);
+    string Password) : ICommand<Unit>;
 
     public class RegisterUserValidator : AbstractValidator<RegisterUserCommand>
     {

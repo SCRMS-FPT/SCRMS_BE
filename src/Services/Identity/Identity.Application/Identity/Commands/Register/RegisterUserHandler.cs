@@ -8,71 +8,53 @@ using System.Text;
 
 namespace Identity.Application.Identity.Commands.Register
 {
-    public sealed class RegisterUserHandler : ICommandHandler<RegisterUserCommand, RegisterUserResult>
+    public sealed class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Unit>
     {
         private readonly IUserRepository _userRepository;
         private readonly EndpointSettings _endpointSettings;
         private readonly IPublishEndpoint _publishEndpoint;
 
-        public RegisterUserHandler(IUserRepository userRepository, IOptions<EndpointSettings> endpointSettings, IPublishEndpoint publishEndpoint)
+        public RegisterUserHandler(IUserRepository userRepository,
+            IOptions<EndpointSettings> endpointSettings,
+            IPublishEndpoint publishEndpoint)
         {
             _userRepository = userRepository;
             _endpointSettings = endpointSettings.Value;
             _publishEndpoint = publishEndpoint;
         }
 
-        public async Task<RegisterUserResult> Handle(
+        public async Task<Unit> Handle(
             RegisterUserCommand command,
             CancellationToken cancellationToken)
         {
-            var user = new User
+            // Validate
+            var user = await _userRepository.GetUserByEmailAsync(command.Email);
+            if (user != null)
             {
-                Id = Guid.NewGuid(),
-                FirstName = command.FirstName,
-                LastName = command.LastName,
-                Email = command.Email,
-                UserName = command.Email,
-                PhoneNumber = command.Phone,
-                BirthDate = command.BirthDate,
-                Gender = Enum.Parse<Gender>(command.Gender),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var result = await _userRepository.CreateUserAsync(user, command.Password);
-
-            if (!result.Succeeded)
-            {
-                throw new DomainException(
-                    $"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}"
-                );
+                throw new DomainException("Email already taken");
             }
-
             // Send email 
             await _publishEndpoint.Publish(
                 new SendMailEvent(
                     command.Email,
                     GenerateVerificationEmail(command.FirstName + " " + command.LastName,
-                    _endpointSettings.Verification + GenerateToken(command.Email, _endpointSettings.VerificationKey)),
+                    _endpointSettings.Verification + GenerateTokenWithHashedPassword(command, _endpointSettings.VerificationKey)),
                     "Thư xác minh tài khoản của SCRMS",
                     true));
 
-            return new RegisterUserResult(user.Id);
+            return Unit.Value;
         }
 
-        /// <summary>
-        /// Generate the token to encrypt the data for sending
-        /// </summary>
-        /// <param name="email">This is the private data for backend verification</param>
-        /// <param name="secretKey">This is the key to encrypt and decrypt</param>
-        /// <returns>An token that can be decrypt using the sercet key, but safe with backend user</returns>
-        public static string GenerateToken(string email, string secretKey)
+        public static string GenerateTokenWithHashedPassword(RegisterUserCommand command, string secretKey)
         {
-            var data = $"{email}|{DateTime.UtcNow.Ticks}";
+            var registrationData = $"{command.FirstName}|{command.LastName}|{command.Email}|{command.Phone}|{command.BirthDate:yyyyMMdd}|{command.Gender}|{command.Password}";
+
             using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
             {
-                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registrationData));
                 var hashString = Convert.ToBase64String(hash);
-                var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{data}|{hashString}"));
+                var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{registrationData}|{hashString}"));
+
                 return token;
             }
         }
@@ -108,7 +90,7 @@ namespace Identity.Application.Identity.Commands.Register
         </style>
     </head>
     <body>
-        <div style=""max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);"">
+        <div style=""max-width: 600px; margin: 0 auto; background: #f2f2f2; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);"">
             <div style=""text-align: center; margin-bottom: 20px;"">
                 <h1>Xác Minh Tài Khoản Sports Court Management and Reservation System</h1>
             </div>
