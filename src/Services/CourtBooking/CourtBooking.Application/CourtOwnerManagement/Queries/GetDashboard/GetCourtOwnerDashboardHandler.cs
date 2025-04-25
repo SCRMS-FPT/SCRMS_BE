@@ -70,7 +70,7 @@ namespace CourtBooking.Application.CourtOwnerManagement.Queries.GetDashboard
             // Calculate booking rates
             var totalBookings = allBookings.Count;
             var completedBookings = allBookings.Count(b => b.Status == BookingStatus.Completed);
-            var confirmedBookings = allBookings.Count(b => b.Status == BookingStatus.Confirmed);
+            var confirmedBookings = allBookings.Count(b => b.Status == BookingStatus.Deposited); // Changed from Confirmed to Deposited
 
             var completedRate = totalBookings > 0 ? (decimal)completedBookings / totalBookings * 100 : 0;
             var confirmedRate = totalBookings > 0 ? (decimal)confirmedBookings / totalBookings * 100 : 0;
@@ -128,7 +128,7 @@ namespace CourtBooking.Application.CourtOwnerManagement.Queries.GetDashboard
         private decimal CalculateRevenue(List<Domain.Models.Booking> bookings)
         {
             return bookings
-                .Where(b => b.Status == BookingStatus.Completed || b.Status == BookingStatus.Confirmed)
+                .Where(b => b.Status == BookingStatus.Completed || b.Status == BookingStatus.Deposited) // Changed from Confirmed to Deposited
                 .Sum(b => b.TotalPrice);
         }
 

@@ -83,17 +83,8 @@ namespace CourtBooking.Application.BookingManagement.Command.UpdateBookingStatus
             // Define valid status transitions
             switch (currentStatus)
             {
-                case BookingStatus.Pending:
-                    return newStatus == BookingStatus.Confirmed ||
-                           newStatus == BookingStatus.Cancelled ||
-                           newStatus == BookingStatus.PendingPayment;
-
-                case BookingStatus.Confirmed:
-                    return newStatus == BookingStatus.Completed ||
-                           newStatus == BookingStatus.Cancelled;
-
                 case BookingStatus.PendingPayment:
-                    return newStatus == BookingStatus.Confirmed ||
+                    return newStatus == BookingStatus.Deposited ||
                            newStatus == BookingStatus.Cancelled ||
                            newStatus == BookingStatus.PaymentFail;
 

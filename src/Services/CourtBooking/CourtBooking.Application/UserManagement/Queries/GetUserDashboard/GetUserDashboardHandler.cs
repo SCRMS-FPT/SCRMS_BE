@@ -49,7 +49,7 @@ namespace CourtBooking.Application.UserManagement.Queries.GetUserDashboard
                 .Include(b => b.BookingDetails)
                 .Where(b => b.UserId == userId)
                 .Where(b => b.BookingDate >= today)
-                .Where(b => b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending || b.Status == BookingStatus.PendingPayment)
+                .Where(b => b.Status == BookingStatus.Deposited || b.Status == BookingStatus.PendingPayment) // Changed from Confirmed to Deposited
                 .OrderBy(b => b.BookingDate)
                 .ThenBy(b => b.BookingDetails.Min(d => d.StartTime))
                 .Take(limit);
@@ -183,7 +183,7 @@ namespace CourtBooking.Application.UserManagement.Queries.GetUserDashboard
                     CompletedCount = g.Count(b => b.Status == BookingStatus.Completed),
                     CancelledCount = g.Count(b => b.Status == BookingStatus.Cancelled),
                     UpcomingCount = g.Count(b => b.BookingDate >= today &&
-                        (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending || b.Status == BookingStatus.PendingPayment))
+                        (b.Status == BookingStatus.Deposited || b.Status == BookingStatus.PendingPayment)) // Changed from Confirmed to Deposited
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 

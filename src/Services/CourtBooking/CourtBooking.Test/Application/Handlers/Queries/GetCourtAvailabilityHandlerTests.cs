@@ -235,13 +235,13 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             // Với lịch trình từ 8:00-10:00 và thời lượng sân 1 giờ, chúng ta kỳ vọng 2 time slots
             Assert.Equal(2, result.Schedule[0].TimeSlots.Count);
-            
+
             // Kiểm tra time slot đầu tiên: 8:00-9:00
             Assert.Equal("AVAILABLE", result.Schedule[0].TimeSlots[0].Status);
             Assert.Equal("08:00", result.Schedule[0].TimeSlots[0].StartTime);
             Assert.Equal("09:00", result.Schedule[0].TimeSlots[0].EndTime);
             Assert.Equal(150.0m, result.Schedule[0].TimeSlots[0].Price);
-            
+
             // Kiểm tra time slot thứ hai: 9:00-10:00
             Assert.Equal("AVAILABLE", result.Schedule[0].TimeSlots[1].Status);
             Assert.Equal("09:00", result.Schedule[0].TimeSlots[1].StartTime);
@@ -290,9 +290,9 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 startDate,
                 "Test booking"
             );
-            
-            // Thiết lập status là Confirmed
-            booking.UpdateStatus(BookingStatus.Confirmed);
+
+            // Thiết lập status là Deposited
+            booking.UpdateStatus(BookingStatus.Deposited); // Changed from Confirmed to Deposited
 
             var bookingDetail = BookingDetail.Create(
                 bookingId,
@@ -490,7 +490,7 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             // All slots should be marked as maintenance
             Assert.All(result.Schedule[0].TimeSlots, slot => Assert.Equal("MAINTENANCE", slot.Status));
-            
+
             // Kiểm tra thời gian của các slot
             Assert.Equal("08:00", result.Schedule[0].TimeSlots[0].StartTime);
             Assert.Equal("09:00", result.Schedule[0].TimeSlots[0].EndTime);

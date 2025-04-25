@@ -44,7 +44,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             var command = new UpdateBookingStatusCommand(
                 BookingId: bookingId,
                 OwnerId: ownerId,
-                Status: BookingStatus.Confirmed
+                Status: BookingStatus.Deposited // Changed from Confirmed to Deposited
             );
 
             // Setup booking
@@ -111,7 +111,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(BookingStatus.Confirmed, booking.Status);
+            Assert.Equal(BookingStatus.Deposited, booking.Status); // Changed from Confirmed to Deposited
             _mockBookingRepository.Verify(r => r.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -125,7 +125,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             var command = new UpdateBookingStatusCommand(
                 BookingId: bookingId,
                 OwnerId: ownerId,
-                Status: BookingStatus.Confirmed
+                Status: BookingStatus.Completed
             );
 
             _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<BookingId>(), It.IsAny<CancellationToken>()))
@@ -153,7 +153,7 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             var command = new UpdateBookingStatusCommand(
                 BookingId: bookingId,
                 OwnerId: ownerId,
-                Status: BookingStatus.Confirmed
+                Status: BookingStatus.Completed
             );
 
             // Setup booking
@@ -323,14 +323,14 @@ namespace CourtBooking.Test.Application.Handlers.Commands
                 Status: BookingStatus.Cancelled
             );
 
-            // Setup booking with Pending status
+            // Setup booking with PendingPayment status
             var booking = Booking.Create(
                 BookingId.Of(bookingId),
                 UserId.Of(Guid.NewGuid()),
                 DateTime.Now.AddDays(1),
                 "Test booking"
             );
-            booking.UpdateStatus(BookingStatus.Pending); // Set to pending
+            booking.UpdateStatus(BookingStatus.PendingPayment); // Use PendingPayment instead of Pending
 
             // Add booking detail
             var bookingDetail = BookingDetail.Create(
@@ -392,4 +392,4 @@ namespace CourtBooking.Test.Application.Handlers.Commands
             _mockBookingRepository.Verify(r => r.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
-} 
+}

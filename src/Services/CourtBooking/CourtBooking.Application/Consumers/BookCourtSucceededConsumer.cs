@@ -68,9 +68,13 @@ namespace CourtBooking.Application.Consumers
                 {
                     booking.UpdateStatus(status);
                 }
+                else if (booking.RemainingBalance == 0)
+                {
+                    booking.UpdateStatus(BookingStatus.Completed);
+                }
                 else
                 {
-                    booking.Confirm();
+                    booking.UpdateStatus(BookingStatus.Deposited);
                 }
 
                 _logger.LogInformation("Đã cập nhật trạng thái đặt sân thành {Status} cho BookingId: {BookingId}",
