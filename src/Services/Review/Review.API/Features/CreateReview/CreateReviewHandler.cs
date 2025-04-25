@@ -34,15 +34,15 @@ namespace Reviews.API.Features.CreateReview
                 throw new ArgumentException("Rating must be between 1 and 5.");
             if (!new[] { "court", "coach" }.Contains(request.SubjectType))
                 throw new ArgumentException("Invalid subject type.");
-            var cacheKey = $"{request.SubjectType}_{request.SubjectId}";
-            if (!_cache.TryGetValue(cacheKey, out var exists))
-            {
-                exists = await CheckViaApi(request.SubjectType, request.SubjectId, cancellationToken);
-                _cache.Set(cacheKey, exists);
-            }
+            // var cacheKey = $"{request.SubjectType}_{request.SubjectId}";
+            // if (!_cache.TryGetValue(cacheKey, out var exists))
+            // {
+            //     exists = await CheckViaApi(request.SubjectType, request.SubjectId, cancellationToken);
+            //     _cache.Set(cacheKey, exists);
+            // }
 
-            if (!exists)
-                throw new InvalidOperationException($"{request.SubjectType} not exists");
+            // if (!exists)
+            //     throw new InvalidOperationException($"{request.SubjectType} not exists");
             var review = new Review
             {
                 Id = Guid.NewGuid(),
