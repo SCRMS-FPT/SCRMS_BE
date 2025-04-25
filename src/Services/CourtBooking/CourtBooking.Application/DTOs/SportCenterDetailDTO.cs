@@ -19,6 +19,7 @@ namespace CourtBooking.Application.DTOs
     double Longitude,
     string Avatar,
     List<string> ImageUrls,
+    bool IsDeleted,
     string Description,
     DateTime CreatedAt,
     DateTime? LastModified

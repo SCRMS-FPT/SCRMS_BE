@@ -5,6 +5,8 @@ using Coach.API.Features.Coaches.GetCoaches;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Coach.API.Extensions;
+using System.Text.Json;
+
 namespace Coach.API.Features.Coaches.GetMyCoachProfile
 {
     public record GetMyCoachProfileQuery(Guid UserId) : IQuery<CoachResponse>;
@@ -59,20 +61,40 @@ namespace Coach.API.Features.Coaches.GetMyCoachProfile
             var imageUrls = new List<string>();
             if (!string.IsNullOrEmpty(coach.ImageUrls))
             {
-                // First try splitting by pipe (|) character which is the test expectation
-                if (coach.ImageUrls.Contains('|'))
+                // Try parsing as JSON first (new format)
+                try
                 {
-                    imageUrls = coach.ImageUrls.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
+                    var jsonDocument = JsonDocument.Parse(coach.ImageUrls);
+                    if (jsonDocument.RootElement.TryGetProperty("Images", out var imagesElement) &&
+                        imagesElement.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var imageElement in imagesElement.EnumerateArray())
+                        {
+                            if (imageElement.ValueKind == JsonValueKind.String)
+                            {
+                                imageUrls.Add(imageElement.GetString());
+                            }
+                        }
+                    }
                 }
-                // Also try comma (,) which might be used in some tests
-                else if (coach.ImageUrls.Contains(','))
+                catch (JsonException)
                 {
-                    imageUrls = coach.ImageUrls.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-                }
-                else
-                {
-                    // If no delimiters found but string is not empty, treat as a single URL
-                    imageUrls.Add(coach.ImageUrls);
+                    // Fallback to old formats if JSON parsing fails
+                    // First try splitting by pipe (|) character 
+                    if (coach.ImageUrls.Contains('|'))
+                    {
+                        imageUrls = coach.ImageUrls.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
+                    }
+                    // Also try comma (,) 
+                    else if (coach.ImageUrls.Contains(','))
+                    {
+                        imageUrls = coach.ImageUrls.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                    }
+                    else
+                    {
+                        // If no delimiters found but string is not empty, treat as a single URL
+                        imageUrls.Add(coach.ImageUrls);
+                    }
                 }
             }
 

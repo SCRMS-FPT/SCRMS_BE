@@ -136,6 +136,7 @@ public class GetSportCentersByOwnerHandler(IApplicationDbContext _context)
                 Description: sportCenter.Description,
                 Avatar: sportCenter.Images.Avatar.ToString(),
                 ImageUrl: sportCenter.Images.ImageUrls.Select(i => i.ToString()).ToList(),
+                IsDeleted: sportCenter.IsDeleted,
                 Courts: courtDtos  // Include courts in the response
             );
         }).ToList();

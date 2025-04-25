@@ -24,6 +24,9 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
         // Start with basic query
         var sportCentersQuery = _context.SportCenters.AsQueryable();
 
+        // Only include non-deleted sport centers
+        sportCentersQuery = sportCentersQuery.Where(sc => !sc.IsDeleted);
+
         // Exclude sport centers owned by the specified owner (if user is CourtOwner)
         if (query.ExcludeOwnerId.HasValue)
         {
@@ -61,7 +64,7 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
             var baseBookingQ = _context.BookingDetails
                 .Join(_context.Bookings,
                       bd => bd.BookingId,
-                      b  => b.Id,
+                      b => b.Id,
                       (bd, b) => new { bd, b })
                 .Where(x => x.b.Status != BookingStatus.Cancelled
                          && x.b.Status != BookingStatus.PaymentFail
@@ -71,7 +74,7 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
             if (query.StartTime.HasValue && query.EndTime.HasValue)
             {
                 var start = query.StartTime.Value;
-                var end   = query.EndTime.Value;
+                var end = query.EndTime.Value;
                 baseBookingQ = baseBookingQ
                     .Where(x => x.bd.EndTime > start && x.bd.StartTime < end);
             }
@@ -87,7 +90,7 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
             var filteredSchedules = allSchedules
                 .Where(cs => cs.DayOfWeek.Days.Contains(dayValue)
                           && (!query.StartTime.HasValue || cs.EndTime > query.StartTime.Value)
-                          && (!query.EndTime  .HasValue || cs.StartTime < query.EndTime.Value))
+                          && (!query.EndTime.HasValue || cs.StartTime < query.EndTime.Value))
                 .ToList();
 
             // join with durations
@@ -95,7 +98,8 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
                 .Join(courtDurations,
                       cs => cs.CourtId,
                       cd => cd.Id,
-                      (cs, cd) => new {
+                      (cs, cd) => new
+                      {
                           cs.CourtId,
                           cs.StartTime,
                           cs.EndTime,
@@ -108,12 +112,13 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
             {
                 var windowStart = query.StartTime.HasValue && x.StartTime < query.StartTime.Value
                     ? query.StartTime.Value : x.StartTime;
-                var windowEnd   = query.EndTime  .HasValue && x.EndTime   > query.EndTime.Value
-                    ? query.EndTime.Value   : x.EndTime;
-                var overlapMin  = Math.Max(0, (windowEnd - windowStart).TotalMinutes);
-                return new {
+                var windowEnd = query.EndTime.HasValue && x.EndTime > query.EndTime.Value
+                    ? query.EndTime.Value : x.EndTime;
+                var overlapMin = Math.Max(0, (windowEnd - windowStart).TotalMinutes);
+                return new
+                {
                     x.CourtId,
-                    OverlapMinutes      = (int)overlapMin,
+                    OverlapMinutes = (int)overlapMin,
                     SlotDurationMinutes = (int)x.SlotDuration.TotalMinutes
                 };
             }).ToList();
@@ -191,6 +196,7 @@ public class GetSportCentersHandler(IApplicationDbContext _context)
                 Description: sportCenter.Description,
                 Avatar: sportCenter.Images.Avatar.ToString(),
                 ImageUrl: sportCenter.Images.ImageUrls.Select(i => i.ToString()).ToList(),
+                IsDeleted: sportCenter.IsDeleted,
                 Courts: courtDtos  // Include courts in the response
             );
         }).ToList();

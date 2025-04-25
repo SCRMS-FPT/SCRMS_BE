@@ -48,6 +48,7 @@ public class UpdateSportCenterHandler : ICommandHandler<UpdateSportCenterCommand
             Longitude: sportCenter.LocationPoint.Longitude,
             Avatar: sportCenter.Images.Avatar,
             ImageUrls: sportCenter.Images.ImageUrls,
+            IsDeleted: sportCenter.IsDeleted,
             Description: sportCenter.Description,
             CreatedAt: sportCenter.CreatedAt,
             LastModified: sportCenter.LastModified

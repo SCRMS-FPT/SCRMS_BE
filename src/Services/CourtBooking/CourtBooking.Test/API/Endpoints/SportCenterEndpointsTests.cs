@@ -202,6 +202,7 @@ namespace CourtBooking.Test.API.Endpoints
                 105.83,                       // Longitude
                 "avatar.jpg",                 // Avatar
                 new List<string> { "image1.jpg" }, // ImageUrls
+                false,                         // IsDeleted
                 "Description",                // Description
                 DateTime.UtcNow,              // CreatedAt
                 null                          // LastModified
@@ -429,6 +430,7 @@ namespace CourtBooking.Test.API.Endpoints
                 105.84,                 // Longitude
                 "avatar.jpg",           // Avatar
                 new List<string> { "updated-image.jpg" }, // ImageUrls
+                false,                  // IsDeleted
                 "Mô tả cập nhật",       // Description
                 now,                    // CreatedAt
                 now                     // LastModified

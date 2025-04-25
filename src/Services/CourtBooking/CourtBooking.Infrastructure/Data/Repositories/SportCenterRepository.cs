@@ -141,5 +141,18 @@ namespace CourtBooking.Application.Data.Repositories
                 await _context.SaveChangesAsync(cancellationToken);
             }
         }
+
+        public async Task RestoreSportCenterAsync(SportCenterId sportCenterId, CancellationToken cancellationToken)
+        {
+            var sportCenter = await _context.SportCenters
+                .FirstOrDefaultAsync(sc => sc.Id == sportCenterId, cancellationToken);
+
+            if (sportCenter != null)
+            {
+                sportCenter.SetIsDeleted(false);
+                sportCenter.SetLastModified(DateTime.UtcNow);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
     }
 }
