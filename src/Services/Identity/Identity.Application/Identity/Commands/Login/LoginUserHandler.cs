@@ -38,6 +38,10 @@ namespace Identity.Application.Identity.Commands.Login
             {
                 throw new DomainException("Invalid credentials");
             }
+            if (user.IsDeleted)
+            {
+                throw new DomainException("Invalid credentials");
+            }
 
             // Check for expired subscriptions and update roles accordingly
             await CheckAndUpdateExpiredSubscriptions(user);

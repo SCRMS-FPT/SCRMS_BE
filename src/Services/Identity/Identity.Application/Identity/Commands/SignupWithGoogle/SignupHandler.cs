@@ -1,6 +1,7 @@
 ﻿using BuildingBlocks.Messaging.Events;
 using Google.Apis.Auth;
 using Identity.Application.Data.Repositories;
+using Identity.Domain.Events;
 using Identity.Domain.Exceptions;
 using MassTransit;
 using Microsoft.AspNetCore.Identity;
@@ -91,6 +92,9 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
                     }
                 }
 
+                // Phát hành sự kiện UserCreatedEvent để các service khác có thể xử lý
+                _publisher.Publish(new UserCreatedEvent(user.Id));
+
                 // Send gmail
                 _publisher.Publish(new SendMailEvent(payload.Email, GenerateAnnouncement(), "Đăng ký thành công dịch vụ của SCRMS", true));
 
@@ -119,7 +123,7 @@ namespace Identity.Application.Identity.Commands.SignupWithGoogle
 </head>
 <body>
     <div style=""  margin:0 auto; max-width: 600px;
-            background-color: #ffffff;
+            background-color: #f2f2f2;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);

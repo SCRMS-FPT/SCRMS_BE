@@ -9,6 +9,8 @@ namespace Notification.Test.Features
     public class SendNotificationCommandHandlerTests : HandlerTestBase
     {
         private readonly SendNotificationCommandHandler _handler;
+        private readonly Guid _hardcodedUserId = Guid.Parse("00000000-0000-0000-0000-000000000030");
+        private readonly string _hardcodedEmail = "hardcoded@example.com";
 
         public SendNotificationCommandHandlerTests() : base()
         {
@@ -18,7 +20,7 @@ namespace Notification.Test.Features
         [Fact]
         public async Task Handle_SavesNotificationToDatabase()
         {
-            var command = new SendNotificationCommand(Guid.NewGuid(), "Title", "Content", "Info", false, null);
+            var command = new SendNotificationCommand(_hardcodedUserId, "Title", "Content", "Info", false, null);
             await _handler.Handle(command, CancellationToken.None);
             var savedNotification = await Context.MessageNotifications.FirstOrDefaultAsync(n => n.Receiver == command.SendTo);
             Assert.NotNull(savedNotification);
@@ -29,7 +31,7 @@ namespace Notification.Test.Features
         [Fact]
         public async Task Handle_SendsRealTimeNotificationViaSignalR()
         {
-            var command = new SendNotificationCommand(Guid.NewGuid(), "Title", "Content", "Info", false, null);
+            var command = new SendNotificationCommand(_hardcodedUserId, "Title", "Content", "Info", false, null);
             await _handler.Handle(command, CancellationToken.None);
             var clientsMock = HubContextMock.Object.Clients;
             Mock.Get(clientsMock).Verify(c => c.User(command.SendTo.ToString()), Times.Once());
@@ -38,7 +40,7 @@ namespace Notification.Test.Features
         [Fact]
         public async Task Handle_SendsEmail_WhenSendMailIsTrue()
         {
-            var command = new SendNotificationCommand(Guid.NewGuid(), "Title", "Content", "Info", true, "test@gmail.com");
+            var command = new SendNotificationCommand(_hardcodedUserId, "Title", "Content", "Info", true, _hardcodedEmail);
             SenderMock.Setup(s => s.Send(It.IsAny<SendEmailCommand>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Unit.Value);
             await _handler.Handle(command, CancellationToken.None);
@@ -48,7 +50,7 @@ namespace Notification.Test.Features
         [Fact]
         public async Task Handle_DoesNotSendEmail_WhenSendMailIsFalse()
         {
-            var command = new SendNotificationCommand(Guid.NewGuid(), "Title", "Content", "Info", false, "test@gmail.com");
+            var command = new SendNotificationCommand(_hardcodedUserId, "Title", "Content", "Info", false, _hardcodedEmail);
             await _handler.Handle(command, CancellationToken.None);
             SenderMock.Verify(s => s.Send(It.IsAny<SendEmailCommand>(), It.IsAny<CancellationToken>()), Times.Never());
         }

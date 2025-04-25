@@ -25,6 +25,7 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddScoped<IUserWalletRepository, UserWalletRepository>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
 builder.Services.AddScoped<IWithdrawalRequestRepository, WithdrawalRequestRepository>();
+builder.Services.AddScoped<IPendingDepositRepository, PendingDepositRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddCarter();
 builder.Services.AddCors();
@@ -124,3 +125,4 @@ app.UseHealthChecks("/health",
     });
 
 app.Run();
+

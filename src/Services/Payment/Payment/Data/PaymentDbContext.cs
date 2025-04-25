@@ -15,6 +15,7 @@ namespace Payment.API.Data
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
         public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
+        public DbSet<PendingDeposit> PendingDeposits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +39,13 @@ namespace Payment.API.Data
             modelBuilder.Entity<WithdrawalRequest>()
                 .HasIndex(w => w.Status)
                 .HasDatabaseName("IX_WithdrawalRequests_Status");
+            modelBuilder.Entity<PendingDeposit>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.Code).HasMaxLength(50);
+            });
         }
     }
 }
