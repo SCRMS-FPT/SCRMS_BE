@@ -29,7 +29,7 @@ namespace Coach.API.Features.Bookings.UpdateBookingStatus
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Update Booking Status")
-            .WithDescription("Update the status of a booking (confirmed/cancelled).").WithTags("Booking");
+            .WithDescription("Update the status of a booking (completed/cancelled).").WithTags("Booking");
         }
     }
 }

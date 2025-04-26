@@ -53,7 +53,7 @@ namespace Coach.API.Tests.Bookings
             var bookingId = Guid.NewGuid();
             var coachId = Guid.NewGuid();
             var booking = new CoachBooking { Id = bookingId, CoachId = coachId, Status = "pending" };
-            var command = new UpdateBookingStatusCommand(bookingId, "confirmed", coachId);
+            var command = new UpdateBookingStatusCommand(bookingId, "completed", coachId);
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(repo => repo.GetCoachBookingByIdAsync(bookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
             var mockContext = new Mock<CoachDbContext>();
@@ -65,7 +65,7 @@ namespace Coach.API.Tests.Bookings
             // Assert
             mockBookingRepo.Verify(repo => repo.UpdateCoachBookingAsync(booking, It.IsAny<CancellationToken>()), Times.Once);
             Assert.True(result.IsUpdated);
-            Assert.Equal("confirmed", booking.Status);
+            Assert.Equal("completed", booking.Status);
         }
     }
 }

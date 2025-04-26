@@ -113,7 +113,7 @@ namespace Coach.API.Tests.Schedules
                     BookingDate = bookingDate,
                     StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)),
                     EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(12)),
-                    Status = "Confirmed"
+                    Status = "pending"
                 }
             };
 

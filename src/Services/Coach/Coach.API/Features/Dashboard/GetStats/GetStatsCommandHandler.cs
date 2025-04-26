@@ -70,7 +70,7 @@ namespace Coach.API.Features.Dashboard.GetStats
         private async Task<List<StatPeriod>> GetGroupedStats(IQueryable<CoachBooking> bookingsQuery, string groupBy, CancellationToken cancellationToken)
         {
             var bookings = await bookingsQuery
-                .Where(b => b.Status == "confirmed")
+                .Where(b => b.Status == "completed")
                 .Select(b => new { b.BookingDate, b.TotalPrice })
                 .ToListAsync(cancellationToken);
 

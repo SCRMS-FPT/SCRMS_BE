@@ -19,8 +19,8 @@ namespace Coach.API.Features.Bookings.UpdateBookingStatus
                 .WithMessage("BookingId is required.");
             RuleFor(x => x.Status)
             .NotEmpty()
-            .Must(status => status == "confirmed" || status == "cancelled")
-            .WithMessage("Status must be either 'confirmed' or 'cancelled'.");
+            .Must(status => status == "completed" || status == "cancelled")
+            .WithMessage("Status must be either 'completed' or 'cancelled'.");
         }
     }
 
@@ -44,12 +44,12 @@ namespace Coach.API.Features.Bookings.UpdateBookingStatus
             if (booking.CoachId != command.CoachBookingId)
                 throw new BadRequestException("Booking coach is not you");
 
-            if (command.Status != "confirmed" && command.Status != "cancelled")
+            if (command.Status != "completed" && command.Status != "cancelled")
                 throw new BadRequestException("Invalid booking status");
 
             // Add validation for invalid status transitions
             if ((booking.Status == "cancelled" || booking.Status == "completed") &&
-                (command.Status == "confirmed" || command.Status == "cancelled"))
+                (command.Status == "completed" || command.Status == "cancelled"))
             {
                 throw new BadRequestException("Invalid booking status transition");
             }

@@ -28,7 +28,7 @@ namespace Coach.API.Tests.Bookings
                 Status = "pending"
             };
 
-            var command = new UpdateBookingStatusCommand(bookingId, "confirmed", coachId);
+            var command = new UpdateBookingStatusCommand(bookingId, "completed", coachId);
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(repo => repo.GetCoachBookingByIdAsync(bookingId, It.IsAny<CancellationToken>()))
@@ -47,11 +47,11 @@ namespace Coach.API.Tests.Bookings
 
             // Assert
             mockBookingRepo.Verify(repo => repo.UpdateCoachBookingAsync(
-                It.Is<CoachBooking>(b => b.Id == bookingId && b.Status == "confirmed"),
+                It.Is<CoachBooking>(b => b.Id == bookingId && b.Status == "completed"),
                 It.IsAny<CancellationToken>()),
                 Times.Once);
             Assert.True(result.IsUpdated);
-            Assert.Equal("confirmed", booking.Status);
+            Assert.Equal("completed", booking.Status);
         }
 
         [Fact]
@@ -60,7 +60,7 @@ namespace Coach.API.Tests.Bookings
             // Arrange
             var bookingId = Guid.NewGuid();
             var coachId = Guid.NewGuid();
-            var command = new UpdateBookingStatusCommand(bookingId, "confirmed", coachId);
+            var command = new UpdateBookingStatusCommand(bookingId, "completed", coachId);
 
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(repo => repo.GetCoachBookingByIdAsync(bookingId, It.IsAny<CancellationToken>()))
@@ -97,7 +97,7 @@ namespace Coach.API.Tests.Bookings
 
             var command = new UpdateBookingStatusCommand(
                 bookingId,
-                "confirmed",
+                "completed",
                 requestingCoachId  // Different coach trying to update
             );
 
@@ -122,7 +122,7 @@ namespace Coach.API.Tests.Bookings
         }
 
         [Theory]
-        [InlineData("pending", "confirmed")]
+        [InlineData("pending", "completed")]
         [InlineData("pending", "cancelled")]
         public async Task Handle_ValidStatusTransition_UpdatesStatus(string initialStatus, string newStatus)
         {
@@ -159,8 +159,8 @@ namespace Coach.API.Tests.Bookings
         }
 
         [Theory]
-        [InlineData("cancelled", "confirmed")]  // Can't confirm a cancelled booking
-        [InlineData("completed", "confirmed")]  // Can't revert a completed booking
+        [InlineData("cancelled", "completed")]  // Can't complete a cancelled booking
+        [InlineData("completed", "pending")]    // Can't revert a completed booking
         [InlineData("completed", "cancelled")]  // Can't cancel a completed booking
         public async Task Handle_InvalidStatusTransition_ThrowsBadRequestException(string initialStatus, string newStatus)
         {
