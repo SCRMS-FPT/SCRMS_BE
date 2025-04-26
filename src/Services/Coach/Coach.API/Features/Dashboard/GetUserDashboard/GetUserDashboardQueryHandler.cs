@@ -46,13 +46,13 @@ namespace Coach.API.Features.Dashboard.GetUserDashboard
             // Get all bookings for the user
             var allBookings = await _bookingRepository.GetCoachBookingsByUserIdAsync(query.UserId, cancellationToken);
 
-            // Calculate total sessions (completed or confirmed sessions)
-            int totalSessions = allBookings.Count(b => b.Status == "completed" || b.Status == "confirmed");
+            // Calculate total sessions (only completed sessions)
+            int totalSessions = allBookings.Count(b => b.Status == "completed");
 
-            // Get upcoming sessions (confirmed sessions with date >= today)
+            // Get upcoming sessions (pending sessions with date >= today)
             var today = DateOnly.FromDateTime(DateTime.Today);
             var upcomingBookings = allBookings
-                .Where(b => b.Status == "confirmed" && b.BookingDate >= today)
+                .Where(b => b.Status == "pending" && b.BookingDate >= today)
                 .OrderBy(b => b.BookingDate)
                 .ThenBy(b => b.StartTime)
                 .Take(5) // Limit to 5 upcoming sessions

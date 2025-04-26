@@ -23,7 +23,7 @@ namespace Coach.API.Tests.Bookings
             var bookingId = Guid.NewGuid();
             var coachId = Guid.NewGuid();
             var booking = new CoachBooking { Id = bookingId, CoachId = coachId, Status = "pending" };
-            var command = new UpdateBookingStatusCommand(bookingId, "confirmed", coachId);
+            var command = new UpdateBookingStatusCommand(bookingId, "completed", coachId);
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(repo => repo.GetCoachBookingByIdAsync(bookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
             var mockContext = new Mock<CoachDbContext>();
@@ -35,7 +35,7 @@ namespace Coach.API.Tests.Bookings
             // Assert
             mockBookingRepo.Verify(repo => repo.UpdateCoachBookingAsync(booking, It.IsAny<CancellationToken>()), Times.Once);
             Assert.True(result.IsUpdated);
-            Assert.Equal("confirmed", booking.Status);
+            Assert.Equal("completed", booking.Status);
         }
 
         [Fact]
@@ -43,7 +43,7 @@ namespace Coach.API.Tests.Bookings
         {
             // Arrange
             var bookingId = Guid.NewGuid();
-            var command = new UpdateBookingStatusCommand(bookingId, "confirmed", Guid.NewGuid());
+            var command = new UpdateBookingStatusCommand(bookingId, "completed", Guid.NewGuid());
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(repo => repo.GetCoachBookingByIdAsync(bookingId, It.IsAny<CancellationToken>())).ReturnsAsync((CoachBooking)null);
             var handler = new UpdateBookingStatusCommandHandler(mockBookingRepo.Object, null);
@@ -60,7 +60,7 @@ namespace Coach.API.Tests.Bookings
             var bookingId = Guid.NewGuid();
             var coachId = Guid.NewGuid();
             var booking = new CoachBooking { Id = bookingId, CoachId = Guid.NewGuid() }; // Different CoachId
-            var command = new UpdateBookingStatusCommand(bookingId, "confirmed", coachId);
+            var command = new UpdateBookingStatusCommand(bookingId, "completed", coachId);
             var mockBookingRepo = new Mock<ICoachBookingRepository>();
             mockBookingRepo.Setup(repo => repo.GetCoachBookingByIdAsync(bookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
             var handler = new UpdateBookingStatusCommandHandler(mockBookingRepo.Object, null);
@@ -82,7 +82,7 @@ namespace Coach.API.Tests.Bookings
 
             // Assert
             Assert.False(result.IsValid);
-            Assert.Contains(result.Errors, e => e.ErrorMessage == "Status must be either 'confirmed' or 'cancelled'.");
+            Assert.Contains(result.Errors, e => e.ErrorMessage == "Status must be either 'completed' or 'cancelled'.");
         }
     }
 }

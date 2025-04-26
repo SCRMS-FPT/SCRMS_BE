@@ -43,7 +43,7 @@ namespace Coach.API.Tests.Bookings
                     BookingDate = DateOnly.FromDateTime(DateTime.Now.AddDays(10)),
                     StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(9)),
                     EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(10)),
-                    Status = "confirmed",
+                    Status = "completed",
                     TotalPrice = 50m
                 },
                 new CoachBooking
@@ -127,7 +127,7 @@ namespace Coach.API.Tests.Bookings
 
             Assert.Equal(coachId, firstBooking.CoachId);
             Assert.Equal("John Coach", firstBooking.CoachName);
-            Assert.Equal("confirmed", firstBooking.Status);
+            Assert.Equal("completed", firstBooking.Status);
             Assert.Equal("Basic Package", firstBooking.PackageName);
 
             // Check the second booking
@@ -147,7 +147,7 @@ namespace Coach.API.Tests.Bookings
 
             var bookings = new List<CoachBooking>
             {
-                new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId, Status = "confirmed" },
+                new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId, Status = "completed" },
                 new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId, Status = "pending" },
                 new CoachBooking { Id = Guid.NewGuid(), UserId = userId, CoachId = coachId, Status = "cancelled" }
             };
@@ -178,7 +178,7 @@ namespace Coach.API.Tests.Bookings
                 userId,
                 0,
                 10,
-                "confirmed",  // Status filter
+                "completed",  // Status filter
                 null,
                 null,
                 null,
@@ -192,7 +192,7 @@ namespace Coach.API.Tests.Bookings
             Assert.NotNull(result);
             Assert.Equal(1, result.Count);
             Assert.Single(result.Data);
-            Assert.Equal("confirmed", result.Data.First().Status);
+            Assert.Equal("completed", result.Data.First().Status);
         }
 
         [Fact]

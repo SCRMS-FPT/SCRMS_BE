@@ -17,7 +17,8 @@ namespace Payment.API.Features.ProcessBookingPayment
         Guid? ProviderId = null,
         Guid? BookingId = null,
         Guid? PackageId = null,
-        string? Status = "Confirmed") : IRequest<Guid>;
+        string? Status = "Confirmed",
+        Guid? CustomerId = null) : IRequest<Guid>;  // Add CustomerId parameter
 
     public class ProcessBookingPaymentHandler : IRequestHandler<ProcessBookingPaymentCommand, Guid>
     {
@@ -46,6 +47,32 @@ namespace Payment.API.Features.ProcessBookingPayment
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Special handling for cash payment at court (marked as completed by court owner)
+                if (request.PaymentType == "CourtBookingCash")
+                {
+                    // Create a transaction record without modifying any wallets
+                    // UserId is the court owner's ID (authenticated user)
+                    var cashTransaction = new WalletTransaction
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = request.UserId, // Court owner ID (from JWT)
+                        TransactionType = "CourtBookingRevenue",
+                        ReferenceId = request.ReferenceId ?? request.BookingId,
+                        Amount = request.Amount,
+                        Description = request.Description ??
+                            (request.CustomerId != null
+                                ? $"Thanh toán tiền mặt tại sân cho khách hàng {request.CustomerId}"
+                                : "Thanh toán tiền mặt tại sân"),
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _walletTransactionRepository.AddWalletTransactionAsync(cashTransaction, cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+
+                    return cashTransaction.Id;
+                }
+
                 var wallet = await _userWalletRepository.GetUserWalletByUserIdAsync(request.UserId, cancellationToken);
 
                 if (wallet == null)
@@ -66,7 +93,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                     Id = Guid.NewGuid(),
                     UserId = request.UserId,
                     TransactionType = request.PaymentType,
-                    ReferenceId = request.ReferenceId,
+                    ReferenceId = request.ReferenceId ?? request.BookingId,
                     Amount = -request.Amount,
                     Description = request.Description,
                     CreatedAt = DateTime.UtcNow
@@ -107,7 +134,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                         Id = Guid.NewGuid(),
                         UserId = request.ProviderId.Value,
                         TransactionType = $"{request.PaymentType}Revenue",
-                        ReferenceId = request.ReferenceId,
+                        ReferenceId = request.ReferenceId ?? request.BookingId,
                         Amount = request.Amount, // Cộng toàn bộ số tiền (không trừ phí)
                         Description = $"Doanh thu từ {request.Description}",
                         CreatedAt = DateTime.UtcNow

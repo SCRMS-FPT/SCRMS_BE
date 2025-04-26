@@ -15,7 +15,9 @@ namespace Payment.API.Features.ProcessBookingPayment
             });
             app.MapPost("/api/payments/wallet/booking", async (ProcessPaymentRequest request, ISender sender, HttpContext httpContext) =>
             {
-                var userId = Guid.Parse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+                // Get authenticated user ID (this will be the court owner for CourtBookingCash)
+                var authUserId = Guid.Parse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                    throw new UnauthorizedAccessException());
 
                 // Xác định ProviderId nếu chưa có
                 Guid? providerId = request.ProviderId;
@@ -25,16 +27,17 @@ namespace Payment.API.Features.ProcessBookingPayment
                 }
 
                 var command = new ProcessBookingPaymentCommand(
-                    userId,
+                    authUserId, // Always use authenticated user's ID
                     request.Amount,
                     request.Description,
                     request.PaymentType,
                     request.ReferenceId,
                     request.CoachId,
-                    providerId,               // Truyền ProviderId vào command
+                    providerId,
                     request.BookingId,
                     request.PackageId,
-                    request.Status);
+                    request.Status,
+                    request.CustomerId); // Pass customer ID for reference
 
                 var transactionId = await sender.Send(command);
                 return Results.Created($"/api/payments/wallet/transactions/{transactionId}",
@@ -67,6 +70,7 @@ namespace Payment.API.Features.ProcessBookingPayment
         Guid? ProviderId = null,
         Guid? BookingId = null,
         Guid? PackageId = null,
-        string? Status = "Confirmed"
+        string? Status = "Confirmed",
+        Guid? CustomerId = null  // Add CustomerId parameter
     );
 }
