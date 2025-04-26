@@ -29,7 +29,7 @@ namespace CourtBooking.Test.Domain.Models
             Assert.Equal(userId, booking.UserId);
             Assert.Equal(bookingDate, booking.BookingDate);
             Assert.Equal(note, booking.Note);
-            Assert.Equal(BookingStatus.Pending, booking.Status);
+            Assert.Equal(BookingStatus.PendingPayment, booking.Status); // Changed from Pending to PendingPayment
             Assert.Equal(0, booking.TotalPrice);
             Assert.Equal(0, booking.RemainingBalance);
             Assert.Equal(0, booking.InitialDeposit);
@@ -104,7 +104,7 @@ namespace CourtBooking.Test.Domain.Models
             Assert.Equal(depositAmount, booking.InitialDeposit);
             Assert.Equal(depositAmount, booking.TotalPaid);
             Assert.Equal(100m, booking.RemainingBalance); // 200 - 100 = 100
-            Assert.Equal(BookingStatus.Confirmed, booking.Status);
+            Assert.Equal(BookingStatus.Deposited, booking.Status); // Changed from Confirmed to Deposited
 
             // Kiểm tra domain event
             var depositEvent = booking.DomainEvents.Last() as BookingDepositMadeEvent;
@@ -229,7 +229,7 @@ namespace CourtBooking.Test.Domain.Models
             booking.Confirm();
 
             // Assert
-            Assert.Equal(BookingStatus.Confirmed, booking.Status);
+            Assert.Equal(BookingStatus.Deposited, booking.Status); // Changed from Confirmed to Deposited
         }
 
         [Fact]
@@ -237,7 +237,7 @@ namespace CourtBooking.Test.Domain.Models
         {
             // Arrange
             var booking = CreateValidBooking();
-            booking.Confirm(); // Đã chuyển sang Confirmed
+            booking.Confirm(); // Đã chuyển sang Deposited
 
             // Act & Assert
             var exception = Assert.Throws<DomainException>(() => booking.Confirm());

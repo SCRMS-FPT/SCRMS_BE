@@ -34,7 +34,7 @@ namespace CourtBooking.Domain.Models
                 Id = id,
                 UserId = userId,
                 BookingDate = bookingDate,
-                Status = BookingStatus.Pending,
+                Status = BookingStatus.PendingPayment, // Changed from Pending to PendingPayment
                 Note = note,
                 TotalPrice = 0,
                 RemainingBalance = 0,
@@ -71,8 +71,8 @@ namespace CourtBooking.Domain.Models
             if (RemainingBalance < 0)
                 RemainingBalance = 0;
 
-            // If fully paid, update status to confirmed
-            if (RemainingBalance == 0 && Status != BookingStatus.Confirmed)
+            // If fully paid, update status to completed
+            if (RemainingBalance == 0)
             {
                 Status = BookingStatus.Completed;
             }
@@ -160,9 +160,9 @@ namespace CourtBooking.Domain.Models
 
         public void Confirm()
         {
-            if (Status != BookingStatus.Pending)
+            if (Status != BookingStatus.PendingPayment) // Changed from Pending to PendingPayment
                 throw new DomainException("Only pending bookings can be confirmed.");
-            Status = BookingStatus.Confirmed;
+            Status = BookingStatus.Deposited; // Changed from Confirmed to Deposited
         }
 
         // Add this method to the Booking class in d:\SEP490_G37\m\SCRMS_BE\src\Services\CourtBooking\CourtBooking.Domain\Models\Booking.cs
@@ -203,9 +203,9 @@ namespace CourtBooking.Domain.Models
             TotalPaid += depositAmount;
             RemainingBalance = TotalPrice - TotalPaid;
 
-            if (Status == BookingStatus.Pending && TotalPaid >= InitialDeposit)
+            if (Status == BookingStatus.PendingPayment && TotalPaid >= InitialDeposit) // Changed from Pending to PendingPayment
             {
-                Status = BookingStatus.Confirmed;
+                Status = BookingStatus.Deposited; // Changed from Confirmed to Deposited
             }
             if (TotalPaid > InitialDeposit)
             {

@@ -16,7 +16,7 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             Guid? filterUserId = Guid.NewGuid();
             Guid? courtId = Guid.NewGuid();
             Guid? sportsCenterId = Guid.NewGuid();
-            BookingStatus? status = BookingStatus.Confirmed;
+            BookingStatus? status = BookingStatus.Deposited; // Changed from Confirmed to Deposited
             DateTime? startDate = DateTime.Today;
             DateTime? endDate = DateTime.Today.AddDays(7);
             int page = 0;
@@ -157,4 +157,4 @@ namespace CourtBooking.Test.Application.BookingManagement.Queries
             // nhưng Handler sẽ cần xử lý các trường hợp này
         }
     }
-} 
+}

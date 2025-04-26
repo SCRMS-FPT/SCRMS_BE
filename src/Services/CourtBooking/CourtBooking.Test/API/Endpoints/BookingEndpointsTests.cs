@@ -62,7 +62,7 @@ namespace CourtBooking.Test.API.Endpoints
 
             var resultId = Guid.NewGuid();
             _mockSender.Setup(s => s.Send(It.IsAny<CreateBookingCommand>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new CreateBookingResult(resultId, "Confirmed"));
+                .ReturnsAsync(new CreateBookingResult(resultId, "Deposited")); // Changed from Confirmed to Deposited
 
             // Act
             var result = await BookingEndpoints.CreateBooking(request, _mockSender.Object, _httpContext.User);
@@ -121,7 +121,7 @@ namespace CourtBooking.Test.API.Endpoints
                     TotalPrice: 200m,
                     RemainingBalance: 0m,
                     InitialDeposit: 200m,
-                    Status: BookingStatus.Confirmed.ToString(),
+                    Status: BookingStatus.Deposited.ToString(), // Changed from Confirmed to Deposited
                     BookingDate: DateTime.Today,
                     Note: "Test note",
                     CreatedAt: DateTime.Now,
@@ -175,7 +175,7 @@ namespace CourtBooking.Test.API.Endpoints
                 TotalPrice: 200m,
                 RemainingBalance: 0m,
                 InitialDeposit: 200m,
-                Status: BookingStatus.Confirmed.ToString(),
+                Status: BookingStatus.Deposited.ToString(), // Changed from Confirmed to Deposited
                 BookingDate: DateTime.Today,
                 Note: "Test note",
                 CreatedAt: DateTime.Now,
