@@ -177,6 +177,7 @@ namespace Payment.API.Features.ProcessBookingPayment
                 }
                 else if (request.PaymentType == "CourtBooking" || request.PaymentType == "CourtBookingAdditional" || request.PaymentType.StartsWith("Court"))
                 {
+                    await _context.SaveChangesAsync(cancellationToken);
                     var paymentEvent = new BookCourtSucceededEvent(
                         userTransaction.Id,
                         request.UserId,
