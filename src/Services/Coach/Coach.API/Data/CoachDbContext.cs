@@ -2,6 +2,8 @@
 using System.Reflection.Emit;
 using Coach.API.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using BuildingBlocks.Messaging.Outbox;
+using BuildingBlocks.Messaging.Extensions;
 
 namespace Coach.API.Data
 {
@@ -21,6 +23,7 @@ namespace Coach.API.Data
         public virtual DbSet<CoachPackage> CoachPackages => Set<CoachPackage>();
         public virtual DbSet<CoachPackagePurchase> CoachPackagePurchases { get; set; }
         public virtual DbSet<CoachPromotion> CoachPromotions { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -100,6 +103,9 @@ namespace Coach.API.Data
                 .WithMany(p => p.Promotions) // You'll need to add this collection to CoachPackage
                 .HasForeignKey(cp => cp.PackageId)
                 .IsRequired(false);
+
+            // Configure outbox
+            modelBuilder.ConfigureOutbox();
         }
     }
 }

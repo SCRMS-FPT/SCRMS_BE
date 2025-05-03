@@ -197,9 +197,6 @@ namespace CourtBooking.Domain.Models
             if (depositAmount < minRequired)
                 throw new DomainException($"Số tiền đặt cọc tối thiểu: {minRequired}");
 
-            if (depositAmount > TotalPrice - TotalPaid)
-                throw new DomainException($"Số tiền đặt cọc không thể lớn hơn số dư còn lại: {TotalPrice - TotalPaid}");
-
             TotalPaid += depositAmount;
             RemainingBalance = TotalPrice - TotalPaid;
 

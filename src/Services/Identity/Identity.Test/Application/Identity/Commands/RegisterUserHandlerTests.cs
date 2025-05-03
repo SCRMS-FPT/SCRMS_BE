@@ -12,6 +12,8 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 using System.Net.Http;
+using MassTransit;
+using MediatR;
 
 namespace Identity.Test.Application.Identity.Commands
 {
@@ -19,11 +21,13 @@ namespace Identity.Test.Application.Identity.Commands
     {
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly Mock<IOptions<EndpointSettings>> _endpointSettingsMock;
+        private readonly Mock<IPublishEndpoint> _publishEndpointMock;
         private readonly EndpointSettings _endpointSettings;
 
         public RegisterUserHandlerTests()
         {
             _userRepositoryMock = new Mock<IUserRepository>();
+            _publishEndpointMock = new Mock<IPublishEndpoint>();
 
             // Setup endpoint settings for email verification
             _endpointSettings = new EndpointSettings
@@ -40,54 +44,72 @@ namespace Identity.Test.Application.Identity.Commands
         public async Task Handle_ShouldRegisterUserSuccessfully()
         {
             // Arrange
-            var userId = Guid.NewGuid();
             var command = new RegisterUserCommand("First", "Last", "test@example.com", "+1234567890", DateTime.UtcNow.AddYears(-20), "Male", "Password123");
-            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>(), "Password123"))
-                .ReturnsAsync(IdentityResult.Success)
-                .Callback<User, string>((user, pass) => user.Id = userId);
 
-            // Note: Pass null for httpClientFactory to avoid HTTP calls in test
-            var handler = new RegisterUserHandler(_userRepositoryMock.Object, _endpointSettingsMock.Object, null);
+            // Setup userRepository to return null for GetUserByEmailAsync (email not taken)
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync("test@example.com"))
+                .ReturnsAsync((User)null);
+
+            var handler = new RegisterUserHandler(
+                _userRepositoryMock.Object,
+                _endpointSettingsMock.Object,
+                _publishEndpointMock.Object);
 
             // Act
             var result = await handler.Handle(command, CancellationToken.None);
 
             // Assert
-            result.Id.Should().Be(userId);
-            _userRepositoryMock.Verify(x => x.CreateUserAsync(It.IsAny<User>(), "Password123"), Times.Once);
+            result.Should().Be(Unit.Value);
+            // Verify that publish was called for the email verification
+            _publishEndpointMock.Verify(x => x.Publish(
+                It.IsAny<BuildingBlocks.Messaging.Events.SendMailEvent>(),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Fact]
-        public async Task Handle_ShouldThrowException_WhenUserCreationFails()
+        public async Task Handle_ShouldThrowException_WhenEmailAlreadyExists()
         {
             // Arrange
-            var command = new RegisterUserCommand("First", "Last", "test@example.com", "+1234567890", DateTime.UtcNow.AddYears(-20), "Male", "Password123");
-            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>(), "Password123"))
-                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Creation failed" }));
+            var command = new RegisterUserCommand("First", "Last", "existing@example.com", "+1234567890", DateTime.UtcNow.AddYears(-20), "Male", "Password123");
 
-            var handler = new RegisterUserHandler(_userRepositoryMock.Object, _endpointSettingsMock.Object, null);
+            // Setup userRepository to return an existing user
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync("existing@example.com"))
+                .ReturnsAsync(new User { Email = "existing@example.com" });
+
+            var handler = new RegisterUserHandler(
+                _userRepositoryMock.Object,
+                _endpointSettingsMock.Object,
+                _publishEndpointMock.Object);
 
             // Act
             Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
             // Assert
             await act.Should().ThrowAsync<DomainException>()
-                .WithMessage("Failed to create user: Creation failed");
+                .WithMessage("Email already taken");
         }
 
         [Fact]
-        public async Task GenerateToken_ShouldCreateValidToken()
+        public void GenerateTokenWithHashedPassword_ShouldCreateValidToken()
         {
             // Arrange
-            var email = "test@example.com";
+            var command = new RegisterUserCommand(
+                "First",
+                "Last",
+                "test@example.com",
+                "+1234567890",
+                new DateTime(2000, 1, 1),
+                "Male",
+                "Password123");
             var key = "test-secret-key";
 
             // Act
-            var token = RegisterUserHandler.GenerateToken(email, key);
+            var token = RegisterUserHandler.GenerateTokenWithHashedPassword(command, key);
 
             // Assert
             token.Should().NotBeNullOrEmpty();
-            // Since we can't easily validate the exact token (it contains timestamp)
+            // Since we can't easily validate the exact token (it contains hashed data)
             // we'll just verify it's a Base64 string with reasonable length
             token.Should().Match(t => IsBase64String(t));
             token.Length.Should().BeGreaterThan(20);
