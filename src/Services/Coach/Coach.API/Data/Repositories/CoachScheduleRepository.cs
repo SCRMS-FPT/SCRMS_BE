@@ -72,5 +72,18 @@ namespace Coach.API.Data.Repositories
                     (startTime <= s.StartTime && endTime >= s.EndTime)
                 ), cancellationToken);
         }
+
+        public async Task<bool> HasCoachScheduleConflictExcludingCurrentAsync(Guid scheduleId, Guid coachId, int dayOfWeek, TimeOnly startTime, TimeOnly endTime, CancellationToken cancellationToken)
+        {
+            return await _context.CoachSchedules.AnyAsync(s =>
+                s.CoachId == coachId &&
+                s.DayOfWeek == dayOfWeek &&
+                s.Id != scheduleId && // Exclude the current schedule being updated
+                (
+                    (startTime >= s.StartTime && startTime < s.EndTime) ||
+                    (endTime > s.StartTime && endTime <= s.EndTime) ||
+                    (startTime <= s.StartTime && endTime >= s.EndTime)
+                ), cancellationToken);
+        }
     }
 }

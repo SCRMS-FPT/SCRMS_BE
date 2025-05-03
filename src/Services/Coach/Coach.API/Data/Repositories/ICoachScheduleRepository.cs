@@ -15,5 +15,7 @@ namespace Coach.API.Data.Repositories
         Task<List<CoachSchedule>> GetCoachSchedulesByCoachIdAsync(Guid coachId, CancellationToken cancellationToken);
 
         Task<bool> HasCoachScheduleConflictAsync(Guid coachId, int dayOfWeek, TimeOnly startTime, TimeOnly endTime, CancellationToken cancellationToken);
+
+        Task<bool> HasCoachScheduleConflictExcludingCurrentAsync(Guid scheduleId, Guid coachId, int dayOfWeek, TimeOnly startTime, TimeOnly endTime, CancellationToken cancellationToken);
     }
 }

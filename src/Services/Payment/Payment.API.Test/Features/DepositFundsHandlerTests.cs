@@ -9,140 +9,110 @@ using Payment.API.Data.Models;
 using Payment.API.Data.Repositories;
 using Payment.API.Features.DepositFunds;
 using Xunit;
-using BuildingBlocks.Messaging.Outbox;
+using Microsoft.Extensions.Configuration;
 
 namespace Payment.API.Tests.Features
 {
     public class DepositFundsHandlerTests
     {
-        private readonly Mock<IUserWalletRepository> _userWalletRepoMock;
-        private readonly Mock<IWalletTransactionRepository> _walletTransactionRepoMock;
-        private readonly PaymentDbContext _context;
-        private readonly Mock<IOutboxService> _outboxServiceMock;
+        private readonly Mock<IPendingDepositRepository> _pendingDepositRepoMock;
+        private readonly Mock<IConfiguration> _configurationMock;
         private readonly DepositFundsHandler _handler;
 
         public DepositFundsHandlerTests()
         {
-            _userWalletRepoMock = new Mock<IUserWalletRepository>();
-            _walletTransactionRepoMock = new Mock<IWalletTransactionRepository>();
-            _outboxServiceMock = new Mock<IOutboxService>();
+            _pendingDepositRepoMock = new Mock<IPendingDepositRepository>();
+            _configurationMock = new Mock<IConfiguration>();
 
-            var options = new DbContextOptionsBuilder<PaymentDbContext>()
-                .UseInMemoryDatabase(databaseName: "DepositFundsTestDb_" + Guid.NewGuid().ToString())
-                .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
-                .Options;
-            _context = new PaymentDbContext(options);
+            // Set up configuration mock to return a value for Sepay:BankInfo
+            _configurationMock.Setup(c => c.GetSection("Sepay:BankInfo").Value)
+                .Returns("Test Bank Info");
 
             _handler = new DepositFundsHandler(
-                _userWalletRepoMock.Object,
-                _walletTransactionRepoMock.Object,
-                _context,
-                _outboxServiceMock.Object);
+                _pendingDepositRepoMock.Object,
+                _configurationMock.Object);
         }
 
         [Fact]
-        public async Task Handle_ShouldDepositFunds_WhenWalletExists()
+        public async Task Handle_ShouldCreatePendingDeposit()
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var wallet = new UserWallet { UserId = userId, Balance = 100m, UpdatedAt = DateTime.UtcNow };
-            _userWalletRepoMock.Setup(r => r.GetUserWalletByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(wallet);
             var command = new DepositFundsCommand(userId, 50m, "Test Description");
 
+            _pendingDepositRepoMock
+                .Setup(r => r.AddAsync(It.IsAny<PendingDeposit>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
             // Act
-            var transactionId = await _handler.Handle(command, CancellationToken.None);
+            var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            Assert.NotEqual(Guid.Empty, transactionId);
-            _userWalletRepoMock.Verify(r =>
-                r.UpdateUserWalletAsync(It.Is<UserWallet>(w => w.Balance == 150m), It.IsAny<CancellationToken>()),
-                Times.Once);
+            Assert.NotEqual(Guid.Empty, result.DepositId);
+            Assert.Equal(50m, result.Amount);
+            Assert.StartsWith("ORD", result.DepositCode);
+            Assert.Equal("Test Bank Info", result.BankInfo);
 
-            _walletTransactionRepoMock.Verify(r =>
-                r.AddWalletTransactionAsync(
-                    It.Is<WalletTransaction>(t =>
-                        t.Description == "Test Description"),
+            _pendingDepositRepoMock.Verify(r =>
+                r.AddAsync(
+                    It.Is<PendingDeposit>(p =>
+                        p.UserId == userId &&
+                        p.Amount == 50m &&
+                        p.Description == "Test Description" &&
+                        p.Status == "Pending"),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
         [Fact]
-        public async Task Handle_ShouldCreateWalletAndDeposit_WhenWalletDoesNotExist()
+        public async Task Handle_ShouldUseDefaultDescription_WhenDescriptionIsNull()
         {
             // Arrange
             var userId = Guid.NewGuid();
-            _userWalletRepoMock.Setup(r => r.GetUserWalletByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((UserWallet)null);
-            var command = new DepositFundsCommand(userId, 50m, "Test Description");
-
-            // Act
-            var transactionId = await _handler.Handle(command, CancellationToken.None);
-
-            // Assert
-            Assert.NotEqual(Guid.Empty, transactionId);
-            _userWalletRepoMock.Verify(r =>
-                r.AddUserWalletAsync(It.Is<UserWallet>(w =>
-                    w.Balance == 50m &&
-                    w.UserId == userId),
-                It.IsAny<CancellationToken>()),
-                Times.Once);
-        }
-
-        [Fact]
-        public async Task Handle_ShouldAcceptNullDescription()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var wallet = new UserWallet { UserId = userId, Balance = 100m, UpdatedAt = DateTime.UtcNow };
-            _userWalletRepoMock.Setup(r => r.GetUserWalletByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(wallet);
             var command = new DepositFundsCommand(userId, 50m, null);
 
             // Act
-            var transactionId = await _handler.Handle(command, CancellationToken.None);
+            var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            _walletTransactionRepoMock.Verify(r =>
-                r.AddWalletTransactionAsync(
-                    It.Is<WalletTransaction>(t =>
-                        t.Description == "Deposit funds"),
+            _pendingDepositRepoMock.Verify(r =>
+                r.AddAsync(
+                    It.Is<PendingDeposit>(p =>
+                        p.Description == "Deposit funds"),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
         [Fact]
-        public async Task Handle_ShouldThrowException_WhenAmountIsZeroOrNegative()
-        {
-            // Arrange
-            var command = new DepositFundsCommand(Guid.NewGuid(), 0m, "Test Description");
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _handler.Handle(command, CancellationToken.None));
-            Assert.Equal("Amount must be positive.", exception.Message);
-        }
-
-        [Fact]
-        public async Task Handle_ShouldCreateCorrectTransactionType()
+        public async Task Handle_ShouldGenerateUniqueCode()
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var wallet = new UserWallet { UserId = userId, Balance = 100m, UpdatedAt = DateTime.UtcNow };
-            _userWalletRepoMock.Setup(r => r.GetUserWalletByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(wallet);
-            var command = new DepositFundsCommand(userId, 50m, "Test Description");
+            var command = new DepositFundsCommand(userId, 50m, "Test");
 
             // Act
-            await _handler.Handle(command, CancellationToken.None);
+            var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            _walletTransactionRepoMock.Verify(r =>
-                r.AddWalletTransactionAsync(
-                    It.Is<WalletTransaction>(t =>
-                        t.TransactionType == "deposit"),
-                    It.IsAny<CancellationToken>()),
-                Times.Once);
+            Assert.StartsWith("ORD", result.DepositCode);
+            Assert.True(result.DepositCode.Length > 3);
+        }
+
+        [Fact]
+        public async Task Handle_ShouldUseBankInfoFromConfiguration()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var command = new DepositFundsCommand(userId, 50m, "Test");
+
+            _configurationMock.Setup(c => c.GetSection("Sepay:BankInfo").Value)
+                .Returns("Custom Bank Info");
+
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Assert
+            Assert.Equal("Custom Bank Info", result.BankInfo);
         }
     }
 }

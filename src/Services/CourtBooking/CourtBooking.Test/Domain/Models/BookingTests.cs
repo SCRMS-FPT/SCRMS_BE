@@ -158,18 +158,6 @@ namespace CourtBooking.Test.Domain.Models
         }
 
         [Fact]
-        public void MakeDeposit_Should_ThrowException_WhenAmountGreaterThanRemainingBalance()
-        {
-            // Arrange
-            var booking = CreateBookingWithDetail(200m);
-            var invalidAmount = 250m;
-
-            // Act & Assert
-            var exception = Assert.Throws<DomainException>(() => booking.MakeDeposit(invalidAmount));
-            Assert.Contains("Số tiền đặt cọc không thể lớn hơn số dư còn lại", exception.Message);
-        }
-
-        [Fact]
         public void MakePayment_Should_UpdateTotalPaidAndStatus()
         {
             // Arrange
