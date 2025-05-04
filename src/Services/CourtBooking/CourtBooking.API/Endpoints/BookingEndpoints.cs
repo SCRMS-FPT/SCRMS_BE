@@ -10,6 +10,7 @@ using CourtBooking.Application.BookingManagement.Queries.GetBookingById;
 using CourtBooking.Application.BookingManagement.Command.CancelBooking;
 using CourtBooking.Application.BookingManagement.Command.UpdateBookingNote;
 using CourtBooking.Application.BookingManagement.Command.UpdateBookingStatus;
+using CourtBooking.Application.BookingManagement.Command.CancelBookingByOwner;
 using CourtBooking.Application.BookingManagement.Queries.CalculateBookingPrice;
 using Microsoft.IdentityModel.JsonWebTokens;
 using CourtBooking.Application.BookingManagement.Command.CreateOwnerBooking;
@@ -50,6 +51,9 @@ namespace CourtBooking.API.Endpoints
         List<IncompleteTransactionDto> IncompleteTransactions,
         UserBookingStatsDto Stats
     );
+
+    public record CancelBookingRequest(string CancellationReason, DateTime RequestedAt);
+    public record CancelBookingByOwnerRequest(string CancellationReason, DateTime RequestedAt);
 
     public class BookingEndpoints : ICarterModule
     {
@@ -293,6 +297,35 @@ namespace CourtBooking.API.Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Cancel a booking")
             .WithDescription("Cancels a booking and processes refund if applicable based on the court's cancellation policy");
+
+            // Add new endpoint for court owner booking cancellation with 100% refund
+            group.MapPut("/{bookingId:guid}/cancel-by-owner", [Authorize(Policy = "CourtOwner")] async (
+                Guid bookingId,
+                [FromBody] CancelBookingByOwnerRequest request,
+                ISender sender,
+                HttpContext context) =>
+            {
+                var ownerId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(ownerId))
+                    return Results.Unauthorized();
+
+                var command = new CancelBookingByOwnerCommand(
+                    bookingId,
+                    request.CancellationReason,
+                    request.RequestedAt,
+                    Guid.Parse(ownerId)
+                );
+
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            })
+            .WithName("CancelBookingByOwner")
+            .Produces<CancelBookingByOwnerResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Cancel a booking by court owner")
+            .WithDescription("Allows court owners to cancel a booking with 100% refund to the customer");
 
             // User Dashboard Endpoint
             group.MapGet("/dashboard", [Authorize] async (

@@ -70,12 +70,6 @@ namespace Coach.API.Features.Bookings.CancelBooking
             {
                 throw new InvalidOperationException("The booking is already cancelled");
             }
-
-            if (booking.Status == "completed")
-            {
-                throw new InvalidOperationException("Cannot cancel a completed booking");
-            }
-
             // Check if the user is authorized to cancel this booking
             bool isAuthorized = false;
 
