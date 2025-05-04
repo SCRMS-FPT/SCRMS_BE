@@ -1,7 +1,10 @@
 using BuildingBlocks.CQRS;
 using BuildingBlocks.Exceptions;
 using CourtBooking.Application.Data.Repositories;
+using CourtBooking.Domain.Enums;
 using CourtBooking.Domain.ValueObjects;
+using FluentValidation;
+using System.Linq;
 
 namespace CourtBooking.Application.CourtManagement.Command.DeleteSportCenter;
 
@@ -9,11 +12,16 @@ public class DeleteSportCenterHandler : ICommandHandler<DeleteSportCenterCommand
 {
     private readonly ISportCenterRepository _sportCenterRepository;
     private readonly ICourtRepository _courtRepository;
+    private readonly IBookingRepository _bookingRepository;
 
-    public DeleteSportCenterHandler(ISportCenterRepository sportCenterRepository, ICourtRepository courtRepository)
+    public DeleteSportCenterHandler(
+        ISportCenterRepository sportCenterRepository,
+        ICourtRepository courtRepository,
+        IBookingRepository bookingRepository)
     {
         _sportCenterRepository = sportCenterRepository;
         _courtRepository = courtRepository;
+        _bookingRepository = bookingRepository;
     }
 
     public async Task<DeleteSportCenterResult> Handle(DeleteSportCenterCommand command, CancellationToken cancellationToken)
@@ -26,8 +34,25 @@ public class DeleteSportCenterHandler : ICommandHandler<DeleteSportCenterCommand
             throw new NotFoundException($"Sport center with ID {command.SportCenterId} not found.");
         }
 
-        // Delete all courts associated with this sport center
+        // Get all courts associated with this sport center
         var courts = await _courtRepository.GetCourtsBySportCenterIdAsync(sportCenterId, cancellationToken);
+
+        // Check if any courts have active bookings
+        foreach (var court in courts)
+        {
+            var activeBookings = await _bookingRepository.GetActiveBookingsForCourtAsync(
+                court.Id,
+                new[] { BookingStatus.Deposited, BookingStatus.Completed },
+                DateTime.UtcNow,
+                cancellationToken);
+
+            if (activeBookings.Any())
+            {
+                throw new ValidationException("Không thể xóa trung tâm thể thao vì có lịch đặt sân còn hoạt động.");
+            }
+        }
+
+        // Delete all courts associated with this sport center
         foreach (var court in courts)
         {
             await _courtRepository.DeleteCourtAsync(court.Id, cancellationToken);
