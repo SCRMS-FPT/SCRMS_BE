@@ -125,13 +125,13 @@ namespace Identity.Infrastructure.Data.Extensions
             logger.LogInformation("Seeding service packages...");
 
             // Premium Coach Package
-            var coachPackageName = "Premium Coach Package";
+            var coachPackageName = "Gói Huấn Luyện Viên 1 Tháng";
             if (!await context.ServicePackages.AnyAsync(p => p.Name == coachPackageName))
             {
-                logger.LogInformation("Adding {PackageName} to database", coachPackageName);
+                logger.LogInformation("Thêm {PackageName} vào cơ sở dữ liệu", coachPackageName);
                 var coachPackage = ServicePackage.Create(
                     coachPackageName,
-                    "Become a verified coach with enhanced visibility and booking features. Includes profile verification, priority listing in search results, and advanced scheduling tools.",
+                    "Trở thành huấn luyện viên được xác minh với khả năng hiển thị và tính năng đặt lịch nâng cao. Bao gồm xác minh hồ sơ, ưu tiên hiển thị trong kết quả tìm kiếm và công cụ lập lịch nâng cao.",
                     299000, // 299,000 VND
                     30,
                     "Coach",
@@ -141,16 +141,16 @@ namespace Identity.Infrastructure.Data.Extensions
                 context.ServicePackages.Add(coachPackage);
             }
 
-            // Court Owner Package
-            var courtPackageName = "Court Management Package";
+            // Gói Chủ Sân
+            var courtPackageName = "Gói Quản Lý Sân 1 Tháng";
             if (!await context.ServicePackages.AnyAsync(p => p.Name == courtPackageName))
             {
-                logger.LogInformation("Adding {PackageName} to database", courtPackageName);
+                logger.LogInformation("Thêm {PackageName} vào cơ sở dữ liệu", courtPackageName);
                 var courtPackage = ServicePackage.Create(
                     courtPackageName,
-                    "Comprehensive solution for court owners. Includes court listing management, booking calendar, payment processing, and analytics dashboard for your venue.",
+                    "Giải pháp toàn diện cho chủ sân. Bao gồm quản lý danh sách sân, lịch đặt sân, xử lý thanh toán và bảng điều khiển phân tích cho địa điểm của bạn.",
                     599000, // 599,000 VND
-                    365,
+                    30,
                     "CourtOwner",
                     "active"
                 );
@@ -158,14 +158,14 @@ namespace Identity.Infrastructure.Data.Extensions
                 context.ServicePackages.Add(courtPackage);
             }
 
-            // Annual Court Owner Package
-            var annualCourtPackageName = "Court Management Annual Package";
+            // Gói Chủ Sân Hàng Năm
+            var annualCourtPackageName = "Gói Quản Lý Sân Hàng Năm";
             if (!await context.ServicePackages.AnyAsync(p => p.Name == annualCourtPackageName))
             {
-                logger.LogInformation("Adding {PackageName} to database", annualCourtPackageName);
+                logger.LogInformation("Thêm {PackageName} vào cơ sở dữ liệu", annualCourtPackageName);
                 var courtAnnualPackage = ServicePackage.Create(
                     annualCourtPackageName,
-                    "Our best value package for court owners. All features of the standard package plus priority support and advanced booking analytics. Save with annual billing.",
+                    "Gói giá trị tốt nhất cho chủ sân. Tất cả các tính năng của gói tiêu chuẩn cộng với hỗ trợ ưu tiên và phân tích đặt sân nâng cao. Tiết kiệm với thanh toán hàng năm.",
                     5990000, // 5,990,000 VND
                     365,
                     "CourtOwner",
