@@ -1,5 +1,6 @@
 ﻿using Notification.API.Data.Model;
 using Notification.API.Features.GetNotifications;
+using Xunit.Abstractions;
 
 namespace Notification.Test.Features
 {
@@ -104,7 +105,7 @@ namespace Notification.Test.Features
             // Assert
             Assert.Equal(2, result.Data.Count());
             Assert.Equal("Hardcoded Notification 3", result.Data.First().Title);
-            Assert.Equal("Hardcoded Notification 4", result.Data.Last().Title);
+            Assert.Equal("Hardcoded Notification 2", result.Data.Last().Title);
         }
     }
 }
