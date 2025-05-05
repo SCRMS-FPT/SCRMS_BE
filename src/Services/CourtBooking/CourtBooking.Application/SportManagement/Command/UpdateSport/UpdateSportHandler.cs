@@ -24,6 +24,11 @@ public class UpdateSportHandler : IRequestHandler<UpdateSportCommand, UpdateSpor
         {
             throw new KeyNotFoundException("Sport not found");
         }
+        var isExist = await _sportRepository.GetByName(request.Name, cancellationToken);
+        if (isExist != null)
+        {
+            throw new ApplicationException("Duplicate was found.");
+        }
 
         sport.Update(request.Name, request.Description, request.Icon);
         await _sportRepository.UpdateSportAsync(sport, cancellationToken);

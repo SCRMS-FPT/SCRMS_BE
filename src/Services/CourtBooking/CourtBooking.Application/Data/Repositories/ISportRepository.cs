@@ -23,5 +23,6 @@ namespace CourtBooking.Application.Data.Repositories
         Task<List<Sport>> GetSportsByIdsAsync(List<SportId> sportIds, CancellationToken cancellationToken);
 
         Task<Sport> GetByIdAsync(SportId sportId, CancellationToken cancellationToken);
+        Task<Sport> GetByName(string Name, CancellationToken cancellationToken);
     }
 }
