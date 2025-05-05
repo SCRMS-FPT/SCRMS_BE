@@ -9,7 +9,7 @@ namespace Coach.API.Features.Promotion.DeleteCoachPromotion
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapDelete("/api/coaches/promotions/{promotionId:guid}", async (
-                [FromQuery] Guid promotionId,
+                Guid promotionId,
                 [FromServices] ISender sender,
                 HttpContext httpContext) =>
             {

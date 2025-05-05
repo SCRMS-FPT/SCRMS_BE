@@ -46,5 +46,19 @@ namespace CourtBooking.Application.Data.Repositories
         /// Lấy danh sách booking trong khoảng thời gian cho một sân cụ thể
         /// </summary>
         Task<IEnumerable<Booking>> GetBookingsInDateRangeForCourtAsync(Guid courtId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Gets active bookings for a court with specified statuses and booking date after the given date
+        /// </summary>
+        /// <param name="courtId">The ID of the court</param>
+        /// <param name="statuses">The booking statuses to include</param>
+        /// <param name="afterDate">The date after which to check bookings</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of active bookings</returns>
+        Task<List<Booking>> GetActiveBookingsForCourtAsync(
+            CourtId courtId,
+            BookingStatus[] statuses,
+            DateTime afterDate,
+            CancellationToken cancellationToken);
     }
 }

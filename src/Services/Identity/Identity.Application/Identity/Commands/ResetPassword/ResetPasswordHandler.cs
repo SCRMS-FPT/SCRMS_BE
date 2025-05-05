@@ -34,6 +34,8 @@ namespace Identity.Application.Identity.Commands.ResetPassword
             var user = await _userRepository.GetUserByEmailAsync(command.Email);
             if (user == null)
                 throw new DomainException("Người dùng không tồn tại");
+            if (user.IsDeleted)
+                throw new DomainException("Người dùng không tồn tại");
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var resetLink = $"{_endpointSettings.ResetPassword}/{Uri.EscapeDataString(GenerateAnCodeForResetPassword(command.Email, token, _endpointSettings.VerificationKey))}";

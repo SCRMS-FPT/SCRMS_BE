@@ -14,6 +14,7 @@ using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
+using Identity.Application.Identity.Commands.AdminLogin;
 
 namespace Identity.API.Endpoints
 {
@@ -33,16 +34,16 @@ namespace Identity.API.Endpoints
 
             identityGroup.MapPost("/login", async (LoginUserRequest request, ISender sender) =>
             {
-                try
-                {
-                    var command = request.Adapt<LoginUserCommand>();
-                    var result = await sender.Send(command);
-                    return Results.Ok(result);
-                }
-                catch
-                {
-                    return Results.Unauthorized();
-                }
+                var command = request.Adapt<LoginUserCommand>();
+                var result = await sender.Send(command);
+                return Results.Ok(result);
+            });
+
+            identityGroup.MapPost("/adminlogin", async (LoginUserRequest request, ISender sender) =>
+            {
+                var command = request.Adapt<AdminLoginCommand>();
+                var result = await sender.Send(command);
+                return Results.Ok(result);
             });
 
             identityGroup.MapPost("/loginwithgoogle", async (LoginWithGoogle request, ISender sender) =>

@@ -8,7 +8,7 @@
       },
       {
         "Path": "src\\Services\\Payment\\Payment\\Payment.API.csproj",
-        "Action": "Start"
+        "Action": "StartWithoutDebugging"
       }
     ]
   },

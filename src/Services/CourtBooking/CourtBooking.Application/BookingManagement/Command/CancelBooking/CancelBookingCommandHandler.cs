@@ -124,7 +124,7 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
         try
         {
             // Calculate refund amount (if applicable)
-            decimal refundAmount = 0;
+            decimal refundAmount = await CalculateRefundAmount(booking, bookingDetails.First(), cancellationToken);
 
             // Update booking status and cancellation reason
             booking.Cancel();
@@ -134,29 +134,33 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
             // Save changes to the database
             await _bookingRepository.UpdateBookingAsync(booking, cancellationToken);
 
-            // Save booking cancelled event to the outbox
-            var bookingCancelledEvent = new BookingCancelledEvent(
+            // Get the SportCenterOwnerId from the booking
+            var court = await _courtRepository.GetCourtByIdAsync(CourtId.Of(courtId.Value), cancellationToken);
+            var sportCenter = await _sportCenterRepository.GetSportCenterByIdAsync(court.SportCenterId, cancellationToken);
+            var sportCenterOwnerId = sportCenter.OwnerId.Value;
+
+            // Save the integration event to the outbox instead of multiple domain events
+            var bookingCancelledRefundEvent = new BookingCancelledRefundEvent(
                 booking.Id.Value,
                 booking.UserId.Value,
+                sportCenterOwnerId,
+                refundAmount,
                 request.CancellationReason,
                 request.RequestedAt);
 
-            await _outboxService.SaveMessageAsync(bookingCancelledEvent);
+            await _outboxService.SaveMessageAsync(bookingCancelledRefundEvent);
 
-            // Save message for each booking detail as well
-            foreach (var detail in bookingDetails)
-            {
-                var bookingDetailCancelledEvent = new BookingDetailCancelledEvent(
-                    detail.Id.Value,
-                    booking.Id.Value,
-                    detail.CourtId.Value,
-                    detail.StartTime,
-                    detail.EndTime,
-                    request.CancellationReason,
-                    request.RequestedAt);
+            // Also save notification event for other systems
+            var bookingCancelledNotificationEvent = new BookingCancelledNotificationEvent(
+                booking.Id.Value,
+                booking.UserId.Value,
+                court.SportCenterId.Value,
+                refundAmount > 0,
+                refundAmount,
+                request.CancellationReason,
+                request.RequestedAt);
 
-                await _outboxService.SaveMessageAsync(bookingDetailCancelledEvent);
-            }
+            await _outboxService.SaveMessageAsync(bookingCancelledNotificationEvent);
 
             // Commit the transaction
             await transaction.CommitAsync(cancellationToken);
@@ -175,5 +179,33 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    // Helper method to calculate refund amount based on business rules
+    private async Task<decimal> CalculateRefundAmount(Booking booking, BookingDetail bookingDetail, CancellationToken cancellationToken)
+    {
+        // If nothing was paid yet, no refund
+        if (booking.TotalPaid <= 0)
+            return 0;
+
+        // Get a court to check cancellation policy
+        var courtId = bookingDetail.CourtId.Value;
+        var court = await _courtRepository.GetCourtByIdAsync(CourtId.Of(courtId), cancellationToken);
+
+        // Calculate time remaining until booking starts
+        var now = DateTime.UtcNow;
+        var bookingTime = booking.BookingDate.Add(bookingDetail.StartTime);
+        var hoursRemaining = (bookingTime - now).TotalHours;
+
+        // Check if cancellation is within the window for refund
+        if (court != null && hoursRemaining >= court.CancellationWindowHours)
+        {
+            // Apply refund percentage
+            var refundPercentage = court.RefundPercentage / 100m;
+            return booking.TotalPaid * refundPercentage;
+        }
+
+        // Default: no refund outside of cancellation window
+        return 0;
     }
 }

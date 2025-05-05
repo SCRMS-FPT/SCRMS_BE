@@ -15,6 +15,7 @@ using BuildingBlocks.Messaging.MassTransit;
 using BuildingBlocks.Messaging.Events;
 using BuildingBlocks.Messaging.Extensions;
 using Coach.API.Data.Extensions;
+using Coach.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,9 @@ builder.Services.AddHttpClient<IImageKitService, ImageKitService>();
 
 // Chỉ đăng ký MessageBroker đơn giản
 builder.Services.AddMessageBroker(builder.Configuration, assembly);
+
+// Add outbox services
+builder.Services.AddOutboxServices();
 
 builder.Services.AddCarter();
 builder.Services.AddCors();

@@ -106,17 +106,31 @@ namespace CourtBooking.Domain.Models
         public BookingDetail AddBookingDetailWithPromotion(CourtId courtId, TimeSpan startTime, TimeSpan endTime,
             List<CourtSchedule> schedules, decimal minDepositPercentage, string discountType, decimal discountValue)
         {
-            // Find appropriate schedule
-            var schedule = schedules.FirstOrDefault(s =>
-                s.StartTime <= startTime && s.EndTime >= endTime);
+            // Calculate original price based on time slots
+            decimal originalPrice = 0;
+            TimeSpan current = startTime;
 
-            if (schedule == null)
+            // Sort schedules by StartTime for easier processing
+            var sortedSchedules = schedules.OrderBy(s => s.StartTime).ToList();
+
+            while (current < endTime)
             {
-                throw new InvalidOperationException($"No valid schedule found for time slot {startTime} to {endTime}");
-            }
+                // Find the schedule that covers the current time
+                var schedule = sortedSchedules.FirstOrDefault(s => s.StartTime <= current && s.EndTime > current);
+                if (schedule == null)
+                    throw new InvalidOperationException($"No valid schedule found for time slot {current}");
 
-            // Calculate original price
-            decimal originalPrice = schedule.PriceSlot;
+                // Determine how long we stay in this schedule period
+                TimeSpan slotEndTime = schedule.EndTime < endTime ? schedule.EndTime : endTime;
+                TimeSpan duration = slotEndTime - current;
+
+                // Calculate price for this period using hourly rate
+                decimal priceForPeriod = schedule.PriceSlot * (decimal)duration.TotalHours;
+                originalPrice += priceForPeriod;
+
+                // Move to the next time boundary
+                current = slotEndTime;
+            }
 
             // Calculate price after promotion
             decimal finalPrice = originalPrice;
@@ -196,9 +210,6 @@ namespace CourtBooking.Domain.Models
 
             if (depositAmount < minRequired)
                 throw new DomainException($"Số tiền đặt cọc tối thiểu: {minRequired}");
-
-            if (depositAmount > TotalPrice - TotalPaid)
-                throw new DomainException($"Số tiền đặt cọc không thể lớn hơn số dư còn lại: {TotalPrice - TotalPaid}");
 
             TotalPaid += depositAmount;
             RemainingBalance = TotalPrice - TotalPaid;

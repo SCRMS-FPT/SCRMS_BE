@@ -51,7 +51,8 @@ namespace Coach.API.Features.Schedules.UpdateSchedule
             if (schedule.CoachId != command.CoachId)
                 throw new UnauthorizedAccessException("You are not authorized to update this schedule.");
 
-            var hasConflict = await _scheduleRepository.HasCoachScheduleConflictAsync(
+            var hasConflict = await _scheduleRepository.HasCoachScheduleConflictExcludingCurrentAsync(
+                command.ScheduleId,
                 command.CoachId,
                 command.DayOfWeek,
                 command.StartTime,

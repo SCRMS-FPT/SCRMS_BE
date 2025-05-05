@@ -48,7 +48,7 @@ namespace CourtBooking.Application.BookingManagement.Queries.CalculateBookingPri
 
                 // Get court schedules for the booking day
                 var bookingDayOfWeek = request.Booking.BookingDate.DayOfWeek;
-                var bookingDayOfWeekInt = bookingDayOfWeek == DayOfWeek.Sunday ? 7 : (int)bookingDayOfWeek + 1;
+                var bookingDayOfWeekInt = bookingDayOfWeek == DayOfWeek.Sunday ? 7 : (int)bookingDayOfWeek;
                 var allCourtSchedules = await _courtScheduleRepository.GetSchedulesByCourtIdAsync(courtId, cancellationToken);
                 var schedules = allCourtSchedules
                     .Where(s => s.DayOfWeek.Days.Contains(bookingDayOfWeekInt))

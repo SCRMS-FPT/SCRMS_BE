@@ -162,5 +162,21 @@ namespace CourtBooking.Infrastructure.Data.Repositories
                            b.BookingDetails.Any(bd => bd.CourtId == CourtId.Of(courtId)))
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<List<Booking>> GetActiveBookingsForCourtAsync(
+            CourtId courtId,
+            BookingStatus[] statuses,
+            DateTime afterDate,
+            CancellationToken cancellationToken)
+        {
+            return await _context.Bookings
+                .Include(b => b.BookingDetails)
+                .Where(b => b.BookingDetails.Any(bd => bd.CourtId == courtId) &&
+                            statuses.Contains(b.Status) &&
+                            b.BookingDate >= afterDate &&
+                            b.Status != BookingStatus.PendingPayment &&
+                            b.Status != BookingStatus.Cancelled)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

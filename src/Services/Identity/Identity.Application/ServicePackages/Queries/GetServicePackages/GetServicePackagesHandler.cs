@@ -22,7 +22,7 @@ namespace Identity.Application.ServicePackages.Queries.GetServicePackages
             // Áp dụng search theo tên
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
-                packagesQuery = packagesQuery.Where(p => p.Name.Contains(query.Search));
+                packagesQuery = packagesQuery.Where(p => p.Name.ToLower().Contains(query.Search.ToLower()));
             }
 
             // Áp dụng filter theo AssociatedRole

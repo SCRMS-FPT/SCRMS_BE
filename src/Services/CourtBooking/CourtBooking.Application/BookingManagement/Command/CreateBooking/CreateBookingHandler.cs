@@ -58,7 +58,9 @@ namespace CourtBooking.Application.BookingManagement.Command.CreateBooking
                     throw new ApplicationException($"Court {detail.CourtId} not found");
                 }
 
-                var bookingDayOfWeekInt = (int)request.Booking.BookingDate.DayOfWeek + 1;
+                var bookingDayOfWeekInt = request.Booking.BookingDate.DayOfWeek == DayOfWeek.Sunday
+                    ? 7
+                    : (int)request.Booking.BookingDate.DayOfWeek;
                 var allCourtSchedules = await _courtScheduleRepository.GetSchedulesByCourtIdAsync(courtId, cancellationToken);
                 var schedules = allCourtSchedules
                     .Where(s => s.DayOfWeek.Days.Contains(bookingDayOfWeekInt))
