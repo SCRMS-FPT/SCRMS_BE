@@ -34,7 +34,7 @@ namespace CourtBooking.Application.CourtManagement.Command.DeleteCourtPromotion
 
             var court = await _courtRepository.GetCourtByIdAsync(promotion.CourtId, cancellationToken);
             var sportCenter = await _context.SportCenters
-                .FirstOrDefaultAsync(sc => sc.Id.Value == court.SportCenterId.Value, cancellationToken);
+                .FirstOrDefaultAsync(sc => sc.Id == court.SportCenterId, cancellationToken);
             if (sportCenter == null || sportCenter.OwnerId.Value != request.UserId)
                 throw new UnauthorizedAccessException("Bạn không sở hữu sân này.");
 
