@@ -125,7 +125,7 @@ namespace Identity.Infrastructure.Data.Extensions
             logger.LogInformation("Seeding service packages...");
 
             // Premium Coach Package
-            var coachPackageName = "Gói Huấn Luyện Viên Cao Cấp";
+            var coachPackageName = "Gói Huấn Luyện Viên 1 Tháng";
             if (!await context.ServicePackages.AnyAsync(p => p.Name == coachPackageName))
             {
                 logger.LogInformation("Thêm {PackageName} vào cơ sở dữ liệu", coachPackageName);
@@ -142,7 +142,7 @@ namespace Identity.Infrastructure.Data.Extensions
             }
 
             // Gói Chủ Sân
-            var courtPackageName = "Gói Quản Lý Sân";
+            var courtPackageName = "Gói Quản Lý Sân 1 Tháng";
             if (!await context.ServicePackages.AnyAsync(p => p.Name == courtPackageName))
             {
                 logger.LogInformation("Thêm {PackageName} vào cơ sở dữ liệu", courtPackageName);
@@ -150,7 +150,7 @@ namespace Identity.Infrastructure.Data.Extensions
                     courtPackageName,
                     "Giải pháp toàn diện cho chủ sân. Bao gồm quản lý danh sách sân, lịch đặt sân, xử lý thanh toán và bảng điều khiển phân tích cho địa điểm của bạn.",
                     599000, // 599,000 VND
-                    365,
+                    30,
                     "CourtOwner",
                     "active"
                 );
