@@ -13,6 +13,7 @@ jobs:
   push_to_registry:
     name: Build and Push Docker Compose Image
     runs-on: ubuntu-latest
+    environment: STAG
 
     steps:
       - name: Checkout source code
