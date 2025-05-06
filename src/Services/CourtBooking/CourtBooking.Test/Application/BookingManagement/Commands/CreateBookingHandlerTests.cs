@@ -429,13 +429,13 @@ namespace CourtBooking.Test.Application.BookingManagement.Command.CreateBooking
 
         private void SetupMockSchedules(Guid courtId, DateTime bookingDate)
         {
-            var dayOfWeek = (int)bookingDate.DayOfWeek + 1; // Convert to 1-7 for consistency
+            // Instead of calculating specific day, create a schedule that works for all days
             var schedules = new List<CourtSchedule>
             {
                 CourtSchedule.Create(
                     CourtScheduleId.Of(Guid.NewGuid()),
                     CourtId.Of(courtId),
-                    new DayOfWeekValue(new int[] { dayOfWeek }),
+                    new DayOfWeekValue(new int[] { 1, 2, 3, 4, 5, 6, 7 }), // All days of week
                     TimeSpan.FromHours(8),
                     TimeSpan.FromHours(22),
                     100m

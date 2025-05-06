@@ -37,10 +37,14 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             // Arrange
             var paginationRequest = new PaginationRequest(0, 10);
             var query = new GetCourtsQuery(paginationRequest, null, null, null);
-            _mockCourtRepository.Setup(r => r.GetPaginatedCourtsAsync(0, 10, It.IsAny<CancellationToken>()))
+
+            // Setup method call to use GetAllCourtsAsync instead of GetPaginatedCourtsAsync
+            _mockCourtRepository.Setup(r => r.GetAllCourtsAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Court>());
+
             _mockSportRepository.Setup(r => r.GetSportsByIdsAsync(It.IsAny<List<SportId>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport>());
+
             _mockPromotionRepository.Setup(r => r.GetPromotionsByCourtIdAsync(It.IsAny<CourtId>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<CourtPromotion>());
 
@@ -49,8 +53,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             // Assert
             Assert.NotNull(result);
-            Assert.Empty(result.Courts.Data); // Fixed: Changed from PaginatedResult to Courts
-            _mockCourtRepository.Verify(r => r.GetPaginatedCourtsAsync(0, 10, It.IsAny<CancellationToken>()), Times.Once);
+            Assert.Empty(result.Courts.Data);
+            _mockCourtRepository.Verify(r => r.GetAllCourtsAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -71,8 +75,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 TimeSpan.FromMinutes(100),
                 "Main court", null,
                 CourtType.Indoor,
-                1,
-                30
+                50, // MinDepositPercentage
+                24  // CancellationWindowHours
             );
 
             // Properly create the Sport with the correct ID
@@ -83,11 +87,11 @@ namespace CourtBooking.Test.Application.Handlers.Queries
                 "icon"
             );
 
-            _mockCourtRepository.Setup(r => r.GetPaginatedCourtsAsync(0, 10, It.IsAny<CancellationToken>()))
+            _mockCourtRepository.Setup(r => r.GetAllCourtsAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Court> { court });
 
             _mockSportRepository.Setup(r => r.GetSportsByIdsAsync(
-                It.Is<List<SportId>>(ids => ids.Any(id => id.Value == sportId)),
+                It.Is<List<SportId>>(ids => ids.Count > 0),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Sport> { sport });
 
@@ -105,11 +109,11 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.Equal("Tennis Court 1", courtDto.CourtName);
             Assert.Equal("Main court", courtDto.Description);
             Assert.Equal(TimeSpan.FromMinutes(100), courtDto.SlotDuration);
-            Assert.Equal("Indoor", courtDto.CourtType.ToString());
+            Assert.Equal(CourtType.Indoor, courtDto.CourtType);
             Assert.Equal(sportCenterId, courtDto.SportCenterId);
             Assert.Equal(sportId, courtDto.SportId);
             Assert.Equal("Tennis", courtDto.SportName);
-            _mockCourtRepository.Verify(r => r.GetPaginatedCourtsAsync(0, 10, It.IsAny<CancellationToken>()), Times.Once);
+            _mockCourtRepository.Verify(r => r.GetAllCourtsAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

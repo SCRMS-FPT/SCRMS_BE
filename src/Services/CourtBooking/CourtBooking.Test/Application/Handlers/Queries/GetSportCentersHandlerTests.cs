@@ -50,16 +50,20 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             // Setup mock data
             var sportCenters = new List<SportCenter> { sportCenter };
             var mockDbSet = CreateMockDbSet(sportCenters);
-            
+
             // Configure mocks
             _mockContext.Setup(c => c.SportCenters).Returns(mockDbSet.Object);
-            
+
+            // Correctly set up count method
+            mockDbSet.Setup(m => m.LongCountAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(sportCenters.Count);
+
             // Setup async methods with TestAsyncEnumerable
             var courtsData = new List<Court>();
             var sportsData = new List<Sport>();
             var mockCourtsDbSet = CreateMockDbSet(courtsData);
             var mockSportsDbSet = CreateMockDbSet(sportsData);
-            
+
             _mockContext.Setup(c => c.Courts).Returns(mockCourtsDbSet.Object);
             _mockContext.Setup(c => c.Sports).Returns(mockSportsDbSet.Object);
 
@@ -69,7 +73,8 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             // Assert
             Assert.NotNull(result);
             Assert.NotNull(result.SportCenters);
-            Assert.Equal(sportCenters.Count, result.SportCenters.Count);
+            Assert.Equal(1, result.SportCenters.Count); // This should now pass
+            Assert.Single(result.SportCenters.Data);
         }
 
         [Fact]
@@ -82,16 +87,16 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             // Setup mock data with empty collections
             var emptySportCenters = new List<SportCenter>();
             var mockDbSet = CreateMockDbSet(emptySportCenters);
-            
+
             // Configure mocks
             _mockContext.Setup(c => c.SportCenters).Returns(mockDbSet.Object);
-            
+
             // Setup empty courts and sports
             var emptyCourts = new List<Court>();
             var emptySports = new List<Sport>();
             var mockCourtsDbSet = CreateMockDbSet(emptyCourts);
             var mockSportsDbSet = CreateMockDbSet(emptySports);
-            
+
             _mockContext.Setup(c => c.Courts).Returns(mockCourtsDbSet.Object);
             _mockContext.Setup(c => c.Sports).Returns(mockSportsDbSet.Object);
 
@@ -131,16 +136,16 @@ namespace CourtBooking.Test.Application.Handlers.Queries
 
             var sportCenters = new List<SportCenter> { sportCenter };
             var mockDbSet = CreateMockDbSet(sportCenters);
-            
+
             // Configure mocks
             _mockContext.Setup(c => c.SportCenters).Returns(mockDbSet.Object);
-            
+
             // Setup empty courts and sports
             var emptyCourts = new List<Court>();
             var emptySports = new List<Sport>();
             var mockCourtsDbSet = CreateMockDbSet(emptyCourts);
             var mockSportsDbSet = CreateMockDbSet(emptySports);
-            
+
             _mockContext.Setup(c => c.Courts).Returns(mockCourtsDbSet.Object);
             _mockContext.Setup(c => c.Sports).Returns(mockSportsDbSet.Object);
 
@@ -152,36 +157,40 @@ namespace CourtBooking.Test.Application.Handlers.Queries
             Assert.NotNull(result.SportCenters);
             Assert.NotEmpty(result.SportCenters.Data);
         }
-        
+
         private Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data) where T : class
         {
             var mockDbSet = new Mock<DbSet<T>>();
             var queryable = data.AsQueryable();
             var asyncQueryable = data.AsQueryable().AsAsyncQueryable();
-            
-            // Thiết lập IQueryable
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(asyncQueryable.Provider);
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(asyncQueryable.Expression);
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(asyncQueryable.ElementType);
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => data.GetEnumerator());
-            
+
+            // Basic IQueryable setup
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+
+            // Setup Count method
+            mockDbSet.Setup(m => m.LongCountAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(data.Count);
+
             // Thiết lập IAsyncEnumerable
             mockDbSet.As<IAsyncEnumerable<T>>()
                 .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
                 .Returns(new TestAsyncEnumerator<T>(data.GetEnumerator()));
-            
+
             // Thiết lập IQueryable<T> cho phương thức LongCountAsync
             mockDbSet.Setup(m => m.AsQueryable()).Returns(asyncQueryable);
-            
+
             // Thiết lập phương thức FindAsync
             mockDbSet.Setup(m => m.FindAsync(It.IsAny<object[]>()))
-                .Returns<object[]>(ids => 
+                .Returns<object[]>(ids =>
                 {
                     var idValue = ids[0];
                     var item = data.FirstOrDefault();
                     return ValueTask.FromResult(item);
                 });
-            
+
             return mockDbSet;
         }
     }
