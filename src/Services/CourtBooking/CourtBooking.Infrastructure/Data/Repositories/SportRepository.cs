@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CourtBooking.Application.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Data.Repositories
 {
@@ -65,6 +66,10 @@ namespace CourtBooking.Application.Data.Repositories
             return await _context.Sports
                 .Where(s => guidIds.Contains(s.Id)) // So sánh với Guid
                 .ToListAsync(cancellationToken);
+        }
+        public async Task<Sport> GetByName(string name, CancellationToken cancellationToken)
+        {
+            return await _context.Sports.FirstOrDefaultAsync(p => EF.Functions.ILike(p.Name, name), cancellationToken);
         }
     }
 }

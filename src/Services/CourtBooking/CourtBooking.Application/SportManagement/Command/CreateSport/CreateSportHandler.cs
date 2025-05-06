@@ -18,6 +18,12 @@ public class CreateSportHandler : IRequestHandler<CreateSportCommand, CreateSpor
 
     public async Task<CreateSportResult> Handle(CreateSportCommand request, CancellationToken cancellationToken)
     {
+        var isExist = await _sportRepository.GetByName(request.Name, cancellationToken);
+        if (isExist != null)
+        {
+            throw new ApplicationException("Duplicate was found.");
+        }
+
         var newSportId = SportId.Of(Guid.NewGuid());
         var sport = Sport.Create(newSportId, request.Name, request.Description, request.Icon);
 

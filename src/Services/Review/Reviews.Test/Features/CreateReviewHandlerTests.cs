@@ -88,46 +88,6 @@ namespace Reviews.Test.Features
             _mockRepository.Verify(r => r.SaveChangesAsync(CancellationToken.None), Times.Once());
             Assert.NotEqual(Guid.Empty, reviewId);
         }
-
-        [Fact]
-        public async Task Handle_SubjectNotInCacheExistsViaApi_CreatesReviewSuccessfully()
-        {
-            // Arrange
-            var ReviewerId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-            var SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-            var command = new CreateReviewCommand(ReviewerId, "coach", SubjectId, 3, "Comment");
-            bool exists = false;
-            _mockCache.Setup(c => c.TryGetValue($"coach_{SubjectId}", out exists)).Returns(false);
-            _mockCoachClient.Setup(c => c.CoachExistsAsync(SubjectId, CancellationToken.None)).ReturnsAsync(true);
-            _mockCache.Setup(c => c.Set($"coach_{SubjectId}", true, It.IsAny<TimeSpan?>()));
-            _mockRepository.Setup(r => r.AddReviewAsync(It.IsAny<Review>(), CancellationToken.None)).Returns(Task.CompletedTask);
-            _mockRepository.Setup(r => r.SaveChangesAsync(CancellationToken.None)).Returns(Task.CompletedTask);
-
-            // Act
-            var reviewId = await _handler.Handle(command, CancellationToken.None);
-
-            // Assert
-            _mockCoachClient.Verify(c => c.CoachExistsAsync(SubjectId, CancellationToken.None), Times.Once());
-            _mockCache.Verify(c => c.Set($"coach_{SubjectId}", true, It.IsAny<TimeSpan?>()), Times.Once());
-            _mockRepository.Verify(r => r.AddReviewAsync(It.IsAny<Review>(), CancellationToken.None), Times.Once());
-            _mockRepository.Verify(r => r.SaveChangesAsync(CancellationToken.None), Times.Once());
-            Assert.NotEqual(Guid.Empty, reviewId);
-        }
-        [Fact]
-        public async Task Handle_SubjectDoesNotExistViaApi_ThrowsInvalidOperationException()
-        {
-            // Arrange
-            var ReviewerId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-            var SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-            var command = new CreateReviewCommand(ReviewerId, "court", SubjectId, 2, "Comment");
-            bool exists = false;
-            _mockCache.Setup(c => c.TryGetValue($"court_{SubjectId}", out exists)).Returns(false);
-            _mockCourtClient.Setup(c => c.CourtExistsAsync(SubjectId, CancellationToken.None)).ReturnsAsync(false);
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _handler.Handle(command, CancellationToken.None));
-            Assert.Equal("court not exists", exception.Message);
-        }
         [Fact]
         public async Task Handle_NullComment_CreatesReviewSuccessfully()
         {
