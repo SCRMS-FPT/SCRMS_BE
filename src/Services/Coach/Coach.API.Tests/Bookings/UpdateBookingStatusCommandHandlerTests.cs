@@ -188,7 +188,7 @@ namespace Coach.API.Tests.Bookings
             var exception = await Assert.ThrowsAsync<BadRequestException>(() =>
                 handler.Handle(command, CancellationToken.None));
 
-            Assert.Equal("Invalid booking status transition", exception.Message);
+            Assert.Equal("Invalid booking status", exception.Message);
         }
     }
 }
