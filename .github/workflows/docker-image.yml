@@ -15,13 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service:
-          - src/Services/Coach/Coach.API
-          - src/Services/Chat/Chat.API
-          - src/Services/Notification/Notification.API
-          - src/Services/Payment/Payment
-          - src/Services/Review/Review.API
-          - src/Gateway/YarpApiGateway
+        include:
+          - path: src/Services/Coach/Coach.API
+            name: scrmrs-coach-service
+          - path: src/Services/Chat/Chat.API
+            name: scrmrs-chat-service
+          - path: src/Services/Notification/Notification.API
+            name: scrmrs-notification-service
+          - path: src/Services/Payment/Payment
+            name: scrmrs-payment-service
+          - path: src/Services/Review/Review.API
+            name: scrmrs-review-service
+          - path: src/Gateway/YarpApiGateway
+            name: scrmrs-gateway
+
     environment: STAG
 
     steps:
@@ -44,14 +51,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build Docker image
         run: |
-          SERVICE_NAME=$(basename ${{ matrix.service }})
-          IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${SERVICE_NAME}:latest
-          echo "Building $IMAGE_NAME from ${{ matrix.service }}"
-          docker build -t $IMAGE_NAME ${{ matrix.service }}
+          IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
+          echo "Building $IMAGE_NAME from ${{ matrix.path }}"
+          docker build -t $IMAGE_NAME ${{ matrix.path }}
 
       - name: Push Docker image
         run: |
-          SERVICE_NAME=$(basename ${{ matrix.service }})
-          IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${SERVICE_NAME}:latest
+          IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Pushing $IMAGE_NAME"
           docker push $IMAGE_NAME
