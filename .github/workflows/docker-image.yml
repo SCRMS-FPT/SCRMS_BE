@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - path: src/Services/Coach/Coach.API/Dockerfile
+          - path: src/Services/Coach/Coach.API
             name: scrmrs-coach-service
 
     environment: STAG
@@ -45,7 +45,7 @@ jobs:
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Building $IMAGE_NAME from ${{ matrix.path }}"
           docker buildx build \
-            --file ${{ matrix.path }} \
+            --file ${{ matrix.path }}/Dockerfile \
             --tag $IMAGE_NAME \
             --output type=docker \
             .
