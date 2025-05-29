@@ -19,7 +19,6 @@ jobs:
           - path: src/Services/Coach/Coach.API/Dockerfile
             name: scrmrs-coach-service
 
-
     environment: STAG
 
     steps:
@@ -40,15 +39,16 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build Docker image
         run: |
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Building $IMAGE_NAME from ${{ matrix.path }}"
           docker buildx build \
-          --file ${{ matrix.service }} \
-          --tag $IMAGE_NAME \
-          --output type=docker \
-          .
+            --file ${{ matrix.path }} \
+            --tag $IMAGE_NAME \
+            --output type=docker \
+            .
 
       - name: Push Docker image
         run: |
