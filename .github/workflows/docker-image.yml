@@ -13,7 +13,6 @@ env:
 jobs:
   build-and-dockerize:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         service:
@@ -23,6 +22,7 @@ jobs:
           - src/Services/Payment/Payment
           - src/Services/Review/Review.API
           - src/Gateway/YarpApiGateway
+    environment: STAG
 
     steps:
       - name: Checkout code
