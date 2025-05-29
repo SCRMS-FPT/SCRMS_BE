@@ -13,11 +13,37 @@ env:
 jobs:
   build-and-dockerize:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         include:
           - path: src/Services/Coach/Coach.API
-            name: scrmrs-coach-service
+            name: scmrs-coach-service
+            watch: src/Services/Coach
+          - path: src/Services/Chat/Chat.API
+            name: scmrs-chat-service
+            watch: src/Services/Chat
+          - path: src/Services/Notification/Notification.API
+            name: scmrs-notification-service
+            watch: src/Services/Notification
+          - path: src/Services/Payment/Payment
+            name: scmrs-payment-service
+            watch: src/Services/Payment
+          - path: src/Services/Review/Review.API
+            name: scmrs-review-service
+            watch: src/Services/Review
+          - path: src/Gateway/YarpApiGateway
+            name: scmrs-gateway
+            watch: src/Gateway
+          - path: src/Services/Identity/Identity.API
+            name: scmrs-identity-service
+            watch: src/Services/Identity
+          - path: src/Services/CourtBooking/CourtBooking.API
+            name: scmrs-courtbooking-service
+            watch: src/Services/CourtBooking
+          - path: src/Services/Matching/Matching.API
+            name: scmrs-matching-service
+            watch: src/Services/Matching
 
     environment: STAG
 
@@ -40,7 +66,22 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Check for changes in service
+        id: changes
+        run: |
+          WATCH_PATH="${{ matrix.watch }}"
+          echo "Checking changes in $WATCH_PATH"
+          git fetch origin master
+          if git diff --quiet origin/master HEAD -- "$WATCH_PATH"; then
+            echo "No changes in $WATCH_PATH"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected in $WATCH_PATH"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Docker image
+        if: steps.changes.outputs.changed == 'true'
         run: |
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Building $IMAGE_NAME from ${{ matrix.path }}"
@@ -51,6 +92,7 @@ jobs:
             .
 
       - name: Push Docker image
+        if: steps.changes.outputs.changed == 'true'
         run: |
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Pushing $IMAGE_NAME"
