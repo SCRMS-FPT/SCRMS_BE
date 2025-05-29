@@ -44,7 +44,11 @@ jobs:
         run: |
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Building $IMAGE_NAME from ${{ matrix.path }}"
-          docker build -f ${{ matrix.service }} -t $IMAGE_NAME .
+          docker buildx build \
+          --file ${{ matrix.service }} \
+          --tag $IMAGE_NAME \
+          --output type=docker \
+          .
 
       - name: Push Docker image
         run: |
