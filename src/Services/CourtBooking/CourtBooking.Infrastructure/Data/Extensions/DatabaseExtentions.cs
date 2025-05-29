@@ -1,15 +1,9 @@
-﻿using CourtBooking.Domain.Enums;
-using CourtBooking.Domain.Models;
-using CourtBooking.Domain.ValueObjects;
+﻿using CourtBooking.Application.DTOs;
+using CourtBooking.Domain.Enums;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
-using CourtBooking.Application.DTOs;
 
 namespace CourtBooking.Infrastructure.Data.Extensions;
 
@@ -38,7 +32,7 @@ public static class DatabaseExtentions
         // Check if SportCenter exists before proceeding with seeding
         if (!await context.SportCenters.AnyAsync())
         {
-            logger.LogInformation("Bắt đầu quá trình seed dữ liệu...");
+            logger.LogInformation("Bắt đầu quá trình seed dữ liệu...    ");
 
             // Seed in the required order
             var sportCenter = await SeedSportCenterAsync(context, logger);
