@@ -79,7 +79,7 @@ jobs:
 
           echo "Comparing $PREVIOUS_SHA -> $CURRENT_SHA"
 
-          if git diff --quiet "$PREVIOUS_SHA" "$CURRENT_SHA" -- "$WATCH_PATH"; then
+          if git diff --name-only HEAD~1 HEAD -- "$WATCH_PATH"; then
             echo "No changes in $WATCH_PATH"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
