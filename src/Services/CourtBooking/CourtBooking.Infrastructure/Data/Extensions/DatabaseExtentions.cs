@@ -32,7 +32,7 @@ public static class DatabaseExtentions
         // Check if SportCenter exists before proceeding with seeding
         if (!await context.SportCenters.AnyAsync())
         {
-            logger.LogInformation("Bắt đầu quá trình seed dữ liệu...    ");
+            logger.LogInformation("Bắt đầu quá trình seed dữ liệu");
 
             // Seed in the required order
             var sportCenter = await SeedSportCenterAsync(context, logger);
