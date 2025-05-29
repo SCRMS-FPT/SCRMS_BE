@@ -50,6 +50,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
@@ -71,8 +73,13 @@ jobs:
         run: |
           WATCH_PATH="${{ matrix.watch }}"
           echo "Checking changes in $WATCH_PATH"
-          git fetch origin master
-          if git diff --quiet origin/master HEAD -- "$WATCH_PATH"; then
+
+          PREVIOUS_SHA=$(git rev-parse HEAD~1)
+          CURRENT_SHA=$(git rev-parse HEAD)
+
+          echo "Comparing $PREVIOUS_SHA -> $CURRENT_SHA"
+
+          if git diff --quiet "$PREVIOUS_SHA" "$CURRENT_SHA" -- "$WATCH_PATH"; then
             echo "No changes in $WATCH_PATH"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
