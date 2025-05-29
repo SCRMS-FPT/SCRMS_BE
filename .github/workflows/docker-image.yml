@@ -73,20 +73,17 @@ jobs:
         run: |
           WATCH_PATH="${{ matrix.watch }}"
           echo "Checking changes in $WATCH_PATH"
-
-          PREVIOUS_SHA=$(git rev-parse HEAD~1)
-          CURRENT_SHA=$(git rev-parse HEAD)
-
-          echo "Comparing $PREVIOUS_SHA -> $CURRENT_SHA"
-
-          if git diff --name-only HEAD~1 HEAD -- "$WATCH_PATH"; then
+          
+          git fetch origin master
+          
+          if git diff --quiet origin/master -- "$WATCH_PATH"; then
             echo "No changes in $WATCH_PATH"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "Changes detected in $WATCH_PATH"
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
-
+          
       - name: Build Docker image
         if: steps.changes.outputs.changed == 'true'
         run: |
