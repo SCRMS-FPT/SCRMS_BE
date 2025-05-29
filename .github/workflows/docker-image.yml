@@ -16,18 +16,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - path: src/Services/Coach/Coach.API
+          - path: src/Services/Coach/Coach.API/Dockerfile
             name: scrmrs-coach-service
-          - path: src/Services/Chat/Chat.API
-            name: scrmrs-chat-service
-          - path: src/Services/Notification/Notification.API
-            name: scrmrs-notification-service
-          - path: src/Services/Payment/Payment
-            name: scrmrs-payment-service
-          - path: src/Services/Review/Review.API
-            name: scrmrs-review-service
-          - path: src/Gateway/YarpApiGateway
-            name: scrmrs-gateway
+
 
     environment: STAG
 
@@ -53,7 +44,7 @@ jobs:
         run: |
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ matrix.name }}:latest
           echo "Building $IMAGE_NAME from ${{ matrix.path }}"
-          docker build -f ${{ matrix.service }}/Dockerfile -t $IMAGE_NAME .
+          docker build -f ${{ matrix.service }} -t $IMAGE_NAME .
 
       - name: Push Docker image
         run: |
