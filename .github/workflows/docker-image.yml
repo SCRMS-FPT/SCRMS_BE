@@ -73,16 +73,23 @@ jobs:
         run: |
           WATCH_PATH="${{ matrix.watch }}"
           echo "Checking changes in $WATCH_PATH"
-          
-          git fetch origin master
-          
-          if git diff --quiet origin/master -- "$WATCH_PATH"; then
+
+          PREVIOUS_SHA="${{ github.event.before }}"
+          CURRENT_SHA="${{ github.sha }}"
+
+          echo "Comparing $PREVIOUS_SHA to $CURRENT_SHA..."
+
+          # In ra danh sách file thay đổi
+          git diff --name-only "$PREVIOUS_SHA" "$CURRENT_SHA" -- "$WATCH_PATH"
+
+          if git diff --quiet "$PREVIOUS_SHA" "$CURRENT_SHA" -- "$WATCH_PATH"; then
             echo "No changes in $WATCH_PATH"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "Changes detected in $WATCH_PATH"
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+
           
       - name: Build Docker image
         if: steps.changes.outputs.changed == 'true'
